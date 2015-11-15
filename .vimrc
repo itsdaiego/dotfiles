@@ -45,9 +45,12 @@ call janus#load_pathogen()
 
 
 "" ------ Personal Configuration --------- "
+if $COLORTERM == 'gnome-terminal'
+  set t_Co=256
+endif
 
-
-
+"Default colorscheme
+colorscheme railscasts
 let NERDTreeWinSize=25
 
 filetype plugin indent on
@@ -63,3 +66,4 @@ command Er Errors
 command Cl lclose
 " Alias for Nerdtree plugin
 command NT NERDTree
+
