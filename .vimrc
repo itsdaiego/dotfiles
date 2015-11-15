@@ -1,5 +1,5 @@
 ""
-"" Janus setup
+"" Janus repo: https://github.com/carlhuda/janus.git
 ""
 
 " Define paths
@@ -44,7 +44,7 @@ call janus#load_pathogen()
 "set runtimepath^=~/.vim/bundle/ctrlp.vim
 
 
-"From now on it's my personal config (not Janus related)
+"" ------ Personal Configuration --------- "
 
 
 
