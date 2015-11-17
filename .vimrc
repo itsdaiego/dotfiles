@@ -61,9 +61,14 @@ set shiftwidth=4
 " On pressing tab, insert 4 spaces
 set expandtab
 
-" Alias for syntastic plugin
 command Er Errors
+" Alias for syntastic plugin
 command Cl lclose
 " Alias for Nerdtree plugin
 command NT NERDTree
 
+"CtrlP config
+let g:ctrlp_working_path_mode=0
+
+"Track files that should be ignored
+set wildignore=*.o,*~,*.pyc
