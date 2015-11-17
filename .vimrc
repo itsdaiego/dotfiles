@@ -61,6 +61,8 @@ set shiftwidth=4
 " On pressing tab, insert 4 spaces
 set expandtab
 
+" remapped keys
+ino jj <esc>
 command Er Errors
 " Alias for syntastic plugin
 command Cl lclose
