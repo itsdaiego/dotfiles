@@ -82,3 +82,11 @@ source $ZSH/oh-my-zsh.sh
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
+
+#Personal Stuff
+
+#Directory aliases
+ alias codestuff='/home/dyego/Documents/code-stuff'
+ alias podcast-central='/home/dyego/Documents/code-stuff/rails/workspace/podcast-central'
+ alias codecast='/home/dyego/Documents/code-stuff/rails/workspace/codecast'
+ alias dotfiles='/home/dyego/Documents/code-stuff/dotfiles'
