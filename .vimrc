@@ -1,3 +1,19 @@
+"" Vundle
+set nocompatible              " be iMproved, required
+filetype off                  " required
+
+" set the runtime path to include Vundle and initialize
+set rtp+=~/.vim/bundle/Vundle.vim
+call vundle#begin()
+
+"" ---------- ADDITIONAL PLUGINS --------- "
+Plugin 'Valloric/YouCompleteMe'
+Plugin 'tpope/vim-vinegar'
+Plugin 'vim-airline/vim-airline'
+Plugin 'scrooloose/nerdcommenter'
+Plugin 'easymotion/vim-easymotion'
+Plugin 'tpope/vim-surround'
+Plugin 'jiangmiao/auto-pairs'
 ""
 "" Janus repo: https://github.com/carlhuda/janus.git
 ""
@@ -44,13 +60,14 @@ call janus#load_pathogen()
 "set runtimepath^=~/.vim/bundle/ctrlp.vim
 
 
+
 "" ------ Personal Configuration --------- "
 if $COLORTERM == 'gnome-terminal'
   set t_Co=256
 endif
 
 "Default colorscheme
-colorscheme railscasts
+colorscheme Tomorrow-Night
 let NERDTreeWinSize=25
 
 filetype plugin indent on
@@ -61,7 +78,7 @@ set shiftwidth=4
 " On pressing tab, insert 4 spaces
 set expandtab
 
-" remapped keys
+"remapped keys
 ino jj <esc>
 command Er Errors
 " Alias for syntastic plugin
