@@ -14,6 +14,8 @@ Plugin 'scrooloose/nerdcommenter'
 Plugin 'easymotion/vim-easymotion'
 Plugin 'tpope/vim-surround'
 Plugin 'jiangmiao/auto-pairs'
+Plugin 'jpo/vim-railscasts-theme'
+
 ""
 "" Janus repo: https://github.com/carlhuda/janus.git
 ""
