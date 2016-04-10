@@ -15,7 +15,7 @@ Plugin 'easymotion/vim-easymotion'
 Plugin 'tpope/vim-surround'
 Plugin 'jiangmiao/auto-pairs'
 Plugin 'jpo/vim-railscasts-theme'
-
+:c:
 ""
 "" Janus repo: https://github.com/carlhuda/janus.git
 ""
@@ -93,3 +93,6 @@ let g:ctrlp_working_path_mode=0
 
 "Track files that should be ignored
 set wildignore=*.o,*~,*.pyc
+
+"ignoring certain directories
+let g:ctrlp_custom_ignore = 'node_modules\|DS_Store\|\platforms\|git'
