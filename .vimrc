@@ -96,3 +96,6 @@ set wildignore=*.o,*~,*.pyc
 
 "ignoring certain directories
 let g:ctrlp_custom_ignore = 'node_modules\|DS_Store\|\platforms\|git'
+
+"disabling highlighted background bug
+set t_ut=  
