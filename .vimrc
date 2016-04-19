@@ -14,7 +14,18 @@ Plugin 'scrooloose/nerdcommenter'
 Plugin 'easymotion/vim-easymotion'
 Plugin 'tpope/vim-surround'
 Plugin 'jiangmiao/auto-pairs'
+Plugin 'mileszs/ack.vim'
+Plugin 'cakebaker/scss-syntax.vim'
+Plugin 'JulesWang/css.vim'
+Plugin 'tpope/vim-haml'
 Plugin 'jpo/vim-railscasts-theme'
+Plugin 'pangloss/vim-javascript'
+Plugin 'othree/html5.vim'
+Plugin 'Shougo/vimproc'
+Plugin 'Shougo/unite.vim'
+Plugin 'm2mdas/phpcomplete-extended'
+Plugin 'Rip-Rip/clang_complete'
+Plugin 'hail2u/vim-css3-syntax'
 :c:
 ""
 "" Janus repo: https://github.com/carlhuda/janus.git
