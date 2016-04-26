@@ -28,17 +28,18 @@ Plugin 'kien/ctrlp.vim'
 Plugin 'tpope/vim-fugitive'
 Plugin 'scrooloose/nerdtree'
 Plugin 'scrooloose/syntastic'
-
+Plugin 'altercation/solarized'
 call vundle#end()
 
 filetype plugin indent on
 "" ------ Personal Configuration --------- "
-if $COLORTERM == 'gnome-terminal'
-  set t_Co=256
-endif
+set t_Co=256
 
 "Default colorscheme
-colorscheme onedark
+syntax enable
+set background=light
+let g:solarized_termcolors=256
+colorscheme solarized
 let NERDTreeWinSize=25
 
 filetype plugin indent on
@@ -64,10 +65,13 @@ let g:ctrlp_working_path_mode=0
 set wildignore=*.o,*~,*.pyc
 
 "ignoring certain directories
-let g:ctrlp_custom_ignore = 'node_modules\|DS_Store\|\platforms\|git'
+let g:ctrlp_custom_ignore = 'node_modules\|DS_Store\|\platforms\|\plugins\|git'
 
 "disabling highlighted background bug
 set t_ut=
 
 "line number"
 :set number
+
+"ack config
+let g:ackprg = "ag --vimgrep"
