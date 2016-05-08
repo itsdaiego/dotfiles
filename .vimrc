@@ -8,13 +8,17 @@ call vundle#begin()
 
 "" ---------- ADDITIONAL PLUGINS --------- "
 Plugin 'Valloric/YouCompleteMe'
+Plugin 'Shougo/neocomplete.vim'
+Plugin 'Shougo/deoplete.nvim'
 Plugin 'tpope/vim-vinegar'
 Plugin 'vim-airline/vim-airline'
 Plugin 'scrooloose/nerdcommenter'
 Plugin 'easymotion/vim-easymotion'
 Plugin 'tpope/vim-surround'
 Plugin 'jiangmiao/auto-pairs'
+Plugin 'rking/ag.vim'
 Plugin 'mileszs/ack.vim'
+Plugin 'ggreer/the_silver_searcher'
 Plugin 'cakebaker/scss-syntax.vim'
 Plugin 'JulesWang/css.vim'
 Plugin 'tpope/vim-haml'
@@ -28,27 +32,37 @@ Plugin 'kien/ctrlp.vim'
 Plugin 'tpope/vim-fugitive'
 Plugin 'scrooloose/nerdtree'
 Plugin 'scrooloose/syntastic'
-Plugin 'altercation/solarized'
+Plugin 'flazz/vim-colorschemes'
+Plugin 'alvan/vim-closetag'
+Plugin 'joonty/vdebug'
+
+
+
 call vundle#end()
 
 filetype plugin indent on
 "" ------ Personal Configuration --------- "
-set t_Co=256
+if $COLORTERM == 'gnome-terminal'
+  set t_Co=256
+endif
+let g:solarized_termcolors=256
+
 
 "Default colorscheme
-syntax enable
-set background=light
-let g:solarized_termcolors=256
-colorscheme solarized
+colorscheme gruvbox
 let NERDTreeWinSize=25
 
 filetype plugin indent on
 "show existing tab with 4 spaces width
-set tabstop=4
+set tabstop=2
 " when indenting with '>', use 4 spaces width
-set shiftwidth=4
+set shiftwidth=2
 " On pressing tab, insert 4 spaces
 set expandtab
+
+syntax enable
+
+set background=dark
 
 "remapped keys
 ino jj <esc>
@@ -65,7 +79,7 @@ let g:ctrlp_working_path_mode=0
 set wildignore=*.o,*~,*.pyc
 
 "ignoring certain directories
-let g:ctrlp_custom_ignore = 'node_modules\|DS_Store\|\platforms\|\plugins\|git'
+let g:ctrlp_custom_ignore = 'node_modules\|DS_Store\|\plugins\|\platforms\|git'
 
 "disabling highlighted background bug
 set t_ut=
@@ -73,5 +87,15 @@ set t_ut=
 "line number"
 :set number
 
-"ack config
+"close tags will work for these files extensions
+let g:closetag_filenames = "*.html.erb,*.html,*.xhtml,*.phtml"
+
+
 let g:ackprg = "ag --vimgrep"
+
+
+"Neovim
+
+if !has('nvim')
+  set ttymouse=xterm2
+endif
