@@ -35,6 +35,17 @@ Plugin 'scrooloose/syntastic'
 Plugin 'flazz/vim-colorschemes'
 Plugin 'alvan/vim-closetag'
 Plugin 'joonty/vdebug'
+Plugin 'powerline/powerline'
+Plugin 'neomake/neomake'
+Plugin 'xolox/vim-easytags'
+Plugin 'xolox/vim-misc'
+Plugin 'nvie/vim-flake8'
+Plugin 'wookiehangover/jshint.vim'
+Plugin 'lambdalisue/vim-fullscreen'
+Plugin 'vim-scripts/CSApprox'
+Plugin 'hynek/vim-python-pep8-indent'
+Plugin 'hdima/python-syntax'
+
 
 
 
@@ -42,11 +53,15 @@ call vundle#end()
 
 filetype plugin indent on
 "" ------ Personal Configuration --------- "
-if $COLORTERM == 'gnome-terminal'
-  set t_Co=256
-endif
+"sem t_Co=256
+
+"enables true colors
+let $NVIM_TUI_ENABLE_TRUE_COLOR=1
+
+
 let g:solarized_termcolors=256
 
+set termguicolors
 
 "Default colorscheme
 colorscheme gruvbox
@@ -72,6 +87,7 @@ command Cl lclose
 " Alias for Nerdtree plugin
 command NT NERDTree
 
+
 "CtrlP config
 let g:ctrlp_working_path_mode=0
 
@@ -93,9 +109,11 @@ let g:closetag_filenames = "*.html.erb,*.html,*.xhtml,*.phtml"
 
 let g:ackprg = "ag --vimgrep"
 
+set backspace=indent,eol,start
+
+
+
 
 "Neovim
-
-if !has('nvim')
-  set ttymouse=xterm2
-endif
+"Using mouse with neovim
+set mouse=
