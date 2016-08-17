@@ -45,7 +45,9 @@ Plugin 'lambdalisue/vim-fullscreen'
 Plugin 'vim-scripts/CSApprox'
 Plugin 'hynek/vim-python-pep8-indent'
 Plugin 'hdima/python-syntax'
-
+Plugin 'editorconfig/editorconfig-vim'
+Plugin 'gotcha/vimpdb'
+Plugin 'tpope/vim-commentary'
 
 
 
