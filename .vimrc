@@ -8,7 +8,6 @@ call vundle#begin()
 
 "" ---------- ADDITIONAL PLUGINS --------- "
 Plugin 'Valloric/YouCompleteMe'
-Plugin 'Shougo/neocomplete.vim'
 Plugin 'Shougo/deoplete.nvim'
 Plugin 'tpope/vim-vinegar'
 Plugin 'vim-airline/vim-airline'
@@ -36,11 +35,10 @@ Plugin 'flazz/vim-colorschemes'
 Plugin 'alvan/vim-closetag'
 Plugin 'joonty/vdebug'
 Plugin 'powerline/powerline'
-Plugin 'neomake/neomake'
 Plugin 'xolox/vim-easytags'
 Plugin 'xolox/vim-misc'
 Plugin 'nvie/vim-flake8'
-Plugin 'wookiehangover/jshint.vim'
+Plugin 'Shutnik/jshint2.vim'
 Plugin 'lambdalisue/vim-fullscreen'
 Plugin 'vim-scripts/CSApprox'
 Plugin 'hynek/vim-python-pep8-indent'
@@ -48,6 +46,11 @@ Plugin 'hdima/python-syntax'
 Plugin 'editorconfig/editorconfig-vim'
 Plugin 'gotcha/vimpdb'
 Plugin 'tpope/vim-commentary'
+Plugin 'vim-addon-mw-utils'
+Plugin 'tomtom/tlib_vim'
+Plugin 'honza/vim-snippets'
+Plugin 'garbas/vim-snipmate'
+Plugin 'kien/rainbow_parentheses.vim'
 
 
 
@@ -115,7 +118,63 @@ set backspace=indent,eol,start
 
 
 
+let g:ycm_register_as_syntastic_checker = 0
+
+
+"vim-javascript config
+let g:javascript_plugin_ngdoc = 1
+let g:javascript_plugin_jsdoc = 1
+
 
 "Neovim
 "Using mouse with neovim
 set mouse=
+
+"async linting
+"autocmd! BufWritePost,BufEnter * Neomake
+
+"syntastic
+"let g:syntastic_enable_highlighting = 1
+"let g:syntastic_echo_current_error = 1
+"let g:syntastic_enable_signs = 0
+"let g:syntastic_enable_balloons = 0
+"let g:syntastic_enable_highlighting = 0
+
+" vim-airline
+if !exists('g:airline_symbols')
+  let g:airline_symbols = {}
+endif
+
+if !exists('g:airline_powerline_fonts')
+  let g:airline#extensions#tabline#left_sep = ' '
+  let g:airline#extensions#tabline#left_alt_sep = '|'
+  let g:airline_left_sep          = '▶'
+  let g:airline_left_alt_sep      = '»'
+  let g:airline_right_sep         = '◀'
+  let g:airline_right_alt_sep     = '«'
+  let g:airline#extensions#branch#prefix     = '⤴' "➔, ➥, ⎇
+  let g:airline#extensions#readonly#symbol   = '⊘'
+  let g:airline#extensions#linecolumn#prefix = '¶'
+  let g:airline#extensions#paste#symbol      = 'ρ'
+  let g:airline_symbols.linenr    = '␊'
+  let g:airline_symbols.branch    = '⎇'
+  let g:airline_symbols.paste     = 'ρ'
+  let g:airline_symbols.paste     = 'Þ'
+  let g:airline_symbols.paste     = '∥'
+  let g:airline_symbols.whitespace = 'Ξ'
+else
+  let g:airline#extensions#tabline#left_sep = ''
+  let g:airline#extensions#tabline#left_alt_sep = ''
+
+  " powerline symbols
+  let g:airline_left_sep = ''
+  let g:airline_left_alt_sep = ''
+  let g:airline_right_sep = ''
+  let g:airline_right_alt_sep = ''
+  let g:airline_symbols.branch = ''
+  let g:airline_symbols.readonly = ''
+  let g:airline_symbols.linenr = ''
+endif
+
+
+
