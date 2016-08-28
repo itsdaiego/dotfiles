@@ -108,6 +108,9 @@ set t_ut=
 "line number"
 :set number
 
+"relative number
+set relativenumber
+
 "close tags will work for these files extensions
 let g:closetag_filenames = "*.html.erb,*.html,*.xhtml,*.phtml"
 
