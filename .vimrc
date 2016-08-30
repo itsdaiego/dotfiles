@@ -35,7 +35,7 @@ Plugin 'flazz/vim-colorschemes'
 Plugin 'alvan/vim-closetag'
 Plugin 'joonty/vdebug'
 Plugin 'powerline/powerline'
-Plugin 'xolox/vim-easytags'
+" Plugin 'xolox/vim-easytags'
 Plugin 'xolox/vim-misc'
 Plugin 'nvie/vim-flake8'
 Plugin 'Shutnik/jshint2.vim'
@@ -69,20 +69,23 @@ let g:solarized_termcolors=256
 set termguicolors
 
 "Default colorscheme
-colorscheme gruvbox
+colorscheme Tomorrow-Night-Eighties
 let NERDTreeWinSize=25
 
 filetype plugin indent on
 "show existing tab with 4 spaces width
-set tabstop=2
+set tabstop=4
 " when indenting with '>', use 4 spaces width
-set shiftwidth=2
+set shiftwidth=4
 " On pressing tab, insert 4 spaces
 set expandtab
 
 syntax enable
 
 set background=dark
+
+set relativenumber
+
 
 "remapped keys
 ino jj <esc>
@@ -107,9 +110,6 @@ set t_ut=
 
 "line number"
 :set number
-
-"relative number
-set relativenumber
 
 "close tags will work for these files extensions
 let g:closetag_filenames = "*.html.erb,*.html,*.xhtml,*.phtml"
@@ -137,11 +137,11 @@ set mouse=
 "autocmd! BufWritePost,BufEnter * Neomake
 
 "syntastic
-"let g:syntastic_enable_highlighting = 1
-"let g:syntastic_echo_current_error = 1
-"let g:syntastic_enable_signs = 0
-"let g:syntastic_enable_balloons = 0
-"let g:syntastic_enable_highlighting = 0
+let g:syntastic_enable_highlighting = 1
+let g:syntastic_echo_current_error = 1
+let g:syntastic_enable_signs = 1
+let g:syntastic_enable_balloons = 0
+let g:syntastic_enable_highlighting = 0
 
 " vim-airline
 if !exists('g:airline_symbols')
