@@ -51,6 +51,7 @@ Plugin 'tomtom/tlib_vim'
 Plugin 'honza/vim-snippets'
 Plugin 'garbas/vim-snipmate'
 Plugin 'kien/rainbow_parentheses.vim'
+Plugin 'klen/python-mode'
 
 
 
@@ -69,7 +70,7 @@ let g:solarized_termcolors=256
 set termguicolors
 
 "Default colorscheme
-colorscheme Tomorrow-Night-Eighties
+colorscheme gruvbox
 let NERDTreeWinSize=25
 
 filetype plugin indent on
