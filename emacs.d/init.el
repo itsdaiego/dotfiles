@@ -69,6 +69,7 @@
 (global-linum-mode t)
 (menu-bar-mode 0)
 (tool-bar-mode 0)
+(menu-bar-mode 0)
 ;;(setq backup-directory-alist `(("." . "~/.saves")))
 (setq make-backup-files nil)
 
