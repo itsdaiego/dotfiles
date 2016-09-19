@@ -5,6 +5,16 @@
 ;;Personal config before
 (setq evil-want-C-u-scroll t)
 
+;;Sass Mode
+(add-to-list 'auto-mode-alist '("\\.scss\\'" . sass-mode))
+
+
+;;JS2 Mode
+(add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+
+;;Exec path from shell
+(when (memq window-system '(mac ns))
+  (exec-path-from-shell-initialize))
 ;;Evil
   (require 'evil)
   (evil-mode 1)
@@ -27,7 +37,7 @@
 (global-flycheck-mode)
 
 ;;Keychord
-(setq key-chord-two-keys-delay 1.5)
+(setq key-chord-two-keys-delay 3.0)
 (key-chord-define evil-insert-state-map "jj" 'evil-normal-state)
 (key-chord-mode 1)
 
@@ -65,11 +75,11 @@
 
 ;;Personal config after
 ;;(load-theme 'solarized- t)
-(load-theme 'dracula t)
+(load-theme 'gruvbox t)
 (global-linum-mode t)
 (menu-bar-mode 0)
 (tool-bar-mode 0)
-(menu-bar-mode 0)
+(scroll-bar-mode 0)
 ;;(setq backup-directory-alist `(("." . "~/.saves")))
 (setq make-backup-files nil)
 
@@ -80,7 +90,7 @@
   (interactive)
   (message "building project tags")
   (let ((root (eproject-root)))
-    (shell-command (concat "ctags -e -R --extra=+fq --exclude=db --exclude=test --exclude=platforms --exclude=plugins --exclude=node_modules --exclude=.git --exclude=public -f " root "TAGS " root)))
+    (shell-command (concat "ctags -e -R --extra=+fq --exclude=db --exclude=test --exclude=platforms --exclude=plugins --exclude=node_modules --exclude=.git --exclude=public --exclude=lib -f " root "TAGS " root)))
   (visit-project-tags)
   (message "tags built successfully"))
 (defun visit-project-tags ()
@@ -139,9 +149,10 @@
     ("427fed191e7a766152e59ef0e2904283f436dbbe259b9ccc04989f3acde50a55" "8abee8a14e028101f90a2d314f1b03bed1cde7fd3f1eb945ada6ffc15b1d7d65" "a164837cd2821475e1099911f356ed0d7bd730f13fa36907895f96a719e5ac3e" "628278136f88aa1a151bb2d6c8a86bf2b7631fbea5f0f76cba2a0079cd910f7d" "a8245b7cc985a0610d71f9852e9f2767ad1b852c2bdea6f4aadc12cce9c4d6d0" "06f0b439b62164c6f8f84fdda32b62fb50b6d00e8b01c2208e55543a6337433a" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" "d677ef584c6dfc0697901a44b885cc18e206f05114c8a3b7fde674fce6180879" default)))
  '(menu-bar-mode nil)
  '(tool-bar-mode nil))
+
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Consolas" :foundry "MS  " :slant normal :weight bold :height 113 :width normal)))))
+ '(default ((t (:family "Consolas" :foundry "MS  " :slant normal :weight bold :height 120 :width normal)))))
