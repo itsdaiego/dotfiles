@@ -1,0 +1,8 @@
+exec zsh
+ls
+..
+tmux new -s mentos
+tmux attach
+tmux new 
+clear
+ls

@@ -5,12 +5,7 @@
 ;;Personal config before
 (setq evil-want-C-u-scroll t)
 
-;;Sass Mode
-(add-to-list 'auto-mode-alist '("\\.scss\\'" . sass-mode))
 
-
-;;JS2 Mode
-(add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
 
 ;;Exec path from shell
 (when (memq window-system '(mac ns))
@@ -82,6 +77,23 @@
 (scroll-bar-mode 0)
 ;;(setq backup-directory-alist `(("." . "~/.saves")))
 (setq make-backup-files nil)
+(ido-mode t)
+
+;;Sass Mode
+(add-to-list 'auto-mode-alist '("\\.scss\\'" . sass-mode))
+
+
+;;JS2 Mode
+(add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+
+
+;;Yaml mode
+(add-to-list 'auto-mode-alist '("\\.js\\'" . yaml-mode))
+
+;;Less mode
+(add-to-list 'auto-mode-alist '("\\.js\\'" . less-css-mode))
+
+
 
 
 ;; Ctags
@@ -155,4 +167,4 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Consolas" :foundry "MS  " :slant normal :weight bold :height 120 :width normal)))))
+ '(default ((t (:family "Consolas" :foundry "MS  " :slant normal :weight bold :height 128 :width normal)))))
