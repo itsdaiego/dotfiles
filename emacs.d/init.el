@@ -102,7 +102,8 @@
   (interactive)
   (message "building project tags")
   (let ((root (eproject-root)))
-    (shell-command (concat "ctags -e -R --extra=+fq --exclude=db --exclude=test --exclude=platforms --exclude=plugins --exclude=node_modules --exclude=.git --exclude=public --exclude=lib -f " root "TAGS " root)))
+   (shell-command (concat "ctags -e -R --extra=+fq --exclude=db --exclude=t    est --exclude=platforms --exclude=plugins --exclude=node_modules --exclude=.    git --exclude=public --exclude=lib --exclude=config --exclude=TDD --exclude=    old -f " root "TAGS " root)))
+
   (visit-project-tags)
   (message "tags built successfully"))
 (defun visit-project-tags ()

@@ -4,58 +4,61 @@ filetype off                  " required
 
 " set the runtime path to include Vundle and initialize
 set rtp+=~/.vim/bundle/Vundle.vim
-call vundle#begin()
+"call vundle#begin()
+call plug#begin('~/.vim/plugged')
 
 "" ---------- ADDITIONAL PLUGINS --------- "
-Plugin 'Valloric/YouCompleteMe'
-Plugin 'Shougo/deoplete.nvim'
-Plugin 'tpope/vim-vinegar'
-Plugin 'vim-airline/vim-airline'
-Plugin 'scrooloose/nerdcommenter'
-Plugin 'easymotion/vim-easymotion'
-Plugin 'tpope/vim-surround'
-Plugin 'jiangmiao/auto-pairs'
-Plugin 'rking/ag.vim'
-Plugin 'mileszs/ack.vim'
-Plugin 'ggreer/the_silver_searcher'
-Plugin 'cakebaker/scss-syntax.vim'
-Plugin 'JulesWang/css.vim'
-Plugin 'tpope/vim-haml'
-Plugin 'jpo/vim-railscasts-theme'
-Plugin 'pangloss/vim-javascript'
-Plugin 'othree/html5.vim'
-Plugin 'Shougo/unite.vim'
-Plugin 'Rip-Rip/clang_complete'
-Plugin 'hail2u/vim-css3-syntax'
-Plugin 'kien/ctrlp.vim'
-Plugin 'tpope/vim-fugitive'
-Plugin 'scrooloose/nerdtree'
-Plugin 'scrooloose/syntastic'
-Plugin 'flazz/vim-colorschemes'
-Plugin 'alvan/vim-closetag'
-Plugin 'joonty/vdebug'
-Plugin 'powerline/powerline'
-" Plugin 'xolox/vim-easytags'
-Plugin 'xolox/vim-misc'
-Plugin 'nvie/vim-flake8'
-Plugin 'Shutnik/jshint2.vim'
-Plugin 'lambdalisue/vim-fullscreen'
-Plugin 'vim-scripts/CSApprox'
-Plugin 'hynek/vim-python-pep8-indent'
-Plugin 'hdima/python-syntax'
-Plugin 'editorconfig/editorconfig-vim'
-Plugin 'gotcha/vimpdb'
-Plugin 'tpope/vim-commentary'
-Plugin 'vim-addon-mw-utils'
-Plugin 'tomtom/tlib_vim'
-Plugin 'honza/vim-snippets'
-Plugin 'garbas/vim-snipmate'
-Plugin 'kien/rainbow_parentheses.vim'
-Plugin 'klen/python-mode'
+Plug 'Valloric/YouCompleteMe'
+" Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+" Plug 'ternjs/tern_for_vim', { 'do': 'npm install' }
+Plug 'neomake/neomake'
+Plug 'tpope/vim-vinegar'
+Plug 'vim-airline/vim-airline'
+Plug 'scrooloose/nerdcommenter'
+Plug 'easymotion/vim-easymotion'
+Plug 'tpope/vim-surround'
+Plug 'jiangmiao/auto-pairs'
+Plug 'rking/ag.vim'
+Plug 'mileszs/ack.vim'
+Plug 'ggreer/the_silver_searcher'
+Plug 'cakebaker/scss-syntax.vim'
+Plug 'JulesWang/css.vim'
+Plug 'tpope/vim-haml'
+Plug 'jpo/vim-railscasts-theme'
+Plug 'pangloss/vim-javascript'
+Plug 'othree/html5.vim'
+Plug 'Shougo/unite.vim'
+Plug 'Rip-Rip/clang_complete'
+Plug 'hail2u/vim-css3-syntax'
+Plug 'kien/ctrlp.vim'
+Plug 'tpope/vim-fugitive'
+Plug 'scrooloose/nerdtree'
+" Plug 'scrooloose/syntastic'
+Plug 'flazz/vim-colorschemes'
+Plug 'alvan/vim-closetag'
+Plug 'joonty/vdebug'
+Plug 'powerline/powerline'
+" Plug 'xolox/vim-easytags'
+Plug 'xolox/vim-misc'
+Plug 'nvie/vim-flake8'
+Plug 'Shutnik/jshint2.vim'
+Plug 'lambdalisue/vim-fullscreen'
+Plug 'vim-scripts/CSApprox'
+Plug 'hynek/vim-python-pep8-indent'
+Plug 'hdima/python-syntax'
+Plug 'editorconfig/editorconfig-vim'
+Plug 'gotcha/vimpdb'
+Plug 'tpope/vim-commentary'
+Plug 'vim-addon-mw-utils'
+Plug 'tomtom/tlib_vim'
+Plug 'honza/vim-snippets'
+Plug 'garbas/vim-snipmate'
+Plug 'kien/rainbow_parentheses.vim'
+Plug 'klen/python-mode'
+Plug 'idanarye/vim-vebugger'
 
-
-
-call vundle#end()
+call plug#end()
+"call vundle#end()
 
 filetype plugin indent on
 "" ------ Personal Configuration --------- "
@@ -66,6 +69,10 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 
 
 let g:solarized_termcolors=256
+
+set clipboard=unnamed
+
+autocmd TextChanged,TextChangedI <buffer> silent write
 
 set termguicolors
 
@@ -134,8 +141,9 @@ let g:javascript_plugin_jsdoc = 1
 "Using mouse with neovim
 set mouse=
 
-"async linting
-"autocmd! BufWritePost,BufEnter * Neomake
+"neomake
+autocmd! BufWritePost,BufEnter * Neomake
+" autocmd InsertLeave,TextChanged * update | Neomake
 
 "syntastic
 let g:syntastic_enable_highlighting = 1
@@ -179,6 +187,3 @@ else
   let g:airline_symbols.readonly = ''
   let g:airline_symbols.linenr = ''
 endif
-
-
-
