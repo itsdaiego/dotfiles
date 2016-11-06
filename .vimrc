@@ -9,54 +9,44 @@ call plug#begin('~/.vim/plugged')
 
 "" ---------- ADDITIONAL PLUGINS --------- "
 Plug 'Valloric/YouCompleteMe'
-" Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
-" Plug 'ternjs/tern_for_vim', { 'do': 'npm install' }
 Plug 'neomake/neomake'
-Plug 'tpope/vim-vinegar'
 Plug 'vim-airline/vim-airline'
-Plug 'scrooloose/nerdcommenter'
 Plug 'easymotion/vim-easymotion'
 Plug 'tpope/vim-surround'
 Plug 'jiangmiao/auto-pairs'
 Plug 'rking/ag.vim'
 Plug 'mileszs/ack.vim'
 Plug 'ggreer/the_silver_searcher'
-Plug 'cakebaker/scss-syntax.vim'
-Plug 'JulesWang/css.vim'
-Plug 'tpope/vim-haml'
-Plug 'jpo/vim-railscasts-theme'
-Plug 'pangloss/vim-javascript'
-Plug 'othree/html5.vim'
+Plug 'cakebaker/scss-syntax.vim', { 'for': 'scss' }
+Plug 'JulesWang/css.vim', { 'for': 'css' }
+Plug 'tpope/vim-haml', { 'for': 'haml' }
+Plug 'pangloss/vim-javascript', { 'for': 'javascript' }
+Plug 'othree/html5.vim', { 'for': 'html' }
 Plug 'Shougo/unite.vim'
 Plug 'Rip-Rip/clang_complete'
-Plug 'hail2u/vim-css3-syntax'
+Plug 'hail2u/vim-css3-syntax' , { 'for': 'css' }
 Plug 'kien/ctrlp.vim'
 Plug 'tpope/vim-fugitive'
 Plug 'scrooloose/nerdtree'
-" Plug 'scrooloose/syntastic'
-Plug 'flazz/vim-colorschemes'
 Plug 'alvan/vim-closetag'
 Plug 'joonty/vdebug'
 Plug 'powerline/powerline'
-" Plug 'xolox/vim-easytags'
-Plug 'xolox/vim-misc'
-Plug 'nvie/vim-flake8'
-Plug 'Shutnik/jshint2.vim'
-Plug 'lambdalisue/vim-fullscreen'
-Plug 'vim-scripts/CSApprox'
-Plug 'hynek/vim-python-pep8-indent'
-Plug 'hdima/python-syntax'
+Plug 'nvie/vim-flake8', { 'for': 'python' }
+Plug 'Shutnik/jshint2.vim', { 'for': 'javascript' }
+Plug 'hynek/vim-python-pep8-indent', { 'for': 'python' }
+Plug 'hdima/python-syntax', { 'for': 'python' }
 Plug 'editorconfig/editorconfig-vim'
-Plug 'gotcha/vimpdb'
+Plug 'gotcha/vimpdb', { 'for': 'python' }
 Plug 'tpope/vim-commentary'
-Plug 'vim-addon-mw-utils'
 Plug 'tomtom/tlib_vim'
 Plug 'honza/vim-snippets'
 Plug 'garbas/vim-snipmate'
 Plug 'kien/rainbow_parentheses.vim'
-Plug 'klen/python-mode'
+Plug 'klen/python-mode', { 'for': 'python' }
 Plug 'idanarye/vim-vebugger'
-
+Plug 'vim-addon-mw-utils'
+Plug 'tomtom/quickfixsigns_vim/'
+Plug 'flazz/vim-colorschemes'
 call plug#end()
 "call vundle#end()
 
@@ -70,7 +60,13 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 
 let g:solarized_termcolors=256
 
-set clipboard=unnamed
+" set clipboard=unnamed
+
+"neovim terminal 
+tnoremap jj <C-\><C-n>
+
+"leader key
+let mapleader=","
 
 autocmd TextChanged,TextChangedI <buffer> silent write
 
@@ -142,8 +138,8 @@ let g:javascript_plugin_jsdoc = 1
 set mouse=
 
 "neomake
-autocmd! BufWritePost,BufEnter * Neomake
-" autocmd InsertLeave,TextChanged * update | Neomake
+" autocmd! BufWritePost,BufEnter * Neomake
+autocmd! InsertLeave * Neomake
 
 "syntastic
 let g:syntastic_enable_highlighting = 1
@@ -187,3 +183,6 @@ else
   let g:airline_symbols.readonly = ''
   let g:airline_symbols.linenr = ''
 endif
+
+
+
