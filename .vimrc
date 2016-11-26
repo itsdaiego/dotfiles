@@ -48,6 +48,8 @@ Plug 'vim-addon-mw-utils'
 Plug 'tomtom/quickfixsigns_vim/'
 Plug 'flazz/vim-colorschemes'
 Plug 'Konfekt/FastFold'
+Plug 'tpope/vim-rails'
+
 call plug#end()
 "call vundle#end()
 
