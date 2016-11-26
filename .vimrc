@@ -140,6 +140,10 @@ let g:javascript_plugin_jsdoc = 1
 "Using mouse with neovim
 set mouse=
 
+set ttyfast
+set lazyredraw
+set re=1
+
 "neomake
 " autocmd! BufWritePost,BufEnter * Neomake
 autocmd! InsertLeave * Neomake
