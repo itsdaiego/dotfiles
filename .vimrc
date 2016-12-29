@@ -145,8 +145,7 @@ set lazyredraw
 set re=1
 
 "neomake
-" autocmd! BufWritePost,BufEnter * Neomake
-autocmd! InsertLeave * Neomake
+autocmd InsertLeave,BufWritePost * update | Neomake  
 
 "syntastic
 let g:syntastic_enable_highlighting = 1
