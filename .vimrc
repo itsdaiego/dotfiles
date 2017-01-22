@@ -49,6 +49,7 @@ Plug 'tomtom/quickfixsigns_vim/'
 Plug 'flazz/vim-colorschemes'
 Plug 'Konfekt/FastFold'
 Plug 'tpope/vim-rails'
+Plug 'python-rope/ropevim'
 
 call plug#end()
 "call vundle#end()

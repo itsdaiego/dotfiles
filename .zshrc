@@ -90,4 +90,6 @@ source $ZSH/oh-my-zsh.sh
  alias podcast-central='/home/dyego/Documents/code-stuff/rails/workspace/podcast-central'
  alias codecast='/home/dyego/Documents/code-stuff/rails/workspace/codecast'
  alias dotfiles='/home/dyego/Documents/code-stuff/dotfiles'
- alias tmux="tmux -2"
+ # alias tmux="tmux -2"
+ alias tmux="env TERM=xterm-256color tmux"
+
