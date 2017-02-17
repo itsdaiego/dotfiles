@@ -92,4 +92,4 @@ source $ZSH/oh-my-zsh.sh
  alias dotfiles='/home/dyego/Documents/code-stuff/dotfiles'
  # alias tmux="tmux -2"
  alias tmux="env TERM=xterm-256color tmux"
-
+ alias vim="nvim"
