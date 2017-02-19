@@ -77,7 +77,7 @@ autocmd TextChanged,TextChangedI <buffer> silent write
 set termguicolors
 
 "Default colorscheme
-colorscheme gruvbox
+colorscheme onedark
 let NERDTreeWinSize=25
 
 filetype plugin indent on
