@@ -32,7 +32,6 @@ Plug 'alvan/vim-closetag'
 Plug 'joonty/vdebug'
 Plug 'powerline/powerline'
 Plug 'nvie/vim-flake8', { 'for': 'python' }
-Plug 'Shutnik/jshint2.vim', { 'for': 'javascript' }
 Plug 'hynek/vim-python-pep8-indent', { 'for': 'python' }
 Plug 'hdima/python-syntax', { 'for': 'python' }
 Plug 'editorconfig/editorconfig-vim'
