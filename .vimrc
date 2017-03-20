@@ -147,12 +147,6 @@ set re=1
 "neomake
 autocmd InsertLeave,BufWritePost * update | Neomake  
 
-"syntastic
-let g:syntastic_enable_highlighting = 1
-let g:syntastic_echo_current_error = 1
-let g:syntastic_enable_signs = 1
-let g:syntastic_enable_balloons = 0
-let g:syntastic_enable_highlighting = 0
 
 " vim-airline
 if !exists('g:airline_symbols')
