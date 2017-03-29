@@ -14,7 +14,6 @@ Plug 'easymotion/vim-easymotion'
 Plug 'vim-airline/vim-airline'
 Plug 'tpope/vim-surround'
 Plug 'jiangmiao/auto-pairs'
-Plug 'rking/ag.vim'
 Plug 'mileszs/ack.vim'
 Plug 'ggreer/the_silver_searcher'
 Plug 'cakebaker/scss-syntax.vim', { 'for': 'scss' }
@@ -25,7 +24,6 @@ Plug 'othree/html5.vim', { 'for': 'html' }
 Plug 'Shougo/unite.vim'
 Plug 'Rip-Rip/clang_complete'
 Plug 'hail2u/vim-css3-syntax' , { 'for': 'css' }
-Plug 'kien/ctrlp.vim'
 Plug 'tpope/vim-fugitive'
 Plug 'scrooloose/nerdtree'
 Plug 'alvan/vim-closetag'
@@ -103,14 +101,9 @@ command Cl lclose
 command NT NERDTree
 
 
-"CtrlP config
-let g:ctrlp_working_path_mode=0
 
 "Track files that should be ignored
 set wildignore=*.o,*~,*.pyc
-
-"ignoring certain directories
-let g:ctrlp_custom_ignore = 'node_modules\|DS_Store\|\plugins\|\platforms\|git'
 
 "disabling highlighted background bug
 set t_ut=
@@ -121,8 +114,6 @@ set t_ut=
 "close tags will work for these files extensions
 let g:closetag_filenames = "*.html.erb,*.html,*.xhtml,*.phtml"
 
-
-let g:ackprg = "ag --vimgrep"
 
 set backspace=indent,eol,start
 
