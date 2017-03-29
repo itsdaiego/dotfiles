@@ -158,3 +158,13 @@ let g:airline#extensions#default#section_truncate_width = {
   \ 'y': 100,
   \ 'z': 60,
 \ }
+
+" FZF
+nnoremap <leader>a :execute "Ag" expand("<cword>")<cr>
+nnoremap <C-P> :Files<cr>
+nnoremap <C-F> :Ag<space>
+" Buffer mapping
+map gn :bn<cr>
+map gp :bp<cr>
+map gd :bd<cr> 
+
