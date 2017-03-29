@@ -151,6 +151,7 @@ let g:airline#extensions#default#section_truncate_width = {
 \ }
 
 " FZF
+let $FZF_DEFAULT_COMMAND = 'ag -g ""'
 nnoremap <leader>a :execute "Ag" expand("<cword>")<cr>
 nnoremap <C-P> :Files<cr>
 nnoremap <C-F> :Ag<space>
