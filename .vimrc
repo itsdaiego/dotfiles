@@ -154,6 +154,10 @@ let g:airline#extensions#default#section_truncate_width = {
 nnoremap <leader>a :execute "Ag" expand("<cword>")<cr>
 nnoremap <C-P> :Files<cr>
 nnoremap <C-F> :Ag<space>
+
+" Ignore these folders 
+set wildignore+=**/node_modules/**/*
+
 " Buffer mapping
 map gn :bn<cr>
 map gp :bp<cr>
