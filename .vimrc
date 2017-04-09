@@ -15,7 +15,6 @@ Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'tpope/vim-surround'
 Plug 'jiangmiao/auto-pairs'
-Plug 'mileszs/ack.vim'
 Plug 'ggreer/the_silver_searcher'
 Plug 'cakebaker/scss-syntax.vim', { 'for': 'scss' }
 Plug 'JulesWang/css.vim', { 'for': 'css' }
@@ -43,11 +42,17 @@ Plug 'kien/rainbow_parentheses.vim'
 Plug 'klen/python-mode', { 'for': 'python' }
 Plug 'idanarye/vim-vebugger'
 Plug 'vim-addon-mw-utils'
-Plug 'tomtom/quickfixsigns_vim/'
+Plug 'airblade/vim-gitgutter'
+Plug 'mhinz/vim-startify'
 Plug 'flazz/vim-colorschemes'
 Plug 'Konfekt/FastFold'
 Plug 'tpope/vim-rails'
 Plug 'python-rope/ropevim'
+Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all'  }
+Plug 'junegunn/fzf.vim'
+Plug 'majutsushi/tagbar'
+Plug 'ryanoasis/vim-devicons'
+Plug 'bilalq/lite-dfm'
 
 call plug#end()
 "call vundle#end()
@@ -75,7 +80,7 @@ autocmd TextChanged,TextChangedI <buffer> silent write
 set termguicolors
 
 "Default colorscheme
-colorscheme molokai
+colorscheme gruvbox
 let NERDTreeWinSize=25
 
 filetype plugin indent on
@@ -165,3 +170,5 @@ map gn :bn<cr>
 map gp :bp<cr>
 map gd :bd<cr> 
 
+nmap <F2> :TagbarToggle<CR>
+nmap <F1> :LiteDFMToggle<CR>
