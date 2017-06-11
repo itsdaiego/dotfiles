@@ -53,6 +53,11 @@ Plug 'junegunn/fzf.vim'
 Plug 'majutsushi/tagbar'
 Plug 'ryanoasis/vim-devicons'
 Plug 'bilalq/lite-dfm'
+Plug 'MarcWeber/vim-addon-mw-utils'
+Plug 'ahayman/vim-nodejs-complete', { 'for': 'javascript' }
+Plug 'jelera/vim-javascript-syntax', { 'for': 'javascript' }
+Plug 'moll/vim-node', { 'for': 'javascript' }
+Plug 'rafi/awesome-vim-colorschemes'
 
 call plug#end()
 "call vundle#end()
@@ -79,8 +84,11 @@ autocmd TextChanged,TextChangedI <buffer> silent write
 
 set termguicolors
 
+syntax enable
+
+set background=dark
 "Default colorscheme
-colorscheme gruvbox
+colorscheme tender
 let NERDTreeWinSize=25
 
 filetype plugin indent on
@@ -91,9 +99,6 @@ set shiftwidth=4
 " On pressing tab, insert 4 spaces
 set expandtab
 
-syntax enable
-
-set background=dark
 
 set relativenumber
 
@@ -160,7 +165,7 @@ let g:airline#extensions#default#section_truncate_width = {
 let $FZF_DEFAULT_COMMAND = 'ag -g ""'
 nnoremap <leader>a :execute "Ag" expand("<cword>")<cr>
 nnoremap <C-P> :Files<cr>
-nnoremap <C-F> :Ag<space>
+inoremap <C-f> <C-x><C-f>
 
 " Ignore these folders 
 set wildignore+=**/node_modules/**/*
