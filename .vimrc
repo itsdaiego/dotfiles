@@ -177,3 +177,8 @@ map gd :bd<cr>
 
 nmap <F2> :TagbarToggle<CR>
 nmap <F1> :LiteDFMToggle<CR>
+
+set guicursor=
+set nocindent
+set nosmartindent
+set noautoindent
