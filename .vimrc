@@ -178,7 +178,14 @@ map gd :bd<cr>
 nmap <F2> :TagbarToggle<CR>
 nmap <F1> :LiteDFMToggle<CR>
 
+" disable guicursor
 set guicursor=
+
+" indent config
 set nocindent
 set nosmartindent
 set noautoindent
+
+" change indent line char
+let g:indentLine_char = '▶'
+
