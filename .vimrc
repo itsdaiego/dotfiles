@@ -41,7 +41,6 @@ Plug 'garbas/vim-snipmate'
 Plug 'kien/rainbow_parentheses.vim'
 Plug 'klen/python-mode', { 'for': 'python' }
 Plug 'idanarye/vim-vebugger'
-Plug 'vim-addon-mw-utils'
 Plug 'airblade/vim-gitgutter'
 Plug 'mhinz/vim-startify'
 Plug 'flazz/vim-colorschemes'
@@ -58,11 +57,12 @@ Plug 'ahayman/vim-nodejs-complete', { 'for': 'javascript' }
 Plug 'jelera/vim-javascript-syntax', { 'for': 'javascript' }
 Plug 'moll/vim-node', { 'for': 'javascript' }
 Plug 'rafi/awesome-vim-colorschemes'
+Plug 'nathanaelkane/vim-indent-guides'
+Plug 'Yggdroot/indentLine'
 
 call plug#end()
 "call vundle#end()
 
-filetype plugin indent on
 "" ------ Personal Configuration --------- "
 "sem t_Co=256
 
@@ -88,14 +88,14 @@ syntax enable
 
 set background=dark
 "Default colorscheme
-colorscheme tender
+colorscheme solarized8_light
 let NERDTreeWinSize=25
 
 filetype plugin indent on
 "show existing tab with 4 spaces width
 set tabstop=4
 " when indenting with '>', use 4 spaces width
-set shiftwidth=4
+set shiftwidth=2
 " On pressing tab, insert 4 spaces
 set expandtab
 
@@ -185,6 +185,7 @@ set guicursor=
 set nocindent
 set nosmartindent
 set noautoindent
+filetype plugin indent on
 
 " change indent line char
 let g:indentLine_char = '▶'
