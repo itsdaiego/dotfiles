@@ -188,5 +188,5 @@ set noautoindent
 filetype plugin indent on
 
 " change indent line char
-let g:indentLine_char = '▶'
+let g:indentLine_char = '▸'
 
