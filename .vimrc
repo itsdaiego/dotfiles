@@ -8,8 +8,8 @@ set rtp+=~/.vim/bundle/Vundle.vim
 call plug#begin('~/.vim/plugged')
 
 "" ---------- ADDITIONAL PLUGINS --------- "
-Plug 'Valloric/YouCompleteMe'
 Plug 'neomake/neomake'
+Plug 'Shougo/deoplete.nvim'
 Plug 'easymotion/vim-easymotion'
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
@@ -88,7 +88,7 @@ syntax enable
 
 set background=dark
 "Default colorscheme
-colorscheme solarized8_light
+colorscheme gruvbox
 let NERDTreeWinSize=25
 
 filetype plugin indent on
@@ -190,3 +190,5 @@ filetype plugin indent on
 " change indent line char
 let g:indentLine_char = '▸'
 
+" Use deoplete.
+let g:deoplete#enable_at_startup = 1
