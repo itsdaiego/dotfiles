@@ -1,10 +1,3 @@
-"" Vundle
-set nocompatible              " be iMproved, required
-filetype off                  " required
-
-" set the runtime path to include Vundle and initialize
-set rtp+=~/.vim/bundle/Vundle.vim
-"call vundle#begin()
 call plug#begin('~/.vim/plugged')
 
 "" ---------- ADDITIONAL PLUGINS --------- "
@@ -59,20 +52,12 @@ Plug 'moll/vim-node', { 'for': 'javascript' }
 Plug 'rafi/awesome-vim-colorschemes'
 Plug 'nathanaelkane/vim-indent-guides'
 Plug 'Yggdroot/indentLine'
+Plug 'skwp/greplace.vim'
 
 call plug#end()
-"call vundle#end()
-
-"" ------ Personal Configuration --------- "
-"sem t_Co=256
 
 "enables true colors
 let $NVIM_TUI_ENABLE_TRUE_COLOR=1
-
-
-let g:solarized_termcolors=256
-
-" set clipboard=unnamed
 
 "neovim terminal 
 tnoremap jj <C-\><C-n>
@@ -88,7 +73,8 @@ syntax enable
 
 set background=dark
 "Default colorscheme
-colorscheme gruvbox
+" colorscheme two-firewatch 
+colorscheme leo 
 let NERDTreeWinSize=25
 
 filetype plugin indent on
@@ -192,3 +178,7 @@ let g:indentLine_char = '▸'
 
 " Use deoplete.
 let g:deoplete#enable_at_startup = 1
+
+set hidden
+
+set inccommand=split
