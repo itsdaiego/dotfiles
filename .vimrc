@@ -48,11 +48,18 @@ Plug 'bilalq/lite-dfm'
 Plug 'MarcWeber/vim-addon-mw-utils'
 Plug 'ahayman/vim-nodejs-complete', { 'for': 'javascript' }
 Plug 'jelera/vim-javascript-syntax', { 'for': 'javascript' }
+Plug 'mxw/vim-jsx', { 'for': 'javascript' }
 Plug 'moll/vim-node', { 'for': 'javascript' }
 Plug 'rafi/awesome-vim-colorschemes'
 Plug 'nathanaelkane/vim-indent-guides'
 Plug 'Yggdroot/indentLine'
 Plug 'skwp/greplace.vim'
+Plug 'Quramy/tsuquyomi'
+Plug 'leafgarland/typescript-vim'
+Plug 'Shougo/vimproc.vim'
+Plug 'fatih/vim-go'
+Plug 'nsf/gocode'
+
 
 call plug#end()
 
@@ -69,12 +76,14 @@ autocmd TextChanged,TextChangedI <buffer> silent write
 
 set termguicolors
 
+
 syntax enable
 
 set background=dark
+
 "Default colorscheme
-" colorscheme two-firewatch 
-colorscheme leo 
+colorscheme base16-chalk
+
 let NERDTreeWinSize=25
 
 filetype plugin indent on
@@ -100,7 +109,7 @@ command NT NERDTree
 
 
 "Track files that should be ignored
-set wildignore=*.o,*~,*.pyc
+set wildignore=*.o,*~,*.pyc,node_modules
 
 "disabling highlighted background bug
 set t_ut=
@@ -122,6 +131,9 @@ let g:ycm_register_as_syntastic_checker = 0
 "vim-javascript config
 let g:javascript_plugin_ngdoc = 1
 let g:javascript_plugin_jsdoc = 1
+
+"JSX for files ending with .js
+let g:jsx_ext_required = 0
 
 
 "Neovim
@@ -155,6 +167,7 @@ inoremap <C-f> <C-x><C-f>
 
 " Ignore these folders 
 set wildignore+=**/node_modules/**/*
+set wildignore+=/build/**/*
 
 " Buffer mapping
 map gn :bn<cr>
