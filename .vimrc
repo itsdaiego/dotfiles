@@ -82,7 +82,7 @@ syntax enable
 set background=dark
 
 "Default colorscheme
-colorscheme base16-chalk
+colorscheme base16-grayscale-dark
 
 let NERDTreeWinSize=25
 
