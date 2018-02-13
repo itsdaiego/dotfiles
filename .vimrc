@@ -81,10 +81,14 @@ syntax enable
 
 set background=dark
 
-"Default colorscheme
-colorscheme base16-grayscale-dark
+let g:lucius_style = "dark"
+let g:lucius_contrast = "high"
+let g:lucius_contrast_bg = "high"
 
-let NERDTreeWinSize=25
+"Default colorscheme
+colorscheme lucius
+
+let NERDTreeWinSize=60
 
 filetype plugin indent on
 "show existing tab with 4 spaces width
