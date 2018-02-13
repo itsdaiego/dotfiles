@@ -59,7 +59,8 @@ Plug 'leafgarland/typescript-vim'
 Plug 'Shougo/vimproc.vim'
 Plug 'fatih/vim-go'
 Plug 'nsf/gocode'
-
+Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
+Plug 'tpope/vim-classpath', { 'for': 'clojure' }
 
 call plug#end()
 
