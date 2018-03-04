@@ -61,6 +61,9 @@ Plug 'fatih/vim-go'
 Plug 'nsf/gocode'
 Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
 Plug 'tpope/vim-classpath', { 'for': 'clojure' }
+Plug 'SirVer/ultisnips'
+Plug 'honza/vim-snippets'
+
 
 call plug#end()
 
