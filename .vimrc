@@ -90,7 +90,7 @@ let g:lucius_contrast = "high"
 let g:lucius_contrast_bg = "high"
 
 "Default colorscheme
-colorscheme lucius
+colorscheme paramount
 
 let NERDTreeWinSize=60
 
