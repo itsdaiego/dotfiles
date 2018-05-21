@@ -63,6 +63,7 @@ Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
 Plug 'tpope/vim-classpath', { 'for': 'clojure' }
 Plug 'SirVer/ultisnips'
 Plug 'honza/vim-snippets'
+Plug 'chriskempson/base16-vim'
 
 
 call plug#end()
