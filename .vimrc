@@ -1,70 +1,39 @@
 call plug#begin('~/.vim/plugged')
 
 "" ---------- ADDITIONAL PLUGINS --------- "
-Plug 'neomake/neomake'
+Plug 'tpope/vim-commentary'
+Plug 'ggreer/the_silver_searcher'
+Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all'  }
+Plug 'junegunn/fzf.vim'
+Plug 'chriskempson/base16-vim'
+Plug 'flazz/vim-colorschemes'
+Plug 'rafi/awesome-vim-colorschemes'
 Plug 'Shougo/deoplete.nvim'
-Plug 'easymotion/vim-easymotion'
+Plug 'neomake/neomake'
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'tpope/vim-surround'
 Plug 'jiangmiao/auto-pairs'
-Plug 'ggreer/the_silver_searcher'
-Plug 'cakebaker/scss-syntax.vim', { 'for': 'scss' }
-Plug 'JulesWang/css.vim', { 'for': 'css' }
-Plug 'tpope/vim-haml', { 'for': 'haml' }
-Plug 'pangloss/vim-javascript', { 'for': 'javascript' }
-Plug 'othree/html5.vim', { 'for': 'html' }
-Plug 'Shougo/unite.vim'
-Plug 'Rip-Rip/clang_complete'
-Plug 'hail2u/vim-css3-syntax' , { 'for': 'css' }
 Plug 'tpope/vim-fugitive'
 Plug 'scrooloose/nerdtree'
-Plug 'alvan/vim-closetag'
-Plug 'joonty/vdebug'
-Plug 'powerline/powerline'
-Plug 'nvie/vim-flake8', { 'for': 'python' }
-Plug 'hynek/vim-python-pep8-indent', { 'for': 'python' }
-Plug 'hdima/python-syntax', { 'for': 'python' }
-Plug 'editorconfig/editorconfig-vim'
-Plug 'gotcha/vimpdb', { 'for': 'python' }
-Plug 'tpope/vim-commentary'
-Plug 'tomtom/tlib_vim'
-Plug 'honza/vim-snippets'
-Plug 'garbas/vim-snipmate'
-Plug 'kien/rainbow_parentheses.vim'
-Plug 'klen/python-mode', { 'for': 'python' }
-Plug 'idanarye/vim-vebugger'
-Plug 'airblade/vim-gitgutter'
-Plug 'mhinz/vim-startify'
-Plug 'flazz/vim-colorschemes'
-Plug 'Konfekt/FastFold'
-Plug 'tpope/vim-rails'
-Plug 'python-rope/ropevim'
-Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all'  }
-Plug 'junegunn/fzf.vim'
-Plug 'majutsushi/tagbar'
-Plug 'ryanoasis/vim-devicons'
-Plug 'bilalq/lite-dfm'
-Plug 'MarcWeber/vim-addon-mw-utils'
-Plug 'ahayman/vim-nodejs-complete', { 'for': 'javascript' }
-Plug 'jelera/vim-javascript-syntax', { 'for': 'javascript' }
-Plug 'mxw/vim-jsx', { 'for': 'javascript' }
-Plug 'moll/vim-node', { 'for': 'javascript' }
-Plug 'rafi/awesome-vim-colorschemes'
-Plug 'nathanaelkane/vim-indent-guides'
-Plug 'Yggdroot/indentLine'
 Plug 'skwp/greplace.vim'
-Plug 'Quramy/tsuquyomi'
-Plug 'leafgarland/typescript-vim'
-Plug 'Shougo/vimproc.vim'
-Plug 'fatih/vim-go'
-Plug 'nsf/gocode'
 Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
 Plug 'tpope/vim-classpath', { 'for': 'clojure' }
 Plug 'SirVer/ultisnips'
 Plug 'honza/vim-snippets'
-Plug 'chriskempson/base16-vim'
-
+Plug 'mhinz/vim-startify'
+Plug 'ryanoasis/vim-devicons'
+Plug 'moll/vim-node', { 'for': 'javascript' }
+Plug 'JulesWang/css.vim', { 'for': 'css' }
+Plug 'tpope/vim-haml', { 'for': 'haml' }
+Plug 'othree/html5.vim', { 'for': 'html' }
+Plug 'alvan/vim-closetag'
+Plug 'nvie/vim-flake8', { 'for': 'python' }
+Plug 'hail2u/vim-css3-syntax' , { 'for': 'css' }
+Plug 'cakebaker/scss-syntax.vim', { 'for': 'scss' }
+Plug 'mxw/vim-jsx', { 'for': 'javascript' }
+Plug 'majutsushi/tagbar'
+Plug 'klen/python-mode', { 'for': 'python' }
 
 call plug#end()
 
@@ -77,21 +46,21 @@ tnoremap jj <C-\><C-n>
 "leader key
 let mapleader=","
 
-autocmd TextChanged,TextChangedI <buffer> silent write
+" autocmd TextChanged,TextChangedI <buffer> silent write
 
 set termguicolors
 
 
 syntax enable
 
-set background=dark
+set background=light
 
-let g:lucius_style = "dark"
+let g:lucius_style = "light"
 let g:lucius_contrast = "high"
 let g:lucius_contrast_bg = "high"
 
 "Default colorscheme
-colorscheme paramount
+colorscheme zenburn
 
 let NERDTreeWinSize=60
 
@@ -121,7 +90,7 @@ command NT NERDTree
 set wildignore=*.o,*~,*.pyc,node_modules
 
 "disabling highlighted background bug
-set t_ut=
+" set t_ut=
 
 "line number"
 :set number
@@ -132,30 +101,19 @@ let g:closetag_filenames = "*.html.erb,*.html,*.xhtml,*.phtml"
 
 set backspace=indent,eol,start
 
-
-
-let g:ycm_register_as_syntastic_checker = 0
-
-
-"vim-javascript config
-let g:javascript_plugin_ngdoc = 1
-let g:javascript_plugin_jsdoc = 1
-
-"JSX for files ending with .js
-let g:jsx_ext_required = 0
-
-
 "Neovim
 "Using mouse with neovim
 set mouse=
 
-set ttyfast
-set lazyredraw
-set re=1
+" set ttyfast
+" set lazyredraw
+" set re=1
 
 "neomake
 autocmd InsertLeave,BufWritePost * update | Neomake  
+" autocmd BufWritePost * update | Neomake  
 
+let g:airline_theme='badcat'
 let g:airline_powerline_fonts = 1
 let g:airline#extensions#tabline#enabled = 1
 let g:airline_section_warning = ''
@@ -196,7 +154,7 @@ set noautoindent
 filetype plugin indent on
 
 " change indent line char
-let g:indentLine_char = '▸'
+" let g:indentLine_char = '▸'
 
 " Use deoplete.
 let g:deoplete#enable_at_startup = 1
@@ -204,3 +162,12 @@ let g:deoplete#enable_at_startup = 1
 set hidden
 
 set inccommand=split
+
+" Pymode
+let g:pymode_lint_ignore = "E501, W404"
+
+
+set foldmethod=indent
+set foldlevel=50
+set nofoldenable
+nnoremap <Space> za
