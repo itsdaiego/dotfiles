@@ -34,8 +34,11 @@ Plug 'nvie/vim-flake8', { 'for': 'python' }
 Plug 'Vimjas/vim-python-pep8-indent', { 'for': 'python' }
 Plug 'hail2u/vim-css3-syntax' , { 'for': 'css' }
 Plug 'cakebaker/scss-syntax.vim', { 'for': 'scss' }
-Plug 'mxw/vim-jsx', { 'for': 'javascript' }
-" Plug 'neoclide/vim-jsx-improve'
+Plug 'mxw/vim-jsx', { 'for': 'javascriptreact' }
+Plug 'neoclide/vim-jsx-improve'
+Plug 'yuezk/vim-js'
+Plug 'HerringtonDarkholme/yats.vim'
+Plug 'maxmellon/vim-jsx-pretty'
 Plug 'NLKNguyen/papercolor-theme'
 Plug 'hashivim/vim-terraform'
 Plug 'juliosueiras/vim-terraform-completion'
@@ -52,7 +55,8 @@ Plug 'leafgarland/typescript-vim'
 Plug 'robertmeta/nofrils'
 Plug 'YorickPeterse/vim-paper'
 Plug 'tomlion/vim-solidity'
-Plug 'zivyangll/git-blame.vim'
+Plug 'tpope/vim-fugitive'
+" Plug 'APZelos/blamer.nvim'
 Plug 'vim-airline/vim-airline'
 Plug 'mfussenegger/nvim-dap'
 Plug 'theHamsta/nvim-dap-virtual-text'
@@ -61,6 +65,9 @@ Plug 'nvim-lua/plenary.nvim'
 Plug 'nvim-telescope/telescope.nvim', { 'tag': '0.1.0' }
 Plug 'nvim-telescope/telescope-dap.nvim'
 Plug 'rcarriga/nvim-dap-ui'
+Plug 'David-Kunz/jester'
+Plug 'sainnhe/sonokai'
+Plug 'github/copilot.vim'
 
 call plug#end()
 "enables true colors
@@ -100,7 +107,7 @@ let g:go_highlight_types = 1
 " colorscheme scheakur
 " colorscheme loogica
 " colorscheme darth
-" colorscheme amber
+" colorscheme Light
 " colorscheme monoacc
 " colorscheme photon
 " colorscheme earthburn
@@ -108,11 +115,9 @@ let g:go_highlight_types = 1
 " colorscheme colorsbox-faff
 
 "http://www.vimninjas.com/2012/09/14/10-light-colors/
-" colorscheme earthsong
-colorscheme jitterbug
+colorscheme moody
 " colorscheme helios
 " colorscheme dogrun
-" colorscheme handmade-hero
 " colorscheme photon
 
 
@@ -203,7 +208,8 @@ highlight ALEWarningSign ctermbg=NONE ctermfg=yellow
 
 " FZF
 let $FZF_DEFAULT_COMMAND = 'ag -g ""'
-nnoremap <leader>a :execute "Ag" expand("<cword>")<cr>
+" nnoremap <leader>a :execute "Ag" expand("<cword>")<cr>
+nnoremap <leader>a :Ag 
 nnoremap <C-P> :Files<cr>
 inoremap <C-f> <C-x><C-f>
 
@@ -218,7 +224,19 @@ set wildignore+=/build/**/*
 "
 
 " coc-nvim definition
-nmap <silent> <C-]> <Plug>(coc-definition)
+" nmap <silent> <C-]> <Plug>(coc-definition)
+nmap gd <Plug>(coc-definition)
+
+" Use K to show documentation in preview window
+nnoremap <silent> K :call <SID>show_documentation()<CR>
+
+function! s:show_documentation()
+  if (index(['vim','help'], &filetype) >= 0)
+    execute 'h '.expand('<cword>')
+  else
+    call CocAction('doHover')
+  endif
+endfunction
 
 
 " Clojure
@@ -285,7 +303,7 @@ let test#python#runner = 'pytest'
 
 let g:closetag_xhtml_filetypes = 'js,jsx'
 
-nnoremap <Leader>s :<C-u>call gitblame#echo()<CR>
+nnoremap <Leader>g :Git blame<CR>
 
 let g:airline_theme='github'
 
@@ -295,30 +313,52 @@ require("nvim-dap-virtual-text").setup()
 require('telescope').load_extension('dap')
 require("dapui").setup()
 
+local dap = require('dap')
+dap.adapters.lldb = {
+  type = 'executable',
+  command = '/usr/bin/lldb-vscode', -- adjust as needed, must be absolute path
+  name = 'lldb'
+}
+
+dap.configurations.cpp = {
+  {
+    name = 'Launch',
+    type = 'lldb',
+    request = 'launch',
+    program = function()
+      return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+    end,
+    cwd = '${workspaceFolder}',
+    stopOnEntry = false,
+    args = {},
+
+    -- 💀
+    -- if you change `runInTerminal` to true, you might need to change the yama/ptrace_scope setting:
+    --
+    --    echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope
+    --
+    -- Otherwise you might get the following error:
+    --
+    --    Error on launch: Failed to attach to the target process
+    --
+    -- But you should be aware of the implications:
+    -- https://www.kernel.org/doc/html/latest/admin-guide/LSM/Yama.html
+    -- runInTerminal = false,
+  },
+}
+
+-- If you want to use this for Rust and C, add something like this:
+
+dap.configurations.c = dap.configurations.cpp
+dap.configurations.rust = dap.configurations.cpp
+
 dap.adapters.chrome = {
     type = "executable",
     command = "node",
     args = {os.getenv("HOME") .. "/dap/vscode-chrome-debug/out/src/chromeDebug.js"}
 }
 
-local dap = require('dap')
-dap.adapters.firefox = {
-  type = 'executable',
-  command = 'node',
-  args = {os.getenv('HOME') .. '/dap/vscode-firefox-debug/dist/adapter.bundle.js'},
-}
-
-dap.configurations.typescript = {
-  name = 'Debug with Firefox',
-  type = 'firefox',
-  request = 'launch',
-  reAttach = true,
-  url = 'http://localhost:3000',
-  webRoot = '${workspaceFolder}',
-  firefoxExecutable = '/usr/bin/firefox'
-}
-
-dap.configurations.javascriptreact = { -- change this to javascript if needed
+dap.configurations.javascriptreact = {
     {
         type = "chrome",
         request = "attach",
@@ -331,6 +371,13 @@ dap.configurations.javascriptreact = { -- change this to javascript if needed
     }
 }
 
+local dap = require('dap')
+dap.adapters.firefox = {
+  type = 'executable',
+  command = 'node',
+  args = {os.getenv('HOME') .. '/dap/vscode-firefox-debug/dist/adapter.bundle.js'},
+}
+
 dap.configurations.typescriptreact = { -- change to typescript if needed
     {
         type = "chrome",
@@ -340,7 +387,8 @@ dap.configurations.typescriptreact = { -- change to typescript if needed
         sourceMaps = true,
         protocol = "inspector",
         port = 9222,
-        webRoot = "${workspaceFolder}"
+        webRoot = "${workspaceFolder}",
+        outFiles = "${workspaceRoot}/compiled/**/*.js"
     }
 }
 dap.adapters.node2 = {
@@ -366,13 +414,53 @@ dap.configurations.javascript = {
       request = 'attach',
       processId = require'dap.utils'.pick_process,
   },
+  {
+      type = "chrome",
+      request = "attach",
+      program = "${file}",
+      cwd = vim.fn.getcwd(),
+      sourceMaps = true,
+      protocol = "inspector",
+      port = 9222,
+      webRoot = "${workspaceFolder}"
+  }
+}
+
+dap.configurations.typescript = {
+  {
+      name = 'Launch',
+      type = 'node2',
+      request = 'launch',
+      program = '${file}',
+      cwd = vim.fn.getcwd(),
+      sourceMaps = true,
+      protocol = 'inspector',
+      console = 'integratedTerminal',
+  },
+  {
+      -- For this to work you need to make sure the node process is started with the `--inspect` flag.
+      name = 'Attach to process',
+      type = 'node2',
+      request = 'attach',
+      processId = require'dap.utils'.pick_process,
+  },
+  {
+      type = "chrome",
+      request = "attach",
+      program = "${file}",
+      cwd = vim.fn.getcwd(),
+      sourceMaps = true,
+      protocol = "inspector",
+      port = 9222,
+      webRoot = "${workspaceFolder}"
+  }
 }
 vim.fn.sign_define('DapBreakpoint', {text='👉', texthl='', linehl='', numhl=''})
 vim.fn.sign_define('DapStopped', {text='🔥', texthl='', linehl='', numhl=''})
 EOF
 
 nnoremap <leader>dh :lua require'dap'.toggle_breakpoint()<CR>
-nnoremap <S-k> :lua require'dap'.step_out()<CR>
+nnoremap <S-l> :lua require'dap'.step_out()<CR>
 nnoremap <S-l> :lua require'dap'.step_into()<CR>
 nnoremap <S-j> :lua require'dap'.step_over()<CR>
 nnoremap <leader>ds :lua require'dap'.stop()<CR>
@@ -380,7 +468,7 @@ nnoremap <leader>dn :lua require'dap'.continue()<CR>
 nnoremap <leader>dk :lua require'dap'.up()<CR>
 nnoremap <leader>dj :lua require'dap'.down()<CR>
 nnoremap <leader>d_ :lua require'dap'.disconnect();require'dap'.stop();require'dap'.run_last()<CR>
-nnoremap <F1> :lua require'dap'.repl.open({}, 'vsplit')<CR><C-w>l
+nnoremap <leader>dr :lua require'dap'.repl.open({}, 'vsplit')<CR><C-w>l
 nnoremap <leader>di :lua require'dap.ui.widgets'.hover()<CR>
 vnoremap <leader>di :lua require'dap.ui.variables'.visual_hover()<CR>
 snoremap <leader>d? :lua require'dap.ui.variables'.scopes()<CR>
@@ -389,6 +477,14 @@ nnoremap <leader>da :lua require'debugHelper'.attach()<CR>
 nnoremap <leader>dA :lua require'debugHelper'.attachToRemote()<CR>
 nnoremap <leader>di :lua require'dap.ui.widgets'.hover()<CR>
 nnoremap <leader>d? :lua local widgets=require'dap.ui.widgets';widgets.centered_float(widgets.scopes)<CR>
+
+
+" Jester
+
+nnoremap <leader>tt :lua require"jester".run()<CR>
+nnoremap <leader>tf :lua require"jester".run_file()<CR>
+nnoremap <leader>tr :lua require"jester".run_last()<CR>
+nnoremap <leader>td :lua require"jester".debug()<CR>
 
 let g:dap_virtual_text = v:true
 
