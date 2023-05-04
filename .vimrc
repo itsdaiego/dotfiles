@@ -498,3 +498,57 @@ function! ClearBreakpoints()
         exec "exe " . item.lnum . "|lua require'dap'.toggle_breakpoint()"
     endfor
 endfunction
+
+
+" Chatjeepitty
+
+lua << EOF
+  local fn = vim.fn
+  local autocmd = vim.api.nvim_create_autocmd
+
+  -- Automatically install packer
+  local install_path = fn.stdpath("data") .. "/site/pack/packer/start/packer.nvim"
+  if fn.empty(fn.glob(install_path)) > 0 then
+    PACKER_BOOTSTRAP = fn.system({
+      "git",
+      "clone",
+      "--depth",
+      "1",
+      "https://github.com/wbthomason/packer.nvim",
+      install_path,
+    })
+    print("Installing packer close and reopen Neovim...")
+    vim.cmd([[packadd packer.nvim]])
+  end
+
+  require('packer').init({
+    display = {
+      open_fn = function()
+        return require("packer.util").float({ border = "rounded" })
+      end,
+    },
+  })
+
+  return require('packer').startup(function(use)
+    -- My plugins here
+
+    use({ "wbthomason/packer.nvim" })
+
+    -- chatGpt
+    use({
+      "jackMort/ChatGPT.nvim",
+      config = function() require("chatgpt").setup({}) end,
+      requires = {
+        "MunifTanjim/nui.nvim",
+        "nvim-lua/plenary.nvim",
+        "nvim-telescope/telescope.nvim",
+      },
+    })
+
+    -- Automatically set up your configuration after cloning packer.nvim
+    -- Put this at the end after all plugins
+    if PACKER_BOOTSTRAP then
+      require("packer").sync()
+    end
+  end)
+EOF
