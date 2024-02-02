@@ -5,10 +5,12 @@
     "javascript",
     "graphql",
     "html",
+    "yml",
     "yaml",
     "json",
     "python",
-    "clojure"
+    "clojure",
+    "scala"
   ],
   // python config
   "python.linting.enabled": true,
@@ -19,7 +21,7 @@
     "~/.config/nvim/utils/snips"
   ],
   "languageserver": {
-    // cpp
+    // c++
     "ccls": {
       "command": "ccls",
       "filetypes": [
@@ -64,5 +66,32 @@
         "ignore-classpath-directories": true
       }
     }
+  },
+  "suggest.completionItemKindLabels": {
+    "method": "  ",
+    "function": "  ",
+    "variable": "[]",
+    "field": "  ",
+    "typeParameter": "<>",
+    "constant": "  ",
+    "class": " פּ ",
+    "interface": " 蘒",
+    "struct": "  ",
+    "event": "  ",
+    "operator": "  ",
+    "module": "  ",
+    "property": "  ",
+    "enum": " 練",
+    "reference": "  ",
+    "keyword": "  ",
+    "file": "  ",
+    "folder": " ﱮ ",
+    "color": "  ",
+    "unit": " 塞 ",
+    "snippet": "  ",
+    "text": "  ",
+    "constructor": "  ",
+    "value": "  ",
+    "enumMember": "  "
   }
 }

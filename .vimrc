@@ -3,23 +3,16 @@ call plug#begin('~/.vim/plugged')
 "" ---------- ADDITIONAL PLUGINS --------- "
 Plug 'tpope/vim-commentary'
 Plug 'ggreer/the_silver_searcher'
-Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all'  }
-Plug 'junegunn/fzf.vim'
 Plug 'chriskempson/base16-vim'
 Plug 'flazz/vim-colorschemes'
 Plug 'rafi/awesome-vim-colorschemes'
-" Plug 'Shougo/deoplete.nvim'
-" Plug 'w0rp/ale'
 Plug 'dense-analysis/ale'
-" Plug 'vim-airline/vim-airline'
-" Plug 'vim-airline/vim-airline-themes'
 Plug 'tpope/vim-surround'
 Plug 'jiangmiao/auto-pairs'
 Plug 'tpope/vim-fugitive'
 Plug 'scrooloose/nerdtree'
 Plug 'skwp/greplace.vim'
-" Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
- Plug 'clojure-vim/async-clj-omni'
+Plug 'clojure-vim/async-clj-omni'
 Plug 'tpope/vim-classpath', { 'for': 'clojure' }
 Plug 'SirVer/ultisnips'
 Plug 'honza/vim-snippets'
@@ -56,18 +49,29 @@ Plug 'robertmeta/nofrils'
 Plug 'YorickPeterse/vim-paper'
 Plug 'tomlion/vim-solidity'
 Plug 'tpope/vim-fugitive'
-" Plug 'APZelos/blamer.nvim'
 Plug 'vim-airline/vim-airline'
 Plug 'mfussenegger/nvim-dap'
 Plug 'theHamsta/nvim-dap-virtual-text'
 Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 Plug 'nvim-lua/plenary.nvim'
-Plug 'nvim-telescope/telescope.nvim', { 'tag': '0.1.0' }
+Plug 'nvim-telescope/telescope.nvim', { 'tag': '0.1.4' }
 Plug 'nvim-telescope/telescope-dap.nvim'
+Plug 'nvim-telescope/telescope-file-browser.nvim'
+Plug 'nvim-tree/nvim-web-devicons'
+Plug 'BurntSushi/ripgrep'
 Plug 'rcarriga/nvim-dap-ui'
 Plug 'David-Kunz/jester'
 Plug 'sainnhe/sonokai'
-Plug 'github/copilot.vim'
+Plug 'github/copilot.vim', { 'tag': 'v1.12.0' }
+Plug 'airblade/vim-gitgutter'
+Plug 'jackMort/ChatGPT.nvim'
+Plug 'EdenEast/nightfox.nvim'
+Plug 'stevearc/dressing.nvim'
+Plug 'mcchrish/zenbones.nvim'
+Plug 'rktjmp/lush.nvim'
+Plug 'rose-pine/neovim'
+Plug 'savq/melange-nvim'
+Plug 'lukas-reineke/indent-blankline.nvim'
 
 call plug#end()
 "enables true colors
@@ -78,11 +82,13 @@ tnoremap jj <C-\><C-n>
 
 "leader key
 let mapleader=","
+set listchars=tab:▸\ ,trail:·,eol:↲
+set list
 
 " autocmd TextChanged,TextChangedI <buffer> silent write
 
 set termguicolors
-
+set colorcolumn=80
 
 syntax enable
 
@@ -91,13 +97,32 @@ set background=dark
 let g:go_highlight_functions = 1
 let g:go_highlight_types = 1
 
+" indenting rules
+
+lua << EOF
+require("ibl").setup({
+   indent = { char = "→" },
+   whitespace = { highlight = { "Whitespace", "NonText" } },
+   scope = { exclude = { language = { "lua" } } },
+})
+EOF
+
+lua << EOF
+  require('nightfox').setup({
+    options = {
+      transparent = true,
+    }
+  })
+EOF
+
+
 "Default colorscheme
 " colorscheme jammy
 " colorscheme rdark
 " colorscheme dante
 " colorscheme hemisu
 
-" set background=light
+" set background=dark
 " colorscheme ego
 " colorscheme fahrenheit
 " colorscheme monochrome
@@ -107,18 +132,25 @@ let g:go_highlight_types = 1
 " colorscheme scheakur
 " colorscheme loogica
 " colorscheme darth
-" colorscheme Light
 " colorscheme monoacc
 " colorscheme photon
 " colorscheme earthburn
-" colorscheme chlordane
-" colorscheme colorsbox-faff
+" colorscheme darkdevel
 
-"http://www.vimninjas.com/2012/09/14/10-light-colors/
-colorscheme moody
-" colorscheme helios
-" colorscheme dogrun
-" colorscheme photon
+colorscheme melange
+
+hi Normal guibg=NONE ctermbg=NONE
+"
+
+lua << EOF
+require('rose-pine').setup({
+    groups = {
+        background = 'NONE',
+        background_nc = 'NONE',
+    },
+})
+EOF
+" vim.cmd('colorscheme rose-pine')
 
 
 let NERDTreeWinSize=40
@@ -141,7 +173,7 @@ ino jj <esc>
 " Alias for syntastic plugin
 " command Cl lclose
 " Alias for Nerdtree plugin
-command NT NERDTree
+" command NT NERDTree
 
 
 
@@ -159,8 +191,6 @@ let g:closetag_filenames = "*.html.erb,*.html,*.xhtml,*.phtml"
 
 
 set backspace=indent,eol,start
-
-
 
 " let g:ycm_register_as_syntastic_checker = 0
 
@@ -206,16 +236,6 @@ highlight ALEWarningSign ctermbg=NONE ctermfg=yellow
 "   \ 'z': 60,
 " \ }
 
-" FZF
-let $FZF_DEFAULT_COMMAND = 'ag -g ""'
-" nnoremap <leader>a :execute "Ag" expand("<cword>")<cr>
-nnoremap <leader>a :Ag 
-nnoremap <C-P> :Files<cr>
-inoremap <C-f> <C-x><C-f>
-
-" Ignore these folders 
-set wildignore+=**/node_modules/**/*
-set wildignore+=/build/**/*
 
 " Buffer mapping
 " map gn :bn<cr>
@@ -276,19 +296,9 @@ let g:terraform_align=1
 let g:terraform_fmt_on_save=1
 
 
-let t:is_transparent = 1
-" Transparent
+let t:is_transparent = 0
 hi Normal guibg=NONE ctermbg=NONE
-function! Toggle_transparent()
-    if t:is_transparent == 0
-        hi Normal guibg=NONE ctermbg=NONE
-        let t:is_transparent = 1
-    else
-        set background=light
-        hi Normal guibg=NONE ctermbg=NONE
-        let t:is_tranparent = 0
-    endif
-endfunction
+
 
 let g:markdown_fenced_languages = [
       \ 'vim',
@@ -500,8 +510,6 @@ function! ClearBreakpoints()
 endfunction
 
 
-" Chatjeepitty
-
 lua << EOF
   local fn = vim.fn
   local autocmd = vim.api.nvim_create_autocmd
@@ -537,7 +545,25 @@ lua << EOF
     -- chatGpt
     use({
       "jackMort/ChatGPT.nvim",
-      config = function() require("chatgpt").setup({}) end,
+      config = function() require("chatgpt").setup({
+       chat = {
+          keymaps = {
+            close = "<C-c>",
+            yank_last = "<C-y>",
+            scroll_up = "<C-u>",
+            scroll_down = "<C-d>",
+            toggle_settings = "<C-o>",
+            new_session = "<C-s>",
+            cycle_windows = "<Tab>",
+            select_session = "<C-g>",
+          },
+        },
+
+        -- actions_paths = { "/home/dylan/.config/lvim/correct_french.json" },
+        popup_input = {
+          submit = "<CR>",
+        },
+      }) end,
       requires = {
         "MunifTanjim/nui.nvim",
         "nvim-lua/plenary.nvim",
@@ -552,3 +578,57 @@ lua << EOF
     end
   end)
 EOF
+
+
+" Telescope config
+
+lua << EOF
+require('telescope').setup({ 
+  defaults = {
+        file_ignore_patterns = {'node_modules', 'builds'} 
+  }, 
+  pickers = {
+    find_files = {
+      path_display = { "smart" }
+    }
+  }
+})
+local builtin = require('telescope.builtin')
+vim.keymap.set('n', '<leader>f', builtin.find_files, {})
+vim.keymap.set('n', '<leader>g', builtin.live_grep, {})
+vim.keymap.set('n', '<leader>b', builtin.buffers, {})
+vim.keymap.set('n', '<leader>h', builtin.help_tags, {})
+
+EOF
+
+lua << EOF
+require("telescope").setup {
+  extensions = {
+    file_browser = {
+      theme = "ivy",
+      -- disables netrw and use telescope-file-browser in its place
+      hijack_netrw = true,
+      mappings = {
+        ["i"] = {
+          -- your custom insert mode mappings
+        },
+        ["n"] = {
+          -- your custom normal mode mappings
+        },
+      },
+    },
+  },
+}
+-- To get telescope-file-browser loaded and working with telescope,
+-- you need to call load_extension, somewhere after setup function:
+require("telescope").load_extension "file_browser"
+
+vim.api.nvim_set_keymap(
+  "n",
+  "<leader>t",
+  ":Telescope file_browser path=%:p:h select_buffer=true<CR>",
+  { noremap = true }
+)
+EOF
+
+" LSP autocomplete
