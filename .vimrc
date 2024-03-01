@@ -1,7 +1,6 @@
 call plug#begin('~/.vim/plugged')
 
 "" ---------- ADDITIONAL PLUGINS --------- "
-Plug 'tpope/vim-commentary'
 Plug 'ggreer/the_silver_searcher'
 Plug 'chriskempson/base16-vim'
 Plug 'flazz/vim-colorschemes'
@@ -57,6 +56,10 @@ Plug 'nvim-lua/plenary.nvim'
 Plug 'nvim-telescope/telescope.nvim', { 'tag': '0.1.4' }
 Plug 'nvim-telescope/telescope-dap.nvim'
 Plug 'nvim-telescope/telescope-file-browser.nvim'
+Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
+Plug 'ibhagwan/fzf-lua', {'branch': 'main'}
+" Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all'  }
+" Plug 'junegunn/fzf.vim'
 Plug 'nvim-tree/nvim-web-devicons'
 Plug 'BurntSushi/ripgrep'
 Plug 'rcarriga/nvim-dap-ui'
@@ -72,6 +75,11 @@ Plug 'rktjmp/lush.nvim'
 Plug 'rose-pine/neovim'
 Plug 'savq/melange-nvim'
 Plug 'lukas-reineke/indent-blankline.nvim'
+Plug 'lewis6991/gitsigns.nvim'
+Plug 'Konfekt/FastFold'
+Plug 'catppuccin/nvim'
+Plug 'numToStr/Comment.nvim'
+Plug 'nvim-lualine/lualine.nvim'
 
 call plug#end()
 "enables true colors
@@ -82,13 +90,15 @@ tnoremap jj <C-\><C-n>
 
 "leader key
 let mapleader=","
+set timeoutlen=400
+
 set listchars=tab:▸\ ,trail:·,eol:↲
 set list
 
 " autocmd TextChanged,TextChangedI <buffer> silent write
 
 set termguicolors
-set colorcolumn=80
+"set colorcolumn=80
 
 syntax enable
 
@@ -101,9 +111,9 @@ let g:go_highlight_types = 1
 
 lua << EOF
 require("ibl").setup({
-   indent = { char = "→" },
-   whitespace = { highlight = { "Whitespace", "NonText" } },
-   scope = { exclude = { language = { "lua" } } },
+ indent = { char = "→" },
+ whitespace = { highlight = { "Whitespace", "NonText" } },
+ scope = { enabled = false },
 })
 EOF
 
@@ -137,7 +147,7 @@ EOF
 " colorscheme earthburn
 " colorscheme darkdevel
 
-colorscheme melange
+colorscheme forestbones
 
 hi Normal guibg=NONE ctermbg=NONE
 "
@@ -148,12 +158,23 @@ require('rose-pine').setup({
         background = 'NONE',
         background_nc = 'NONE',
     },
+    styles = { transparency = true },
 })
 EOF
-" vim.cmd('colorscheme rose-pine')
+  " vim.cmd('colorscheme rose-pine')
+
+" lua  << EOF
+" require("catppuccin").setup({
+"   flavour = "macchiato",
+"   transparent = true,
+"   term_colors = true
+" })
+
+" vim.cmd('colorscheme catppuccin')
+" EOF
 
 
-let NERDTreeWinSize=40
+let NERDTreeWinSize=80
 
 filetype plugin indent on
 "show existing tab with 4 spaces width
@@ -245,18 +266,85 @@ highlight ALEWarningSign ctermbg=NONE ctermfg=yellow
 
 " coc-nvim definition
 " nmap <silent> <C-]> <Plug>(coc-definition)
-nmap gd <Plug>(coc-definition)
+nmap <silent> gd <Plug>(coc-definition)
+nmap <silent> gy <Plug>(coc-type-definition)
+nmap <silent> gi <Plug>(coc-implementation)
+nmap <silent> gr <Plug>(coc-references)
 
 " Use K to show documentation in preview window
-nnoremap <silent> K :call <SID>show_documentation()<CR>
+nnoremap <silent> K :call ShowDocumentation()<CR>
 
-function! s:show_documentation()
-  if (index(['vim','help'], &filetype) >= 0)
-    execute 'h '.expand('<cword>')
+function! ShowDocumentation()
+  if CocAction('hasProvider', 'hover')
+    call CocActionAsync('doHover')
   else
-    call CocAction('doHover')
+    call feedkeys('K', 'in')
   endif
 endfunction
+
+" Highlight the symbol and its references when holding the cursor
+autocmd CursorHold * silent call CocActionAsync('highlight')
+
+" Symbol renaming
+nmap <leader>rn <Plug>(coc-rename)
+
+augroup mygroup
+  autocmd!
+  " Setup formatexpr specified filetype(s)
+  autocmd FileType typescript,json setl formatexpr=CocAction('formatSelected')
+  " Update signature help on jump placeholder
+  autocmd User CocJumpPlaceholder call CocActionAsync('showSignatureHelp')
+augroup end
+
+" Applying code actions to the selected code block
+" Example: `<leader>aap` for current paragraph
+xmap <leader>a  <Plug>(coc-codeaction-selected)
+nmap <leader>a  <Plug>(coc-codeaction-selected)
+
+" Remap keys for applying code actions at the cursor position
+nmap <leader>ac  <Plug>(coc-codeaction-cursor)
+" Remap keys for apply code actions affect whole buffer
+nmap <leader>as  <Plug>(coc-codeaction-source)
+" Apply the most preferred quickfix action to fix diagnostic on the current line
+nmap <leader>qf  <Plug>(coc-fix-current)
+
+" Remap keys for applying refactor code actions
+nmap <silent> <leader>re <Plug>(coc-codeaction-refactor)
+xmap <silent> <leader>r  <Plug>(coc-codeaction-refactor-selected)
+nmap <silent> <leader>r  <Plug>(coc-codeaction-refactor-selected)
+
+" Run the Code Lens action on the current line
+nmap <leader>cl  <Plug>(coc-codelens-action)
+
+
+" Add `:Format` command to format current buffer
+command! -nargs=0 Format :call CocActionAsync('format')
+
+" Add `:OR` command for organize imports of the current buffer
+command! -nargs=0 OR   :call     CocActionAsync('runCommand', 'editor.action.organizeImport')
+
+" Add (Neo)Vim's native statusline support
+" NOTE: Please see `:h coc-status` for integrations with external plugins that
+" provide custom statusline: lightline.vim, vim-airline
+set statusline^=%{coc#status()}%{get(b:,'coc_current_function','')}
+
+" Mappings for CoCList
+" Show all diagnostics
+nnoremap <silent><nowait> <space>a  :<C-u>CocList diagnostics<cr>
+" Manage extensions
+nnoremap <silent><nowait> <space>e  :<C-u>CocList extensions<cr>
+" Show commands
+nnoremap <silent><nowait> <space>c  :<C-u>CocList commands<cr>
+" Find symbol of current document
+nnoremap <silent><nowait> <space>o  :<C-u>CocList outline<cr>
+" Search workspace symbols
+nnoremap <silent><nowait> <space>s  :<C-u>CocList -I symbols<cr>
+" Do default action for next item
+nnoremap <silent><nowait> <space>j  :<C-u>CocNext<CR>
+" Do default action for previous item
+nnoremap <silent><nowait> <space>k  :<C-u>CocPrev<CR>
+" Resume latest coc list
+nnoremap <silent><nowait> <space>p  :<C-u>CocListResume<CR>
 
 
 " Clojure
@@ -289,7 +377,6 @@ let g:pymode_lint_ignore = "E501, W404"
 set foldmethod=indent
 set foldlevel=50
 set nofoldenable
-nnoremap <Space> za
 
 " Terraform
 let g:terraform_align=1
@@ -313,7 +400,7 @@ let test#python#runner = 'pytest'
 
 let g:closetag_xhtml_filetypes = 'js,jsx'
 
-nnoremap <Leader>g :Git blame<CR>
+nnoremap <Leader>q :Git blame<CR>
 
 let g:airline_theme='github'
 
@@ -321,14 +408,42 @@ lua << EOF
 local dap = require('dap')
 require("nvim-dap-virtual-text").setup()
 require('telescope').load_extension('dap')
-require("dapui").setup()
+require("dapui").setup({
+   -- Set icons to characters that are more likely to work in every terminal.
+      --    Feel free to remove or use ones that you like more! :)
+      --    Don't feel like these are good choices.
+      icons = { expanded = '▾', collapsed = '▸', current_frame = '*' },
+      controls = {
+        icons = {
+          pause = '⏸',
+          play = '▶',
+          step_into = '⏎',
+          step_over = '⏭',
+          step_out = '⏮',
+          step_back = 'b',
+          run_last = '▶▶',
+          terminate = '⏹',
+          disconnect = '⏏',
+        },
+      }
+})
 
-local dap = require('dap')
 dap.adapters.lldb = {
   type = 'executable',
-  command = '/usr/bin/lldb-vscode', -- adjust as needed, must be absolute path
+  command = '/usr/bin/lldb-vscode',
   name = 'lldb'
 }
+
+-- dap.adapters.lldb = {
+--   type = "server",
+--   port = "${port}",
+--   executable = {
+--     command = "/Users/daiego/.local/codelldb/adapter/codelldb",
+--     args = { "--port", "${port}" },
+--     -- On windows you may have to uncomment this:
+--     -- detached = false,
+--   },
+-- }
 
 dap.configurations.cpp = {
   {
@@ -381,7 +496,6 @@ dap.configurations.javascriptreact = {
     }
 }
 
-local dap = require('dap')
 dap.adapters.firefox = {
   type = 'executable',
   command = 'node',
@@ -406,6 +520,7 @@ dap.adapters.node2 = {
   command = 'node',
   args = {os.getenv('HOME') .. '/dev/microsoft/vscode-node-debug2/out/src/nodeDebug.js'},
 }
+
 dap.configurations.javascript = {
   {
       name = 'Launch',
@@ -436,6 +551,8 @@ dap.configurations.javascript = {
   }
 }
 
+dap.configurations["javascript.jsx"] = dap.configurations.javascript
+
 dap.configurations.typescript = {
   {
       name = 'Launch',
@@ -465,6 +582,7 @@ dap.configurations.typescript = {
       webRoot = "${workspaceFolder}"
   }
 }
+
 vim.fn.sign_define('DapBreakpoint', {text='👉', texthl='', linehl='', numhl=''})
 vim.fn.sign_define('DapStopped', {text='🔥', texthl='', linehl='', numhl=''})
 EOF
@@ -479,13 +597,13 @@ nnoremap <leader>dk :lua require'dap'.up()<CR>
 nnoremap <leader>dj :lua require'dap'.down()<CR>
 nnoremap <leader>d_ :lua require'dap'.disconnect();require'dap'.stop();require'dap'.run_last()<CR>
 nnoremap <leader>dr :lua require'dap'.repl.open({}, 'vsplit')<CR><C-w>l
-nnoremap <leader>di :lua require'dap.ui.widgets'.hover()<CR>
+nnoremap <leader>dw :lua require'dap.ui.widgets'.hover()<CR>
 vnoremap <leader>di :lua require'dap.ui.variables'.visual_hover()<CR>
 snoremap <leader>d? :lua require'dap.ui.variables'.scopes()<CR>
 " nnoremap <leader>de :lua require'dap'.set_exception_breakpoints({"all"})<CR>
 nnoremap <leader>da :lua require'debugHelper'.attach()<CR>
 nnoremap <leader>dA :lua require'debugHelper'.attachToRemote()<CR>
-nnoremap <leader>di :lua require'dap.ui.widgets'.hover()<CR>
+nnoremap <leader>dw :lua require'dap.ui.widgets'.hover()<CR>
 nnoremap <leader>d? :lua local widgets=require'dap.ui.widgets';widgets.centered_float(widgets.scopes)<CR>
 
 
@@ -500,7 +618,7 @@ let g:dap_virtual_text = v:true
 
 nnoremap <leader>df :Telescope dap frames<CR>
 nnoremap <leader>db :Telescope dap list_breakpoints<CR>
-nnoremap <leader>dq :lua require('dapui').toggle()<CR>
+nnoremap <leader>du :lua require('dapui').toggle()<CR>
 
 function! ClearBreakpoints() 
     exec "lua require'dap'.list_breakpoints()"
@@ -581,29 +699,34 @@ EOF
 
 
 " Telescope config
-
 lua << EOF
-require('telescope').setup({ 
+require("telescope").setup {
   defaults = {
-        file_ignore_patterns = {'node_modules', 'builds'} 
+    file_ignore_patterns = {'node_modules', 'deps'},
+    vimgrep_arguments = {
+      'rg',
+      '--color=never',
+      '--no-heading',
+      '--with-filename',
+      '--line-number',
+      '--column',
+      '--smart-case',
+      '-u'
+    },
   }, 
   pickers = {
     find_files = {
       path_display = { "smart" }
     }
-  }
-})
-local builtin = require('telescope.builtin')
-vim.keymap.set('n', '<leader>f', builtin.find_files, {})
-vim.keymap.set('n', '<leader>g', builtin.live_grep, {})
-vim.keymap.set('n', '<leader>b', builtin.buffers, {})
-vim.keymap.set('n', '<leader>h', builtin.help_tags, {})
-
-EOF
-
-lua << EOF
-require("telescope").setup {
+  },
   extensions = {
+    fzf = {
+      fuzzy = true,                    -- false will only do exact matching
+      override_generic_sorter = true,  -- override the generic sorter
+      override_file_sorter = true,     -- override the file sorter
+      case_mode = "smart_case",        -- or "ignore_case" or "respect_case"
+                                       -- the default case_mode is "smart_case"
+    },
     file_browser = {
       theme = "ivy",
       -- disables netrw and use telescope-file-browser in its place
@@ -619,9 +742,19 @@ require("telescope").setup {
     },
   },
 }
+local builtin = require('telescope.builtin')
+vim.keymap.set('n', '<leader>f', builtin.find_files, {})
+vim.keymap.set('n', '<leader>g', builtin.live_grep, {})
+vim.keymap.set('n', '<leader>s', builtin.git_status, {})
+vim.keymap.set('n', '<leader>b', builtin.buffers, {})
+vim.keymap.set('n', '<leader>h', builtin.help_tags, {})
+
+
 -- To get telescope-file-browser loaded and working with telescope,
 -- you need to call load_extension, somewhere after setup function:
 require("telescope").load_extension "file_browser"
+require("telescope").load_extension "fzf"
+
 
 vim.api.nvim_set_keymap(
   "n",
@@ -631,4 +764,28 @@ vim.api.nvim_set_keymap(
 )
 EOF
 
-" LSP autocomplete
+
+" FZF
+
+" nnoremap <C-P> :FzfLua files<cr>
+" nnoremap <C-F> :FzfLua live_grep<cr>
+" nnoremap <C-S> :FzfLua git_status<cr>
+" nnoremap <C-B> :FzfLua buffers<cr>
+
+
+" Commenter
+
+lua << EOF
+require("Comment").setup()
+EOF
+
+" LuaLine
+lua << END
+require('lualine').setup({
+  sections = { lualine_a = { 'g:coc_status', 'bo:filetype' } },
+  options = {
+    component_separators = { left = '', right = ''},
+    section_separators = {},
+  }
+})
+END
