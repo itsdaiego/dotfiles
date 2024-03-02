@@ -1,11 +1,15 @@
+# Only for M1s hooorayy 
+eval $(/opt/homebrew/bin/brew shellenv)
+
 # Path to your oh-my-zsh installation.
-  export ZSH=/home/dyego/.oh-my-zsh
+  export ZSH=/Users/daiego/.oh-my-zsh
 
 # Set name of the theme to load.
 # Look in ~/.oh-my-zsh/themes/
 # Optionally, if you set this to "random", it'll load a random theme each
 # time that oh-my-zsh is loaded.
-ZSH_THEME="agnoster"
+ZSH_THEME="cloud"
+
 
 # Uncomment the following line to use case-sensitive completion.
 # CASE_SENSITIVE="true"
@@ -53,7 +57,7 @@ plugins=(git)
 
 # User configuration
 
-  export PATH="/usr/local/heroku/bin:/usr/lib/jvm/java-7-oracle/bin:/usr/lib/jvm/java-7-oracle/db/bin:/usr/lib/jvm/java-7-oracle/jre/bin:/home/dyego/Downloads/android-studio/sdk/tools:/home/dyego/Downloads/android-studio/sdk/platform-tools:/home/dyego/.rvm/gems/ruby-2.2.1/bin:/home/dyego/.rvm/gems/ruby-2.2.1@global/bin:/home/dyego/.rvm/rubies/ruby-2.2.1/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/home/dyego/.rvm/bin:/home/dyego/.rvm/bin:/home/dyego/Downloads/android-studio/sdk/platform-tools:/home/dyego/Downloads/android-studio/sdk/tools:/home/dyego/.rvm/bin:/home/dyego/.rvm/bin:/home/dyego/.rvm/bin:/home/dyego/.rvm/bin:/home/dyego/Downloads/android-studio/sdk/platform-tools:/home/dyego/Downloads/android-studio/sdk/tools:/home/dyego/.rvm/bin"
+  export PATH="/usr/local/heroku/bin:/usr/lib/jvm/java-7-oracle/bin:/usr/lib/jvm/java-7-oracle/db/bin:/usr/lib/jvm/java-7-oracle/jre/bin:/Users/daiego/Downloads/android-studio/sdk/tools:/Users/daiego/Downloads/android-studio/sdk/platform-tools:/Users/daiego/.rvm/gems/ruby-2.2.1/bin:/Users/daiego/.rvm/gems/ruby-2.2.1@global/bin:/Users/daiego/.rvm/rubies/ruby-2.2.1/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/Users/daiego/.rvm/bin:/Users/daiego/.rvm/bin:/Users/daiego/Downloads/android-studio/sdk/platform-tools:/Users/daiego/Downloads/android-studio/sdk/tools:/Users/daiego/.rvm/bin:/Users/daiego/.rvm/bin:/Users/daiego/.rvm/bin:/Users/daiego/.rvm/bin:/Users/daiego/Downloads/android-studio/sdk/platform-tools:/Users/daiego/Downloads/android-studio/sdk/tools:/Users/daiego/.rvm/bin"
 # export MANPATH="/usr/local/man:$MANPATH"
 
 source $ZSH/oh-my-zsh.sh
@@ -86,12 +90,60 @@ source $ZSH/oh-my-zsh.sh
 #Personal Stuff
 
 #Directory aliases
- alias codestuff='/home/dyego/Documents/code-stuff'
- alias podcast-central='/home/dyego/Documents/code-stuff/rails/workspace/podcast-central'
- alias codecast='/home/dyego/Documents/code-stuff/rails/workspace/codecast'
- alias dotfiles='/home/dyego/Documents/code-stuff/dotfiles'
+ alias cstuff='/Users/daiego/Documents/code-stuff'
+ alias podcast-central='/Users/daiego/Documents/code-stuff/rails/workspace/podcast-central'
+ alias codecast='/Users/daiego/Documents/code-stuff/rails/workspace/codecast'
+ alias dotfiles='/Users/daiego/Documents/code-stuff/dotfiles'
  # alias tmux="tmux -2"
  alias tmux="env TERM=xterm-256color tmux"
  alias vim="nvim"
 
 prompt_context () { }
+
+alias terraform=/usr/local/bin/terraform
+# alias ngrok=/Users/daiego/Documents/ngrok
+alias aws-sso="python3 /Users/daiego/.local/lib/python3.8/site-packages/awsssocredrestore/__init__.py"
+
+alias dlv=/Users/daiego/go/bin/dlv
+
+# Set loop to mic volume auto-adjust
+#
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+[[ -r $NVM_DIR/bash_completion ]] && \. $NVM_DIR/bash_completion
+
+
+alias credstash=~/.local/bin/credstash
+alias stripe=~/.local/bin/stripe
+alias clojure-lsp=~/.local/bin/clojure-lsp
+#. "$HOME/.cargo/env"
+# export VOLTA_HOME="$HOME/.volta"
+# export PATH="$VOLTA_HOME/bin:$PATH"
+export PATH="/opt/homebrew/bin:$PATH"
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+# export MATCH_SERVER=ubuntu@3.87.33.32
+# export IOS_SETTINGS_SECRET=adalovelace
+# export PROJECT_PATH=~/Adalo/TestApp2
+# export BACKEND_SERVICE=hplovecraft
+# export BACKEND_URL=https://backend.adalo.com
+# export DATABASE_URL=https://database-red.adalo.com
+# export DATABASE_API_URL=https://database-api.adalo.com
+
+export ANDROID_HOME=$HOME/Library/Android/sdk # Should be Library/Android/sdk
+export ANDROID_ROOT_SDK=$HOME/Library/Android/sdk # Should be Library/Android/sdk
+export PATH=$PATH:$ANDROID_HOME/emulator
+export PATH=$PATH:$ANDROID_HOME/tools
+export PATH=$PATH:$ANDROID_HOME/tools/bin
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+
+
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-11.0.17.jdk/Contents/Home
+# export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_341.jdk/Contents/Home
+export PATH=$JAVA_HOME/bin:$PATH
+
+# alias cargo=/Users/daiego/.cargo/bin
+
+export LLVM_ROOT=/Users/daiego/llvm
