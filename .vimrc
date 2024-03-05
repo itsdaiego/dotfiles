@@ -80,6 +80,8 @@ Plug 'Konfekt/FastFold'
 Plug 'catppuccin/nvim'
 Plug 'numToStr/Comment.nvim'
 Plug 'nvim-lualine/lualine.nvim'
+Plug 'folke/noice.nvim'
+Plug 'rcarriga/nvim-notify'
 
 call plug#end()
 "enables true colors
@@ -789,3 +791,28 @@ require('lualine').setup({
   }
 })
 END
+
+" Better Command Mode
+
+lua << EOF
+require('notify').setup({
+  background_colour = "#000000"
+})
+
+require('noice').setup({
+ cmdline = {
+    enabled = true, -- enables the Noice cmdline UI
+    view = "cmdline",
+    opts = {}
+ },
+ lsp = {
+    -- override markdown rendering so that **cmp** and other plugins use **Treesitter**
+    override = {
+      ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
+      ["vim.lsp.util.stylize_markdown"] = true,
+      ["cmp.entry.get_documentation"] = true, -- requires hrsh7th/nvim-cmp
+    },
+  }
+})
+
+EOF
