@@ -1,0 +1,66 @@
+# Global properties
+align=center
+separator=false
+color=#f8f8f2
+separator_block_width=15
+markup=pango
+
+# Volume
+[volume]
+label= 
+command=amixer get Master | awk -F'[][]' '/Left:/ { print $2 }' | head -n1
+interval=once
+color=#bd93f9
+
+
+# Media player
+[mediaplayer]
+label= 
+command=playerctl metadata --format "{{ artist }} - {{ title }}"
+interval=5
+color=#bd93f9
+
+# WiFi
+[wifi]
+label= 
+command=iwgetid -r | tr '\n' ' ' && grep $(iwgetid -m | awk '{ printf "%s", $1 }') /proc/net/wireless | awk '{ printf "%i%%\n", int($3 * 100 / 70) }'
+instance=wlp11s0f3u1
+interval=5
+color=#ff79c6
+
+# Home disk usage
+[home]
+label= 
+command=df -h /home | awk 'NR==2 {print $3 "/" $2}'
+interval=600
+color=#50fa7b
+
+# Memory usage
+[memory]
+label= 
+command=free -h | awk '/^Mem:/ {print $3 "/" $2}'
+interval=10
+color=#ff79c6
+
+
+# Time São Paulo
+[time_sao_paulo]
+label= 
+command=date '+%I:%M %p' -d 'TZ="America/Sao_Paulo" now'
+interval=60
+color=#8be9fd
+
+
+# Date São Paulo
+[date_sao_paulo]
+label= 
+command=date '+%Y-%m-%d' -d 'TZ="America/Sao_Paulo" now'
+interval=3600
+color=#ff5555
+
+# Battery
+[battery]
+label= 
+command=acpi -b | awk '/Battery/ {print $4 " " $5}'
+interval=30
+color=#ff5555

@@ -5,7 +5,7 @@ set $mod Mod4
 new_window pixel
 
 # Font for window titles.
-font pango: BerkeleyMono Nerd Font 10
+font pango: GeistMono 10
 
 # Use Mouse+$mod to drag floating windows to their wanted position
 floating_modifier $mod
@@ -14,13 +14,22 @@ floating_modifier $mod
 bindsym $mod+Return exec kitty
 
 # Kill focused window
-bindsym $mod+Shift+q kill
+bindsym $mod+w kill
 
 # Start rofi
-bindsym $mod+d exec rofi -show drun -columns 3
+bindsym $mod+d exec rofi -show drun -columns 3 -config ~/.config/rofi/config
+
+# Increase gaps
+bindsym $mod+Shift+plus gaps inner current plus 5
+
+# Decrease gaps
+bindsym $mod+Shift+minus gaps inner current minus 5
+
+# Toggle gaps
+bindsym $mod+Shift+g gaps inner current set 0
 
 # Move between windows
-bindsym $mod+j focus left
+bindsym $mod+j focus left/
 bindsym $mod+k focus down
 bindsym $mod+l focus up
 bindsym $mod+semicolon focus right
@@ -52,8 +61,6 @@ bindsym $mod+v split v
 # Enter fullscreen mode for the focused container
 
 # Change container layout (stacked, tabbed, toggle split)
-bindsym $mod+s layout stacking
-bindsym $mod+w layout tabbed
 bindsym $mod+e layout toggle split
 
 # Toggle tiling / floating
@@ -140,7 +147,7 @@ mode "resize"
 }
 
 bindsym $mod+r mode "resize"
-bindsym $mod+Shift+e exec "~/.config/i3blocks/blocks/shutdown_menu/shutdown_menu"
+# bindsym $mod+Shift+e exec "~/.config/i3blocks/blocks/shutdown_menu/shutdown_menu"
 
 # class                 border  bground text    indicator child_border
 client.focused          #6272A4 #6272A4 #F8F8F2 #6272A4   #6272A4
@@ -152,8 +159,9 @@ client.background       #F8F8F2
 
 # Start i3blocks to display a workspace bar
 bar {
-    font pango: BerkeleyMono Nerd Font 9
-    i3bar_command i3bar
+    font pango: GeistMono 9
+    # i3bar_command i3bar
+    status_command i3blocks
     output primary
     position top
     status_command i3blocks
@@ -182,8 +190,9 @@ client.urgent #ff0000 #222222 #ffffff #292d3e
 
 
 bar {
-    font pango: BerkeleyMono Nerd Font 10
-    i3bar_command i3bar
+    font pango: GeistMono 10
+    # i3bar_command i3bar
+    status_command i3blocks
     output nonprimary
     position top
     strip_workspace_numbers yes
@@ -203,13 +212,22 @@ bar {
 }
 
 # Startup programs
-exec_always --no-startup-id ~/.scripts/monitors.sh
-exec_always --no-startup-id ~/.scripts/wallpapers.sh
 exec --no-startup-id betterlockscreen -w dim
-exec --no-startup-id picom --config ~/.config/picom/picom.conf
 exec --no-startup-id xfce4-power-manager
-exec --no-startup-id notify-send "Welcome back $USER!" -i ~/.images/icons8-dog-100.png
+exec --no-startup-id notify-send "Welcome back $USER!"
+exec_always --no-startup-id picom --experimental-backends --config ~/.config/picom/picom.conf
+exec_always --no-startup-id feh --bg-scale ~/Downloads/quarian.webp
+
 
 
 # Set keyboard layout
 exec "setxkbmap -layout us"
+
+# Controls
+bindsym XF86AudioPlay exec playerctl play-pause
+bindsym XF86AudioPause exec playerctl play-pause
+bindsym F5 exec playerctl play-pause
+bindsym $mod+F10 exec amixer -q set Master toggle
+bindsym $mod+F11 exec amixer -q set Master 10%- unmute
+bindsym $mod+F12 exec amixer -q set Master 10%+ unmute
+

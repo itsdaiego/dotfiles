@@ -1,0 +1,70 @@
+configuration {
+    modi: "drun";
+    font: "JetBrainsMonoMedium Nerd Font 10.5";
+    show-icons: true;
+    icon-theme: "Papirus-Dark";
+    display-drun: "   ";
+    drun-display-format: "{icon} {name}";
+    width: 40;
+    lines: 8;
+    columns: 1;
+    location: 0;
+    separator-style: "solid";
+    hide-scrollbar: true;
+}
+// clear the default theme.
+@theme "/dev/null"
+
+* {
+    highlight: bold italic;
+    colorBackground:                #1e1e20;
+    colorBackgroundSelected:        #282c34;
+    colorForeground:                #c8ccd4;
+    color01:                        #61afef;
+    color02:                        #98c379;
+    background-color:               @colorBackground;
+    text-color:                     @colorForeground;
+}
+window {
+   width: 40%;
+}
+mainbox {
+    padding: 5px;
+    border: 3px;
+    border-color: @color01;
+}
+
+listview {
+    border: 2px;
+    padding: 5px;
+lines:  8;
+columns: 1;
+}
+
+element {
+    padding: 5px;
+}
+
+element-icon {
+    size: 25px;
+}
+
+element selected {
+    background-color: @colorBackgroundSelected;
+    text-color: @color01;
+}
+
+element active {
+    text-color: @color02;
+}
+
+element selected.active {
+    text-color: @color02;
+}
+element-text, element-icon {
+  vertical-align: 0.5;
+  background-color: inherit;
+  text-color: inherit;
+}
+
+/* vim:ft=css */
