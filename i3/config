@@ -5,7 +5,7 @@ set $mod Mod4
 new_window pixel
 
 # Font for window titles.
-font pango: GeistMono 10
+font pango: MonoLisa 10
 
 # Use Mouse+$mod to drag floating windows to their wanted position
 floating_modifier $mod
@@ -29,10 +29,10 @@ bindsym $mod+Shift+minus gaps inner current minus 5
 bindsym $mod+Shift+g gaps inner current set 0
 
 # Move between windows
-bindsym $mod+j focus left/
-bindsym $mod+k focus down
-bindsym $mod+l focus up
-bindsym $mod+semicolon focus right
+bindsym $mod+h focus left
+bindsym $mod+j focus down
+bindsym $mod+k focus up
+bindsym $mod+l focus right
 
 # Alternatively, you can use the cursor keys:
 bindsym $mod+Left focus left
@@ -41,10 +41,10 @@ bindsym $mod+Up focus up
 bindsym $mod+Right focus right
 
 # Move focused window
-bindsym $mod+Shift+j move left
-bindsym $mod+Shift+k move down
-bindsym $mod+Shift+l move up
-bindsym $mod+Shift+semicolon move right
+bindsym $mod+Shift+h move left
+bindsym $mod+Shift+j move down
+bindsym $mod+Shift+k move up
+bindsym $mod+Shift+l move right
 
 # Alternatively, you can use the cursor keys:
 bindsym $mod+Shift+Left move left
@@ -53,12 +53,13 @@ bindsym $mod+Shift+Up move up
 bindsym $mod+Shift+Right move right
 
 # Split in horizontal orientation
-bindsym $mod+h split h
+bindsym $mod+v split h
 
 # Split in vertical orientation
-bindsym $mod+v split v
+bindsym $mod+s split v
 
 # Enter fullscreen mode for the focused container
+bindsym $mod+f fullscreen toggle global
 
 # Change container layout (stacked, tabbed, toggle split)
 bindsym $mod+e layout toggle split
@@ -130,7 +131,7 @@ bindsym $mod+Shift+c reload
 bindsym $mod+Shift+r restart
 
 # Lock screen
-bindsym $mod+Shift+x exec betterlockscreen -l dimblur
+bindsym $mod+Shift+q exec i3lock -c 000000 
 
 # Resize window (you can also use the mouse for that)
 mode "resize"
@@ -159,7 +160,7 @@ client.background       #F8F8F2
 
 # Start i3blocks to display a workspace bar
 bar {
-    font pango: GeistMono 9
+    font pango: MonoLisa 9
     # i3bar_command i3bar
     status_command i3blocks
     output primary
@@ -190,7 +191,7 @@ client.urgent #ff0000 #222222 #ffffff #292d3e
 
 
 bar {
-    font pango: GeistMono 10
+    font pango: MonoLisa 10
     # i3bar_command i3bar
     status_command i3blocks
     output nonprimary
@@ -221,7 +222,7 @@ exec_always --no-startup-id feh --bg-scale ~/Downloads/quarian.webp
 
 
 # Set keyboard layout
-exec "setxkbmap -layout us"
+exec_always "setxkbmap -layout us"
 
 # Controls
 bindsym XF86AudioPlay exec playerctl play-pause
@@ -231,3 +232,6 @@ bindsym $mod+F10 exec amixer -q set Master toggle
 bindsym $mod+F11 exec amixer -q set Master 10%- unmute
 bindsym $mod+F12 exec amixer -q set Master 10%+ unmute
 
+
+# Screenshot
+bindsym $mod+Shift+s exec flameshot gui
