@@ -11,11 +11,11 @@ export NERD_FONT="JetBrainsMono Nerd Font"
 
 sketchybar --bar height=50               \
                  margin=10      \
-                 y_offset=20             \
+                 y_offset=10             \
                  position=top            \
                  padding_left=20         \
                  padding_right=20        \
-                 color=0xcc282c34        \
+                 color=$BACKGROUND      \
                  shadow=on               \
                  corner_radius=20
 

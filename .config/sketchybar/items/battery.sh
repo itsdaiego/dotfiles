@@ -13,7 +13,7 @@ sketchybar --add item battery right                      \
                          icon.padding_left=20            \
                          icon.padding_right=20           \
                          icon.color=$FONT_COLOR          \
-                         background.color=$BLUE_GREY     \
+                         background.color=$BACKGROUND     \
                          background.corner_radius=10     \
                          background.padding_right=10     \
                          background.height=40            \
