@@ -4,6 +4,7 @@ call plug#begin('~/.vim/plugged')
 Plug 'ggreer/the_silver_searcher'
 Plug 'chriskempson/base16-vim'
 Plug 'flazz/vim-colorschemes'
+Plug 'utensils/colors.vim'
 Plug 'rafi/awesome-vim-colorschemes'
 Plug 'dense-analysis/ale'
 Plug 'tpope/vim-surround'
@@ -56,14 +57,18 @@ Plug 'nvim-lua/plenary.nvim'
 Plug 'nvim-telescope/telescope.nvim', { 'tag': '0.1.4' }
 Plug 'nvim-telescope/telescope-dap.nvim'
 Plug 'nvim-telescope/telescope-file-browser.nvim'
+Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
+Plug 'ibhagwan/fzf-lua', {'branch': 'main'}
+" Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all'  }
+" Plug 'junegunn/fzf.vim'
 Plug 'nvim-tree/nvim-web-devicons'
 Plug 'BurntSushi/ripgrep'
 Plug 'rcarriga/nvim-dap-ui'
+Plug 'nvim-neotest/nvim-nio'
 Plug 'David-Kunz/jester'
 Plug 'sainnhe/sonokai'
-Plug 'github/copilot.vim', { 'tag': 'v1.12.0' }
+Plug 'github/copilot.vim'
 Plug 'airblade/vim-gitgutter'
-Plug 'jackMort/ChatGPT.nvim'
 Plug 'EdenEast/nightfox.nvim'
 Plug 'stevearc/dressing.nvim'
 Plug 'mcchrish/zenbones.nvim'
@@ -76,19 +81,29 @@ Plug 'Konfekt/FastFold'
 Plug 'catppuccin/nvim'
 Plug 'numToStr/Comment.nvim'
 Plug 'nvim-lualine/lualine.nvim'
-Plug 'folke/noice.nvim'
-Plug 'rcarriga/nvim-notify'
+Plug 'tjdevries/colorbuddy.nvim'
+Plug 'xero/miasma.nvim'
+Plug 'sainnhe/everforest'
+Plug 'jckmgns/curtailed'
+Plug 'alljokecake/naysayer-theme.nvim'
+Plug 'lifepillar/vim-gruvbox8'
+Plug 'fcpg/vim-farout'
+Plug 'yetone/avante.nvim'
+Plug 'MunifTanjim/nui.nvim'
+Plug 'folke/trouble.nvim'
+Plug 'stevearc/dressing.nvim'
+Plug 'HakonHarnes/img-clip.nvim'
 
 call plug#end()
 "enables true colors
 let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 
-"neovim terminal 
+"neovim terminal
 tnoremap jj <C-\><C-n>
 
 "leader key
 let mapleader=","
-set timeoutlen=400
+set timeoutlen=1000
 
 set listchars=tab:▸\ ,trail:·,eol:↲
 set list
@@ -107,13 +122,13 @@ let g:go_highlight_types = 1
 
 " indenting rules
 
-lua << EOF
-require("ibl").setup({
- indent = { char = "→" },
- whitespace = { highlight = { "Whitespace", "NonText" } },
- scope = { enabled = false },
-})
-EOF
+" lua << EOF
+" require("ibl").setup({
+"  indent = { char = "→" },
+"  whitespace = { highlight = { "Whitespace", "NonText" } },
+"  scope = { enabled = true },
+" })
+" EOF
 
 lua << EOF
   require('nightfox').setup({
@@ -143,11 +158,17 @@ EOF
 " colorscheme monoacc
 " colorscheme photon
 " colorscheme earthburn
-" colorscheme darkdevel
 
-colorscheme forestbones
 
-hi Normal guibg=NONE ctermbg=NONE
+
+let g:everforest_background = 'hard'
+
+" colorscheme miasma
+" colorscheme farout
+colorscheme base16-black-metal-burzum
+
+
+"hi Normal guibg=NONE ctermbg=NONE
 "
 
 lua << EOF
@@ -157,9 +178,9 @@ require('rose-pine').setup({
         background_nc = 'NONE',
     },
     styles = { transparency = true },
+    --vim.cmd('colorscheme rose-pine')
 })
 EOF
-  " vim.cmd('colorscheme rose-pine')
 
 " lua  << EOF
 " require("catppuccin").setup({
@@ -172,7 +193,7 @@ EOF
 " EOF
 
 
-let NERDTreeWinSize=80
+let NERDTreeWinSize=50
 
 filetype plugin indent on
 "show existing tab with 4 spaces width
@@ -192,7 +213,10 @@ ino jj <esc>
 " Alias for syntastic plugin
 " command Cl lclose
 " Alias for Nerdtree plugin
-" command NT NERDTree
+command NT NERDTree
+command NTF NERDTreeFind
+let g:NERDTreeWinPos = "right"
+
 
 
 
@@ -230,7 +254,7 @@ set mouse=ar
 " set lazyredraw
 " set re=1
 "
-"ale 
+"ale
 let g:ale_cache_executable_check_failures = 1
 let g:ale_sign_error = '✘'
 let g:ale_sign_warning = '⚠'
@@ -259,7 +283,7 @@ highlight ALEWarningSign ctermbg=NONE ctermfg=yellow
 " Buffer mapping
 " map gn :bn<cr>
 " map gp :bp<cr>
-" map gd :bd<cr> 
+" map gd :bd<cr>
 "
 
 " coc-nvim definition
@@ -324,7 +348,7 @@ command! -nargs=0 OR   :call     CocActionAsync('runCommand', 'editor.action.org
 " Add (Neo)Vim's native statusline support
 " NOTE: Please see `:h coc-status` for integrations with external plugins that
 " provide custom statusline: lightline.vim, vim-airline
-set statusline^=%{coc#status()}%{get(b:,'coc_current_function','')}
+" set statusline^=%{coc#status()}%{get(b:,'coc_current_function','')}
 
 " Mappings for CoCList
 " Show all diagnostics
@@ -586,8 +610,6 @@ vim.fn.sign_define('DapStopped', {text='🔥', texthl='', linehl='', numhl=''})
 EOF
 
 nnoremap <leader>dh :lua require'dap'.toggle_breakpoint()<CR>
-nnoremap <S-l> :lua require'dap'.step_out()<CR>
-nnoremap <S-l> :lua require'dap'.step_into()<CR>
 nnoremap <S-j> :lua require'dap'.step_over()<CR>
 nnoremap <leader>ds :lua require'dap'.stop()<CR>
 nnoremap <leader>dn :lua require'dap'.continue()<CR>
@@ -605,20 +627,13 @@ nnoremap <leader>dw :lua require'dap.ui.widgets'.hover()<CR>
 nnoremap <leader>d? :lua local widgets=require'dap.ui.widgets';widgets.centered_float(widgets.scopes)<CR>
 
 
-" Jester
-
-nnoremap <leader>tt :lua require"jester".run()<CR>
-nnoremap <leader>tf :lua require"jester".run_file()<CR>
-nnoremap <leader>tr :lua require"jester".run_last()<CR>
-nnoremap <leader>td :lua require"jester".debug()<CR>
-
 let g:dap_virtual_text = v:true
 
 nnoremap <leader>df :Telescope dap frames<CR>
 nnoremap <leader>db :Telescope dap list_breakpoints<CR>
 nnoremap <leader>du :lua require('dapui').toggle()<CR>
 
-function! ClearBreakpoints() 
+function! ClearBreakpoints()
     exec "lua require'dap'.list_breakpoints()"
     for item in getqflist()
         exec "exe " . item.lnum . "|lua require'dap'.toggle_breakpoint()"
@@ -658,35 +673,6 @@ lua << EOF
 
     use({ "wbthomason/packer.nvim" })
 
-    -- chatGpt
-    use({
-      "jackMort/ChatGPT.nvim",
-      config = function() require("chatgpt").setup({
-       chat = {
-          keymaps = {
-            close = "<C-c>",
-            yank_last = "<C-y>",
-            scroll_up = "<C-u>",
-            scroll_down = "<C-d>",
-            toggle_settings = "<C-o>",
-            new_session = "<C-s>",
-            cycle_windows = "<Tab>",
-            select_session = "<C-g>",
-          },
-        },
-
-        -- actions_paths = { "/home/dylan/.config/lvim/correct_french.json" },
-        popup_input = {
-          submit = "<CR>",
-        },
-      }) end,
-      requires = {
-        "MunifTanjim/nui.nvim",
-        "nvim-lua/plenary.nvim",
-        "nvim-telescope/telescope.nvim",
-      },
-    })
-
     -- Automatically set up your configuration after cloning packer.nvim
     -- Put this at the end after all plugins
     if PACKER_BOOTSTRAP then
@@ -700,7 +686,7 @@ EOF
 lua << EOF
 require("telescope").setup {
   defaults = {
-    file_ignore_patterns = {'node_modules', 'deps'},
+    file_ignore_patterns = {'node_modules', 'deps', 'dist'},
     vimgrep_arguments = {
       'rg',
       '--color=never',
@@ -711,13 +697,20 @@ require("telescope").setup {
       '--smart-case',
       '-u'
     },
-  }, 
+  },
   pickers = {
     find_files = {
       path_display = { "smart" }
     }
   },
   extensions = {
+    fzf = {
+      fuzzy = true,                    -- false will only do exact matching
+      override_generic_sorter = true,  -- override the generic sorter
+      override_file_sorter = true,     -- override the file sorter
+      case_mode = "smart_case",        -- or "ignore_case" or "respect_case"
+                                       -- the default case_mode is "smart_case"
+    },
     file_browser = {
       theme = "ivy",
       -- disables netrw and use telescope-file-browser in its place
@@ -744,6 +737,7 @@ vim.keymap.set('n', '<leader>h', builtin.help_tags, {})
 -- To get telescope-file-browser loaded and working with telescope,
 -- you need to call load_extension, somewhere after setup function:
 require("telescope").load_extension "file_browser"
+require("telescope").load_extension "fzf"
 
 
 vim.api.nvim_set_keymap(
@@ -780,27 +774,70 @@ require('lualine').setup({
 })
 END
 
-" Better Command Mode
+let g:python3_host_prog = expand('~/.neovim-venv/bin/python3')
+
+
+" Avante
 
 lua << EOF
-require('notify').setup({
-  background_colour = "#000000"
-})
+local avante = require('avante')
 
-require('noice').setup({
- cmdline = {
-    enabled = true, -- enables the Noice cmdline UI
-    view = "cmdline",
-    opts = {}
- },
- lsp = {
-    -- override markdown rendering so that **cmp** and other plugins use **Treesitter**
-    override = {
-      ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
-      ["vim.lsp.util.stylize_markdown"] = true,
-      ["cmp.entry.get_documentation"] = true, -- requires hrsh7th/nvim-cmp
+avante.setup {
+  provider = "claude", -- Only recommend using Claude
+  claude = {
+    endpoint = "https://api.anthropic.com",
+    model = "claude-3-5-sonnet-20240620",
+    temperature = 0,
+    max_tokens = 4096,
+  },
+  mappings = {
+    ask = "<leader>aa",
+    edit = "<leader>ae",
+    refresh = "<leader>ar",
+    ---@class AvanteConflictMappings
+    diff = {
+      ours = "co",
+      theirs = "ct",
+      both = "cb",
+      next = "]x",
+      prev = "[x",
     },
-  }
-})
-
+    jump = {
+      next = "]]",
+      prev = "[[",
+    },
+    submit = {
+      normal = "<CR>",
+      insert = "<C-s>",
+    },
+    toggle = {
+      debug = "<leader>ad",
+      hint = "<leader>ah",
+    },
+  },
+  hints = { enabled = true },
+  windows = {
+    wrap = true, -- similar to vim.o.wrap
+    width = 30, -- default % based on available width
+    sidebar_header = {
+      align = "center", -- left, center, right for title
+      rounded = true,
+    },
+  },
+  highlights = {
+    ---@type AvanteConflictHighlights
+    diff = {
+      current = "DiffText",
+      incoming = "DiffAdd",
+    },
+  },
+  --- @class AvanteConflictUserConfig
+  diff = {
+    debug = false,
+    autojump = true,
+    ---@type string | fun(): any
+    list_opener = "copen",
+  },
+}
 EOF
+
