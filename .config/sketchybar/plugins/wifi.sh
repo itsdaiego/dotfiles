@@ -1,9 +1,26 @@
-#!/usr/bin/env sh
+#!/bin/bash
 
-CURRENT_WIFI="$(/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport -I)"
-SSID="$(echo "$CURRENT_WIFI" | grep -o "SSID: .*" | sed 's/^SSID: //')"
-CURR_TX="$(echo "$CURRENT_WIFI" | grep -o "lastTxRate: .*" | sed 's/^lastTxRate: //')"
+WIFI_DEVICE=$(networksetup -listallhardwareports | awk '/Wi-Fi|AirPort/{getline; print $2}')
+WIFI_INFO=$(networksetup -getairportnetwork $WIFI_DEVICE)
+SSID=$(echo "$WIFI_INFO" | awk -F': ' '{print $2}')
 
-POPUP_OFF="sketchybar --set wifi.control popup.drawing=off"
-POPUP_CLICK_SCRIPT="sketchybar --set \$NAME popup.drawing=toggle"
+if [ -z "$SSID" ]; then
+  ICON="󰤭"
+  LABEL="Disconnected"
+else
+  SIGNAL_STRENGTH=$(/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport -I | awk -F': ' '/agrCtlRSSI/ {print $2}')
+  
+  if [ $SIGNAL_STRENGTH -gt -50 ]; then
+    ICON="󰤨"
+  elif [ $SIGNAL_STRENGTH -gt -60 ]; then
+    ICON="󰤥"
+  elif [ $SIGNAL_STRENGTH -gt -70 ]; then
+    ICON="󰤢"
+  else
+    ICON="󰤟"
+  fi
+  
+  LABEL="$SSID"
+fi
 
+sketchybar --set $NAME icon="$ICON" label="$LABEL"
