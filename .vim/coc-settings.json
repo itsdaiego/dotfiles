@@ -12,14 +12,7 @@
     "clojure",
     "scala"
   ],
-  // python config
-  "python.linting.enabled": true,
-  "python.linting.pylintEnabled": true,
-  "python.linting.pep8Enabled": true,
-  "snippets.ultisnips.directories": [
-    "UltiSnips",
-    "~/.config/nvim/utils/snips"
-  ],
+  "inlayHint.enable": false,
   "languageserver": {
     // c++
     "ccls": {
@@ -43,55 +36,36 @@
         }
       }
     },
-    // clojure
-    "clojure-lsp": {
-      "command": "bash",
-      "args": [
-        "-c",
-        "~/.local/bin/clojure-lsp"
-      ],
-      "filetypes": [
-        "clojure"
-      ],
-      "rootPatterns": [
-        "project.clj",
-        "deps.edn"
-      ],
-      "additionalSchemes": [
-        "jar",
-        "zipfile"
-      ],
-      "trace.server": "verbose",
-      "initializationOptions": {
-        "ignore-classpath-directories": true
-      }
+    "snippets.ultisnips.directories": [
+      "UltiSnips",
+      "~/.config/nvim/utils/snips"
+    ],
+    "clangd.arguments": ["-std=c++11"],
+    "suggest.completionItemKindLabels": {
+      "method": "  ",
+      "function": "  ",
+      "variable": "[]",
+      "field": "  ",
+      "typeParameter": "<>",
+      "constant": "  ",
+      "class": " פּ ",
+      "interface": " 蘒",
+      "struct": "  ",
+      "event": "  ",
+      "operator": "  ",
+      "module": "  ",
+      "property": "  ",
+      "enum": " 練",
+      "reference": "  ",
+      "keyword": "  ",
+      "file": "  ",
+      "folder": " ﱮ ",
+      "color": "  ",
+      "unit": " 塞 ",
+      "snippet": "  ",
+      "text": "  ",
+      "constructor": "  ",
+      "value": "  ",
+      "enumMember": "  "
     }
-  },
-  "suggest.completionItemKindLabels": {
-    "method": "  ",
-    "function": "  ",
-    "variable": "[]",
-    "field": "  ",
-    "typeParameter": "<>",
-    "constant": "  ",
-    "class": " פּ ",
-    "interface": " 蘒",
-    "struct": "  ",
-    "event": "  ",
-    "operator": "  ",
-    "module": "  ",
-    "property": "  ",
-    "enum": " 練",
-    "reference": "  ",
-    "keyword": "  ",
-    "file": "  ",
-    "folder": " ﱮ ",
-    "color": "  ",
-    "unit": " 塞 ",
-    "snippet": "  ",
-    "text": "  ",
-    "constructor": "  ",
-    "value": "  ",
-    "enumMember": "  "
   }
-}

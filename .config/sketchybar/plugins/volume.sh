@@ -10,7 +10,7 @@ elif [ $VOLUME -eq 0 ]; then
 elif [ $VOLUME -lt 30 ]; then
   ICON="󰖀"
 elif [ $VOLUME -lt 70 ]; then
-  ICON="󰖁"
+  ICON="󰖀"
 else
   ICON="󰕾"
 fi
