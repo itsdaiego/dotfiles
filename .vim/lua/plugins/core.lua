@@ -8,6 +8,90 @@ return {
     "neoclide/coc.nvim",
     branch = "release",
     event = { "BufReadPre", "BufNewFile" },
+    init = function()
+      -- Some servers have issues with backup files
+      vim.opt.backup = false
+      vim.opt.writebackup = false
+      
+      -- Having longer updatetime (default is 4000 ms = 4s) leads to noticeable delays
+      vim.opt.updatetime = 300
+      
+      -- Always show the signcolumn
+      vim.opt.signcolumn = "yes"
+    end,
+    config = function()
+      -- GoTo code navigation
+      vim.keymap.set("n", "gd", "<Plug>(coc-definition)", {silent = true})
+      vim.keymap.set("n", "gy", "<Plug>(coc-type-definition)", {silent = true})
+      vim.keymap.set("n", "gi", "<Plug>(coc-implementation)", {silent = true})
+      vim.keymap.set("n", "gr", "<Plug>(coc-references)", {silent = true})
+
+      -- Use K to show documentation in preview window
+      vim.keymap.set("n", "K", ":call v:lua.ShowDocumentation()<CR>", {silent = true})
+      
+      _G.ShowDocumentation = function()
+        if vim.fn.CocAction('hasProvider', 'hover') then
+          vim.fn.CocActionAsync('doHover')
+        else
+          vim.fn.feedkeys('K', 'in')
+        end
+      end
+
+      -- Highlight the symbol and its references when holding the cursor
+      vim.api.nvim_create_autocmd("CursorHold", {
+        pattern = "*",
+        callback = function()
+          vim.fn.CocActionAsync('highlight')
+        end
+      })
+
+      -- Symbol renaming
+      vim.keymap.set("n", "<leader>rn", "<Plug>(coc-rename)", {silent = true})
+
+      -- Setup formatexpr for specific filetypes
+      vim.api.nvim_create_augroup("CocGroup", {})
+      vim.api.nvim_create_autocmd("FileType", {
+        group = "CocGroup",
+        pattern = {"typescript", "json"},
+        command = "setl formatexpr=CocAction('formatSelected')"
+      })
+
+      -- Update signature help on jump placeholder
+      vim.api.nvim_create_autocmd("User", {
+        group = "CocGroup",
+        pattern = "CocJumpPlaceholder",
+        command = "call CocActionAsync('showSignatureHelp')"
+      })
+
+      -- Applying code actions
+      vim.keymap.set("x", "<leader>a", "<Plug>(coc-codeaction-selected)", {silent = true})
+      vim.keymap.set("n", "<leader>a", "<Plug>(coc-codeaction-selected)", {silent = true})
+      vim.keymap.set("n", "<leader>ac", "<Plug>(coc-codeaction-cursor)", {silent = true})
+      vim.keymap.set("n", "<leader>as", "<Plug>(coc-codeaction-source)", {silent = true})
+      vim.keymap.set("n", "<leader>qf", "<Plug>(coc-fix-current)", {silent = true})
+      
+      -- Refactor code actions
+      vim.keymap.set("n", "<leader>re", "<Plug>(coc-codeaction-refactor)", {silent = true})
+      vim.keymap.set("x", "<leader>r", "<Plug>(coc-codeaction-refactor-selected)", {silent = true})
+      vim.keymap.set("n", "<leader>r", "<Plug>(coc-codeaction-refactor-selected)", {silent = true})
+      
+      -- Run the Code Lens action on the current line
+      vim.keymap.set("n", "<leader>cl", "<Plug>(coc-codelens-action)", {silent = true})
+
+      -- Add commands
+      vim.api.nvim_create_user_command("Format", "call CocAction('format')", {})
+      vim.api.nvim_create_user_command("OR", "call CocActionAsync('runCommand', 'editor.action.organizeImport')", {})
+
+      -- CoCList mappings
+      vim.keymap.set("n", "<space>a", ":<C-u>CocList diagnostics<cr>", {silent = true, nowait = true})
+      vim.keymap.set("n", "<space>e", ":<C-u>CocList extensions<cr>", {silent = true, nowait = true})
+      vim.keymap.set("n", "<space>c", ":<C-u>CocList commands<cr>", {silent = true, nowait = true})
+      vim.keymap.set("n", "<space>o", ":<C-u>CocList outline<cr>", {silent = true, nowait = true})
+      vim.keymap.set("n", "<space>s", ":<C-u>CocList -I symbols<cr>", {silent = true, nowait = true})
+      vim.keymap.set("n", "<space>j", ":<C-u>CocNext<CR>", {silent = true, nowait = true})
+      vim.keymap.set("n", "<space>k", ":<C-u>CocPrev<CR>", {silent = true, nowait = true})
+      vim.keymap.set("n", "<space>p", ":<C-u>CocListResume<CR>", {silent = true, nowait = true})
+    end
   },
 
   -- Treesitter
