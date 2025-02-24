@@ -96,17 +96,35 @@ return {
 
   -- Treesitter
   {
-    "nvim-treesitter/nvim-treesitter",
-    build = ":TSUpdate",
-    event = { "BufReadPost", "BufNewFile" },
-    config = function()
-      require("nvim-treesitter.configs").setup({
-        ensure_installed = { "lua", "vim", "vimdoc" },
-        auto_install = true,
-        highlight = { enable = true },
-      })
-    end,
-  },
+      "nvim-treesitter/nvim-treesitter",
+      build = ":TSUpdate",
+      event = { "BufReadPost", "BufNewFile" },
+      dependencies = {
+        "nvim-treesitter/nvim-treesitter-context",
+      },
+      config = function()
+        require("nvim-treesitter.configs").setup({
+          ensure_installed = { "lua", "vim", "vimdoc" },
+          auto_install = true,
+          highlight = { enable = true },
+        })
+        require('treesitter-context').setup{
+          enable = true, -- Enable this plugin (Can be enabled/disabled later via commands)
+          multiwindow = false, -- Enable multiwindow support.
+          max_lines = 10, -- How many lines the window should span. Values <= 0 mean no limit.
+          min_window_height = 5, -- Minimum editor window height to enable context. Values <= 0 mean no limit.
+          line_numbers = true,
+          multiline_threshold = 1000, -- Maximum number of lines to show for a single context
+          trim_scope = 'outer', -- Which context lines to discard if `max_lines` is exceeded. Choices: 'inner', 'outer'
+          mode = 'cursor',  -- Line used to calculate context. Choices: 'cursor', 'topline'
+          -- Separator between context and content. Should be a single character string, like '-'.
+          -- When separator is set, the context will only show up when there are at least 2 lines above cursorline.
+          separator = nil,
+          zindex = 20, -- The Z-index of the context window
+          on_attach = nil, -- (fun(buf: integer): boolean) return false to disable attaching
+        }
+      end,
+    },
   { "nvim-treesitter/nvim-treesitter-textobjects", dependencies = { "nvim-treesitter/nvim-treesitter" } },
 
   -- Telescope and dependencies
@@ -224,15 +242,41 @@ return {
     end,
   },
 
-  -- Debug Adapter Protocol
+  -- Debug Adapter Protocol configuration has been moved to lua/plugins/dap.lua
   {
-    "mfussenegger/nvim-dap",
-    dependencies = {
-      "theHamsta/nvim-dap-virtual-text",
-      "nvim-telescope/telescope-dap.nvim",
-      "rcarriga/nvim-dap-ui",
-      "nvim-neotest/nvim-nio",
+    "yetone/avante.nvim",
+    build = "make",
+    config = function()
+      require('avante').setup({
+        transparent = true,
+        -- Disable the window feature that's causing the error
+        -- disable_window = true,
+        windows = {
+          width = 50
+        }
+      })
+    end,
+  },
+  {
+    "hat0uma/csvview.nvim",
+    ---@module "csvview"
+    ---@type CsvView.Options
+    opts = {
+      parser = { comments = { "#", "//" } },
+      keymaps = {
+        -- Text objects for selecting fields
+        textobject_field_inner = { "if", mode = { "o", "x" } },
+        textobject_field_outer = { "af", mode = { "o", "x" } },
+        -- Excel-like navigation:
+        -- Use <Tab> and <S-Tab> to move horizontally between fields.
+        -- Use <Enter> and <S-Enter> to move vertically between rows and place the cursor at the end of the field.
+        -- Note: In terminals, you may need to enable CSI-u mode to use <S-Tab> and <S-Enter>.
+        jump_next_field_end = { "<Tab>", mode = { "n", "v" } },
+        jump_prev_field_end = { "<S-Tab>", mode = { "n", "v" } },
+        jump_next_row = { "<Enter>", mode = { "n", "v" } },
+        jump_prev_row = { "<S-Enter>", mode = { "n", "v" } },
+      },
     },
-    cmd = { "DapToggleBreakpoint", "DapContinue" },
+    cmd = { "CsvViewEnable", "CsvViewDisable", "CsvViewToggle" },
   },
 } 
