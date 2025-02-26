@@ -1,16 +1,5 @@
 return {
   {
-    "yetone/avante.nvim",
-    build = "make",
-    config = function()
-      require('avante').setup({
-        transparent = true,
-        -- Disable the window feature that's causing the error
-        disable_window = true,
-      })
-    end,
-  },
-  {
     "rose-pine/neovim",
     name = "rose-pine",
     config = function()
@@ -32,6 +21,30 @@ return {
       vim.g.gruvbox_material_transparent_background = 1
       vim.g.gruvbox_material_diagnostic_text_highlight = 1
       vim.g.gruvbox_material_diagnostic_line_highlight = 1
+    end,
+  },
+  {
+    "slugbyte/lackluster.nvim",
+    config = function()
+      require('lackluster').setup({
+        transparent = true,
+      })
+    end,
+  },
+  {
+    "thesimonho/kanagawa-paper.nvim",
+    config = function()
+      require('kanagawa-paper').setup({
+        transparent = true,
+      })
+    end,
+  },
+  {
+    "vague2k/vague.nvim",
+    config = function()
+      require('vague').setup({
+        transparent = true,
+      })
     end,
   },
   { 
