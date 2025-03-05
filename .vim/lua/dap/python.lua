@@ -37,33 +37,6 @@ function M.setup(dap)
       subProcess = true,
     },
     {
-      -- FastAPI configuration
-      type = 'python',
-      request = 'launch',
-      name = 'FastAPI',
-      program = function()
-        return vim.fn.input('Path to FastAPI app file: ', vim.fn.getcwd() .. '/main.py', 'file')
-      end,
-      args = { },
-      pythonPath = function()
-        -- Try to find poetry venv
-        local poetry_venv = '/Users/daiego/Library/Caches/pypoetry/virtualenvs/corrogo-bwpqepX3-py3.12/bin/python'
-        if vim.fn.executable(poetry_venv) == 1 then
-          return poetry_venv
-        end
-        return '/usr/bin/python3'
-      end,
-      console = 'integratedTerminal',
-      justMyCode = false,
-      env = {
-        PYTHONPATH = "${workspaceFolder}",
-        PORT = "8000"
-      },
-      showReturnValue = true,
-      redirectOutput = true,
-      stopOnEntry = false,
-    },
-    {
       -- FastAPI Test configuration
       type = 'python',
       request = 'launch',
@@ -89,7 +62,42 @@ function M.setup(dap)
       showReturnValue = true,
       redirectOutput = true,
       stopOnEntry = false,
-    }
+    },
+    {
+      -- FastAPI configuration
+      type = 'python',
+      request = 'launch',
+      name = 'FastAPI',
+      module = 'uvicorn',
+      args = function()
+        return {
+          'main:app',
+          '--port',
+          '3001',
+          '--host',
+          '0.0.0.0',
+          -- '--reload',
+        }
+      end,
+      pythonPath = function()
+        -- Try to find venv relative to current file
+        local relative_venv = vim.fn.getcwd() .. '/venv/bin/python'
+        if vim.fn.executable(relative_venv) == 1 then
+          return relative_venv
+        end
+        -- Fallback to system python
+        return '/usr/bin/python3'
+      end,
+      console = 'integratedTerminal',
+      justMyCode = false,
+      env = {
+        PYTHONPATH = "${workspaceFolder}",
+      },
+      subProcess = true,
+      showReturnValue = true,
+      redirectOutput = true,
+      stopOnEntry = false,
+    },
   }
 end
 
