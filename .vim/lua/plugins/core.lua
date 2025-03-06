@@ -141,6 +141,7 @@ return {
       { "<leader>f", "<cmd>Telescope find_files<cr>", desc = "Find Files" },
       { "<leader>g", "<cmd>Telescope live_grep<cr>", desc = "Live Grep" },
       { "<leader>b", "<cmd>Telescope buffers<cr>", desc = "Buffers" },
+      { "<leader>tt", "<cmd>Telescope file_browser path=%:p:h<cr>", desc = "File Browser (current dir)" },
     },
   },
   { "ibhagwan/fzf-lua", branch = "main" },
