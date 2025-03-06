@@ -73,7 +73,7 @@ function M.setup(dap)
         return {
           'main:app',
           '--port',
-          '3001',
+          '3000',
           '--host',
           '0.0.0.0',
           -- '--reload',
@@ -85,14 +85,31 @@ function M.setup(dap)
         if vim.fn.executable(relative_venv) == 1 then
           return relative_venv
         end
-        -- Fallback to system python
+        vim.notify("Could not find venv using system's default")
         return '/usr/bin/python3'
       end,
       console = 'integratedTerminal',
       justMyCode = false,
-      env = {
-        PYTHONPATH = "${workspaceFolder}",
-      },
+      env = function()
+        -- Try to load .env file from workspace
+        local env = { PYTHONPATH = "${workspaceFolder}" }  -- Keep the default PYTHONPATH
+        local env_file = io.open(vim.fn.getcwd() .. "/.env", "r")
+        if env_file then
+          for line in env_file:lines() do
+            -- Skip comments and empty lines
+            if not line:match("^%s*#") and line:match("%S") then
+              local key, value = line:match("^%s*(%S+)%s*=%s*(.+)%s*$")
+              if key and value then
+                -- Remove quotes if they exist
+                value = value:gsub("^[\"'](.+)[\"']$", "%1")
+                env[key] = value
+              end
+            end
+          end
+          env_file:close()
+        end
+        return env
+      end,
       subProcess = true,
       showReturnValue = true,
       redirectOutput = true,

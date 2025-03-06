@@ -63,39 +63,43 @@ function M.setup(dap)
       }
     },
     {
-      -- Remote debugging
+      -- NPM Start debugging
       type = "pwa-node",
-      request = "attach",
-      name = "Attach to Remote",
-      address = function()
-        return vim.fn.input('Host [localhost]: ') or 'localhost'
-      end,
-      port = function()
-        return tonumber(vim.fn.input('Port [9229]: ')) or 9229
-      end,
-      remoteRoot = function()
-        return vim.fn.input('Remote root directory: ')
-      end,
-      localRoot = "${workspaceFolder}",
+      request = "launch",
+      name = "Debug NPM Start",
+      runtimeExecutable = "npm",
+      runtimeArgs = { "start" },
+      cwd = "${workspaceFolder}",
+      port = 3000,
+      console = "integratedTerminal",
+      internalConsoleOptions = "neverOpen",
       sourceMaps = true,
       protocol = "inspector",
+      skipFiles = { "<node_internals>/**" },
       resolveSourceMapLocations = {
         "${workspaceFolder}/**",
         "!**/node_modules/**"
       },
-    },
-    {
-      -- Process attach
-      type = "pwa-node",
-      request = "attach",
-      name = "Attach to Process",
-      processId = require('dap.utils').pick_process,
-      cwd = "${workspaceFolder}",
-      sourceMaps = true,
-      resolveSourceMapLocations = {
-        "${workspaceFolder}/**",
-        "!**/node_modules/**"
-      },
+      env = function()
+        -- Try to load .env file from workspace
+        local env = {}
+        local env_file = io.open(vim.fn.getcwd() .. "/.env", "r")
+        if env_file then
+          for line in env_file:lines() do
+            -- Skip comments and empty lines
+            if not line:match("^%s*#") and line:match("%S") then
+              local key, value = line:match("^%s*(%S+)%s*=%s*(.+)%s*$")
+              if key and value then
+                -- Remove quotes if they exist
+                value = value:gsub("^[\"'](.+)[\"']$", "%1")
+                env[key] = value
+              end
+            end
+          end
+          env_file:close()
+        end
+        return env
+      end
     }
   }
 

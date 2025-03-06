@@ -100,23 +100,42 @@ function M.setup(dap)
     },
     {
       type = "go",
-      name = "Attach",
-      mode = "local",
-      request = "attach",
-      processId = require('dap.utils').pick_process,
-    },
-    {
-      type = "go",
-      name = "Remote Attach",
-      mode = "remote",
-      request = "attach",
-      port = function()
-        return tonumber(vim.fn.input('Port: '))
+      name = "Debug Server",
+      request = "launch",
+      program = "${workspaceFolder}",
+      args = function()
+        local default_args = {}
+        local args_str = vim.fn.input('Server arguments (optional): ')
+        if args_str ~= '' then
+          for arg in args_str:gmatch("%S+") do
+            table.insert(default_args, arg)
+          end
+        end
+        return default_args
       end,
-      host = function()
-        return vim.fn.input('Host: ')
+      mode = "debug",
+      env = function()
+        -- Try to load .env file from workspace
+        local env = {}
+        local env_file = io.open(vim.fn.getcwd() .. "/.env", "r")
+        if env_file then
+          for line in env_file:lines() do
+            -- Skip comments and empty lines
+            if not line:match("^%s*#") and line:match("%S") then
+              local key, value = line:match("^%s*(%S+)%s*=%s*(.+)%s*$")
+              if key and value then
+                -- Remove quotes if they exist
+                value = value:gsub("^[\"'](.+)[\"']$", "%1")
+                env[key] = value
+              end
+            end
+          end
+          env_file:close()
+        end
+        return env
       end,
-    },
+      buildFlags = "-tags=integration"
+    }
   }
 end
 
