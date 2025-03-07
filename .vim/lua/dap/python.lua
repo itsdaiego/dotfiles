@@ -115,6 +115,32 @@ function M.setup(dap)
       redirectOutput = true,
       stopOnEntry = false,
     },
+    {
+      -- Python Script configuration
+      type = 'python',
+      request = 'launch',
+      name = 'Python: Current File',
+      program = "${file}",
+      pythonPath = function()
+        local poetry_venv = '/Users/daiego/Library/Caches/pypoetry/virtualenvs/corrogo-bwpqepX3-py3.12/bin/python'
+        if vim.fn.executable(poetry_venv) == 1 then
+          return poetry_venv
+        end
+        local relative_venv = vim.fn.getcwd() .. '/venv/bin/python'
+        if vim.fn.executable(relative_venv) == 1 then
+          return relative_venv
+        end
+        return '/usr/bin/python3'
+      end,
+      console = 'integratedTerminal',
+      justMyCode = false,
+      env = {
+        PYTHONPATH = "${workspaceFolder}"
+      },
+      showReturnValue = true,
+      redirectOutput = true,
+      stopOnEntry = false,
+    }
   }
 end
 
