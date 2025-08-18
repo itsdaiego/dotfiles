@@ -1,0 +1,88 @@
+// Zed keymap
+//
+// For information on binding keys, see the Zed
+// documentation: https://zed.dev/docs/key-bindings
+//
+// To see the default key bindings run `zed: open default keymap`
+// from the command palette.
+[
+    {
+        "context": "Workspace",
+        "bindings": {
+            // "shift shift": "file_finder::Toggle"
+            "cmd-.": "zed::OpenKeymap",
+            "cmd-t": "terminal_panel::ToggleFocus",
+            ", d r": "debugger::Restart",
+            ", t t": "workspace::ToggleZoom"
+        }
+    },
+    {
+        "context": "Editor",
+        "bindings": {
+            "cmd-enter": "assistant::InlineAssist"
+        }
+    },
+
+    {
+        "context": "Editor && vim_mode == insert && !menu",
+        "bindings": {
+            "j j": "vim::SwitchToNormalMode"
+        }
+    },
+    {
+        "context": "Editor && vim_mode == normal",
+        "bindings": {
+            ", d b": "editor::ToggleBreakpoint",
+            ", d c": "debugger::Continue",
+            ", d n": "debugger::StepOver",
+            ", t n": "debugger::Start",
+            ", f": "file_finder::Toggle",
+            ", g": "pane::DeploySearch",
+            "g r": "editor::FindAllReferences"
+        }
+    },
+    {
+        "context": "Editor && vim_mode == normal",
+        "bindings": {
+            ", d u": "workspace::ToggleBottomDock"
+        }
+    },
+    {
+      "context": "Workspace",
+      "bindings": {
+        "cmd-shift-r": [
+          "projects::OpenRecent",
+          {
+            "create_new_window": false
+          }
+        ]
+      }
+    },
+    {
+      "context": "Workspace",
+      "bindings": {
+        "cmd-shift-o": [
+          "projects::OpenRecent",
+          {
+            "create_new_window": false
+          }
+        ]
+      }
+    },
+    {
+      "context": "Workspace",
+      "bindings": {
+        "cmd-shift-r": [
+          "projects::OpenRecent",
+          {
+            "create_new_window": false
+          }
+        ]
+      }
+    },
+    {
+      "bindings": {
+        "cmd-enter": "workspace::ToggleZoom"
+      }
+    }
+]
