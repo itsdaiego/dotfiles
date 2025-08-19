@@ -1,5 +1,63 @@
 local M = {}
 
+-- Dynamic Python path detection (shared with python.lua)
+local function find_python_executable()
+    local cwd = vim.fn.getcwd()
+    
+    -- 1. Check for .venv in current directory
+    local local_venv = cwd .. '/.venv/bin/python'
+    if vim.fn.executable(local_venv) == 1 then
+        return local_venv
+    end
+    
+    -- 2. Check for venv in current directory
+    local local_venv_alt = cwd .. '/venv/bin/python'
+    if vim.fn.executable(local_venv_alt) == 1 then
+        return local_venv_alt
+    end
+    
+    -- 3. Try to detect Poetry virtualenv
+    local handle = io.popen("cd " .. cwd .. " && poetry env info --path 2>/dev/null")
+    if handle then
+        local poetry_path = handle:read("*a"):gsub("%s+", "")
+        handle:close()
+        if poetry_path ~= "" then
+            local poetry_python = poetry_path .. '/bin/python'
+            if vim.fn.executable(poetry_python) == 1 then
+                return poetry_python
+            end
+        end
+    end
+    
+    -- 4. Check common Poetry cache locations for known projects
+    local poetry_patterns = {
+        '/Users/daiego/Library/Caches/pypoetry/virtualenvs/corrogo-*/bin/python',
+        '/Users/daiego/Library/Caches/pypoetry/virtualenvs/erp-gateway-*/bin/python',
+        '/Users/daiego/Library/Caches/pypoetry/virtualenvs/shipwell-*/bin/python'
+    }
+    
+    for _, pattern in ipairs(poetry_patterns) do
+        local expanded = vim.fn.glob(pattern)
+        if expanded ~= "" then
+            local paths = vim.split(expanded, '\n')
+            for _, path in ipairs(paths) do
+                if vim.fn.executable(path) == 1 then
+                    return path
+                end
+            end
+        end
+    end
+    
+    -- 5. Try pyenv if available
+    local pyenv_python = vim.fn.expand("~/.pyenv/versions/3.10.0/bin/python3")
+    if vim.fn.executable(pyenv_python) == 1 then
+        return pyenv_python
+    end
+    
+    -- 6. Fallback to system python
+    return '/usr/bin/python3'
+end
+
 local function detect_python_test(node, ts_utils)
   local is_pytest = false
   local test_func, test_class
@@ -122,13 +180,7 @@ function M.run_nearest_test(dap)
         name = 'FastAPI Test',
         module = 'pytest',
         args = { test_path },
-        pythonPath = function()
-          local poetry_venv = '/Users/daiego/Library/Caches/pypoetry/virtualenvs/corrogo-bwpqepX3-py3.12/bin/python'
-          if vim.fn.executable(poetry_venv) == 1 then
-            return poetry_venv
-          end
-          return '/usr/bin/python3'
-        end,
+        pythonPath = find_python_executable,
         console = 'integratedTerminal',
         justMyCode = false,
         env = {
@@ -161,19 +213,12 @@ function M.run_nearest_test(dap)
         request = 'launch',
         name = 'Django Test',
         program = vim.fn.getcwd() .. "/shipwell_backend/manage.py",
+        -- program = vim.fn.getcwd() .. "/admin_buy/manage.py",
         args = { 'test', test_path, '--failfast', '--keepdb' },
         django = true,
         justMyCode = false,
         console = 'integratedTerminal',
-        pythonPath = function()
-          local poetry_venv = '/Users/daiego/Documents/code-stuff/shipwell/backend-core/.venv/bin/python'
-          if vim.fn.executable(poetry_venv) == 1 then
-            return poetry_venv
-          end
-          vim.notify("Did not found venv")
-          vim.fn.getchar()
-          return '/usr/bin/python3'
-        end,
+        pythonPath = find_python_executable,
         cwd = vim.fn.getcwd(),
         purpose = { "debug-test" },
         postDebugTask = "stopDebugging",
