@@ -47,13 +47,13 @@ local function find_python_executable()
             end
         end
     end
-    
+
     -- 5. Try pyenv if available
     local pyenv_python = vim.fn.expand("~/.pyenv/versions/3.10.0/bin/python3")
     if vim.fn.executable(pyenv_python) == 1 then
         return pyenv_python
     end
-    
+
     -- 6. Fallback to system python
     return '/usr/bin/python3'
 end
