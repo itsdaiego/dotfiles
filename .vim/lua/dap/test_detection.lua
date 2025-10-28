@@ -47,32 +47,57 @@ local function find_python_executable()
             end
         end
     end
-
+    
     -- 5. Try pyenv if available
     local pyenv_python = vim.fn.expand("~/.pyenv/versions/3.10.0/bin/python3")
     if vim.fn.executable(pyenv_python) == 1 then
         return pyenv_python
     end
-
+    
     -- 6. Fallback to system python
     return '/usr/bin/python3'
 end
 
+local function is_django_project()
+  local cwd = vim.fn.getcwd()
+  -- Check for manage.py in project root or common Django locations
+  local possible_paths = {
+    cwd .. '/manage.py',
+    cwd .. '/shipwell_backend/manage.py',
+    cwd .. '/admin_buy/manage.py',
+  }
+
+  for _, path in ipairs(possible_paths) do
+    if vim.fn.filereadable(path) == 1 then
+      return true, path
+    end
+  end
+
+  return false, nil
+end
+
 local function detect_python_test(node, ts_utils)
-  local is_pytest = false
   local test_func, test_class
+  local has_unittest_import = false
+
+  -- Check file imports to help determine test framework
+  local bufnr = vim.api.nvim_get_current_buf()
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, 50, false)
+  for _, line in ipairs(lines) do
+    if line:match("from%s+django") or line:match("import%s+django") then
+      has_unittest_import = true
+      break
+    elseif line:match("import%s+pytest") or line:match("from%s+pytest") then
+      has_unittest_import = false
+      break
+    end
+  end
 
   while node do
     if node:type() == "function_definition" then
       local name_node = node:child(1)
       if name_node then
         local func_name = ts_utils.get_node_text(name_node)[1]
-        -- pytest starts with "async def" so we need to check for the next node
-        if func_name == "def" then
-          is_pytest = true
-          func_name = ts_utils.get_node_text(node:child(2))[1]
-        end
-        vim.notify(func_name, vim.log.levels.INFO)
         if vim.startswith(func_name, "test_") then
           test_func = func_name
         end
@@ -83,6 +108,10 @@ local function detect_python_test(node, ts_utils)
     end
     node = node:parent()
   end
+
+  -- Determine if pytest based on project structure and imports
+  local is_django, _ = is_django_project()
+  local is_pytest = not (is_django and has_unittest_import)
 
   return test_func, test_class, is_pytest
 end
@@ -204,6 +233,32 @@ function M.run_nearest_test(dap)
         }
       })
     else
+      -- Django test
+      local is_django, manage_py_path = is_django_project()
+
+      if not is_django or not manage_py_path then
+        vim.notify("No manage.py found. Falling back to pytest.", vim.log.levels.WARN)
+
+        -- Fallback to pytest
+        local file_path = vim.fn.expand('%:p')
+        local test_path = test_class
+          and string.format('%s::%s::%s', file_path, test_class, test_func)
+          or string.format('%s::%s', file_path, test_func)
+
+        dap.run({
+          type = 'python',
+          request = 'launch',
+          name = 'Pytest Test (Fallback)',
+          module = 'pytest',
+          args = { test_path },
+          pythonPath = find_python_executable,
+          console = 'integratedTerminal',
+          justMyCode = false,
+          env = { PYTHONPATH = "${workspaceFolder}" },
+        })
+        return
+      end
+
       local test_path = string.format('%s.%s.%s', vim.fn.expand('%:r'):gsub('/', '.'), test_class, test_func)
       test_path = test_path:gsub('shipwell_backend.', '')
       vim.notify(string.format("Running Django test: %s", test_path), vim.log.levels.INFO)
@@ -212,8 +267,7 @@ function M.run_nearest_test(dap)
         type = 'python',
         request = 'launch',
         name = 'Django Test',
-        program = vim.fn.getcwd() .. "/shipwell_backend/manage.py",
-        -- program = vim.fn.getcwd() .. "/admin_buy/manage.py",
+        program = manage_py_path,
         args = { 'test', test_path, '--failfast', '--keepdb' },
         django = true,
         justMyCode = false,

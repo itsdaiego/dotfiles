@@ -39,11 +39,20 @@ function M.setup(dap)
             console = 'integratedTerminal',
             cwd = '${workspaceFolder}',
             program = function()
-                return vim.fn.expand('%:p')
+                local current_file = vim.fn.expand('%:p')
+                local file_input = vim.fn.input('File to debug [' .. vim.fn.fnamemodify(current_file, ':t') .. ']: ')
+                if file_input == '' then
+                    return current_file
+                end
+                -- If relative path, make it absolute
+                if not file_input:match('^/') then
+                    return vim.fn.getcwd() .. '/' .. file_input
+                end
+                return file_input
             end,
             python = function()
                 local cwd = vim.fn.getcwd()
-                local handle = io.popen(string.format('cd "%s" && rcc task script --silent -- python -c "import sys; print(sys.executable)" 2>&1 | head -1', cwd))
+                local handle = io.popen(string.format('cd "%s" && rcc task script -- python -c "import sys; print(sys.executable)" 2>&1 | head -1', cwd))
                 local python_path = handle:read("*a"):gsub("%s+", "")
                 handle:close()
 
@@ -121,6 +130,71 @@ function M.setup(dap)
                     handle:close()
                 end
                 return env_vars
+            end,
+            justMyCode = false,
+        },
+        {
+            type = 'python',
+            request = 'launch',
+            name = 'UV: Debug File (default src/task.py)',
+            console = 'integratedTerminal',
+            cwd = '${workspaceFolder}',
+            program = function()
+                local default_file = 'src/task.py'
+                local cwd = vim.fn.getcwd()
+                local current_file = vim.fn.expand('%:p')
+
+                -- Check if default file exists
+                local full_default = cwd .. '/' .. default_file
+                local default_exists = vim.fn.filereadable(full_default) == 1
+
+                -- Determine the best default to show
+                local suggested_file
+                if default_exists then
+                    suggested_file = default_file
+                else
+                    suggested_file = vim.fn.fnamemodify(current_file, ':.')
+                end
+
+                local file_input = vim.fn.input('File to debug [' .. suggested_file .. ']: ')
+
+                if file_input == '' then
+                    if default_exists then
+                        return full_default
+                    else
+                        return current_file
+                    end
+                end
+
+                -- If relative path, make it absolute
+                if not file_input:match('^/') then
+                    return cwd .. '/' .. file_input
+                end
+                return file_input
+            end,
+            python = function()
+                local cwd = vim.fn.getcwd()
+                -- Get the Python interpreter that uv would use
+                local handle = io.popen(string.format('cd "%s" && uv run python -c "import sys; print(sys.executable)" 2>&1', cwd))
+                local python_path = handle:read("*a"):gsub("%s+", "")
+                handle:close()
+
+                if python_path ~= "" and python_path:match("^/") then
+                    return python_path
+                else
+                    return "python3"
+                end
+            end,
+            args = function()
+                local args_input = vim.fn.input('Arguments (optional): ')
+                if args_input ~= '' then
+                    local args = {}
+                    for arg in args_input:gmatch("%S+") do
+                        table.insert(args, arg)
+                    end
+                    return args
+                end
+                return {}
             end,
             justMyCode = false,
         },
