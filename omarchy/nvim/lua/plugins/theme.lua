@@ -1,0 +1,1 @@
+/home/daiego/.config/omarchy/current/theme/neovim.lua
