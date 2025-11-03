@@ -8,11 +8,7 @@ return {
       "nvim-neotest/nvim-nio",
       "mfussenegger/nvim-dap-python",
       "nvim-treesitter/nvim-treesitter",
-      {
-        "microsoft/vscode-js-debug",
-        version = "v1.74.1",
-        build = "npm install --legacy-peer-deps --no-optional && npx gulp vsDebugServerBundle && mkdir -p out && cp -r dist/* out/"
-      },
+      "jay-babu/mason-nvim-dap.nvim",
     },
     keys = {
       { "<Leader>dc", function() require("dap").continue() end, desc = "Debug: Continue" },
@@ -58,18 +54,69 @@ return {
         virt_text_win_col = nil
       })
 
-      -- Load language specific configurations
-      require('dap.javascript').setup(dap)
-      require('dap.python').setup(dap)
-      require('dap.go').setup(dap)
+      -- Setup mason-nvim-dap without automatic installation (Mason handles that)
+      require("mason-nvim-dap").setup({
+        automatic_installation = false,
+        handlers = {},
+      })
+
+      -- Configure Python adapter using Mason's debugpy-adapter wrapper
+      local mason_path = vim.fn.stdpath("data") .. "/mason/bin/debugpy-adapter"
+      dap.adapters.python = {
+        type = "executable",
+        command = mason_path,
+        args = {},
+      }
+
+      -- Configure JavaScript/TypeScript adapters using Mason's js-debug-adapter
+      local js_debug_path = vim.fn.stdpath("data") .. "/mason/packages/js-debug-adapter/js-debug/src/dapDebugServer.js"
+      dap.adapters["pwa-node"] = {
+        type = "server",
+        host = "localhost",
+        port = "${port}",
+        executable = {
+          command = "node",
+          args = { js_debug_path, "${port}" },
+        },
+      }
+      dap.adapters["pwa-chrome"] = dap.adapters["pwa-node"]
+      dap.adapters["node2"] = dap.adapters["pwa-node"]
+      dap.adapters["node"] = dap.adapters["pwa-node"]
+
+      -- Basic JavaScript/TypeScript configurations (will be extended by dap.javascript.setup)
+      -- Create separate tables for each filetype to avoid duplicate entries
+      local base_js_config = {
+        {
+          type = "pwa-node",
+          request = "launch",
+          name = "Launch file",
+          program = "${file}",
+          cwd = "${workspaceFolder}",
+        },
+      }
+      dap.configurations.javascript = vim.deepcopy(base_js_config)
+      dap.configurations.typescript = vim.deepcopy(base_js_config)
+      dap.configurations.javascriptreact = vim.deepcopy(base_js_config)
+      dap.configurations.typescriptreact = vim.deepcopy(base_js_config)
+
+      -- Setup dap-python with Mason's debugpy
+      require('dap-python').setup(vim.fn.stdpath("data") .. "/mason/packages/debugpy/venv/bin/python")
+      
+      -- Defer custom setup calls to add additional configurations (like the Telescope process picker)
+      vim.defer_fn(function()
+        -- Custom configurations for JavaScript (adds the filterable attach for backend services)
+        require('dap.javascript').setup(dap)
+        
+        -- Custom configurations for Python and Go
+        require('dap.python').setup(dap)
+        require('dap.go').setup(dap)
+      end, 100)
 
       dapui.setup({
         layouts = {
           { elements = {
               { id = "scopes", size = 0.5 },
               { id = "repl", size = 0.5 },
-              -- { id = "stacks", size = 0.25 },
-              -- { id = "watches", size = 0.25 },
             },
             position = "left",
             size = 60
@@ -95,7 +142,6 @@ return {
         vim.cmd('silent! lua require("nvim-dap-virtual-text").refresh()')
       end
 
-      -- dap.listeners.after.event_terminated["dapui_config"] = close_dapui
       dap.listeners.after.event_exited["dapui_config"] = close_dapui
       dap.listeners.after.disconnect["dapui_config"] = close_dapui
 
@@ -112,7 +158,18 @@ return {
       vim.fn.sign_define('DapBreakpointCondition', {text='🔍', texthl='', linehl='', numhl=''})
       vim.fn.sign_define('DapStopped', {text='👉', texthl='', linehl='', numhl=''})
 
-      require('telescope').load_extension('dap')
+      -- Load telescope-dap extension with error handling and deferral
+      vim.defer_fn(function()
+        local ok, telescope = pcall(require, 'telescope')
+        if ok then
+          local ext_ok, err = pcall(telescope.load_extension, 'dap')
+          if not ext_ok then
+            vim.notify("Failed to load telescope-dap extension: " .. tostring(err), vim.log.levels.WARN)
+          end
+        else
+          vim.notify("Telescope not available, skipping dap extension", vim.log.levels.DEBUG)
+        end
+      end, 100)
     end,
   }
-} 
+}

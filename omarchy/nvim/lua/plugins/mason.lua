@@ -2,6 +2,7 @@ return {
   "williamboman/mason.nvim",
   dependencies = {
     "williamboman/mason-registry",
+    "jay-babu/mason-nvim-dap.nvim",
   },
   cmd = "Mason",
   opts = {
@@ -29,4 +30,4 @@ return {
       end
     end
   end,
-} 
+}

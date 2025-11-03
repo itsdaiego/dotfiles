@@ -66,13 +66,18 @@ vim.opt.relativenumber = true
 vim.opt.tabstop = 2
 vim.opt.shiftwidth = 2
 vim.opt.expandtab = true
-vim.opt.timeoutlen = 1000
+vim.opt.timeoutlen = 300
 vim.opt.list = true
 vim.opt.listchars = {
   tab = "✝ ",
   trail = "·",
   eol = "↲"
 }
+
+-- Folding settings
+vim.opt.foldmethod = "manual"  -- Use manual folding (zf to create folds)
+vim.opt.foldlevelstart = 99    -- Start with all folds open
+vim.opt.foldenable = true      -- Enable folding
 
 -- Keep cursor shape consistent (block) in all modes
 vim.opt.guicursor = ""
