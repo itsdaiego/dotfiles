@@ -31,9 +31,9 @@ local function find_python_executable()
     
     -- 4. Check common Poetry cache locations for known projects
     local poetry_patterns = {
-        '/Users/daiego/Library/Caches/pypoetry/virtualenvs/corrogo-*/bin/python',
-        '/Users/daiego/Library/Caches/pypoetry/virtualenvs/erp-gateway-*/bin/python',
-        '/Users/daiego/Library/Caches/pypoetry/virtualenvs/shipwell-*/bin/python'
+        '/home/daiego/Library/Caches/pypoetry/virtualenvs/corrogo-*/bin/python',
+        '/home/daiego/Library/Caches/pypoetry/virtualenvs/erp-gateway-*/bin/python',
+        '/home/daiego/Library/Caches/pypoetry/virtualenvs/shipwell-*/bin/python'
     }
     
     for _, pattern in ipairs(poetry_patterns) do

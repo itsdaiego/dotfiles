@@ -75,19 +75,9 @@ vim.opt.listchars = {
 }
 
 -- Folding settings
-vim.opt.foldmethod = "expr"  -- Use Treesitter for folding
-vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+vim.opt.foldmethod = "manual"  -- Use manual folding (zf to create folds)
 vim.opt.foldlevelstart = 99    -- Start with all folds open
 vim.opt.foldenable = true      -- Enable folding
-
--- Autocommand to ensure folding works after file is loaded
-vim.api.nvim_create_autocmd({"BufReadPost", "BufNewFile"}, {
-  pattern = "*",
-  callback = function()
-    vim.opt_local.foldmethod = "expr"
-    vim.opt_local.foldexpr = "v:lua.vim.treesitter.foldexpr()"
-  end,
-})
 
 -- Keep cursor shape consistent (block) in all modes
 vim.opt.guicursor = ""

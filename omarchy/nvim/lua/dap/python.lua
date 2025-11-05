@@ -1,5 +1,33 @@
 local M = {}
 
+-- Helper function to get the active Python interpreter
+local function get_python_path()
+    -- 1. Check for VIRTUAL_ENV environment variable
+    if vim.env.VIRTUAL_ENV then
+        return vim.env.VIRTUAL_ENV .. '/bin/python'
+    end
+    
+    -- 2. Check for .venv in current working directory
+    local cwd = vim.fn.getcwd()
+    local venv_python = cwd .. '/.venv/bin/python'
+    if vim.fn.executable(venv_python) == 1 then
+        return venv_python
+    end
+    
+    -- 3. Try uv to get the Python path
+    local handle = io.popen('cd "' .. cwd .. '" && uv run python -c "import sys; print(sys.executable)" 2>/dev/null')
+    if handle then
+        local uv_python = handle:read("*a"):gsub("%s+", "")
+        handle:close()
+        if uv_python ~= "" and uv_python:match("^/") then
+            return uv_python
+        end
+    end
+    
+    -- 4. Fall back to system python3
+    return vim.fn.exepath('python3') or 'python3'
+end
+
 function M.setup(dap)
     -- nvim-dap-python already provides:
     -- - "Python: Current File"
@@ -9,6 +37,16 @@ function M.setup(dap)
     
     -- We only need to add remote server attach (for debugging running servers like FastAPI)
     local custom_configs = {
+        {
+            type = 'python',
+            request = 'launch',
+            name = 'Python: Current File (Auto-detect venv)',
+            program = '${file}',
+            console = 'integratedTerminal',
+            cwd = '${workspaceFolder}',
+            python = get_python_path,
+            justMyCode = false,
+        },
         {
             type = 'python',
             request = 'attach',
@@ -203,6 +241,14 @@ function M.setup(dap)
     -- Extend existing configurations
     vim.defer_fn(function()
         if dap.configurations.python then
+            -- Update the default "Launch file" configuration to use active venv
+            for _, config in ipairs(dap.configurations.python) do
+                if config.name == "Python: Current File" or config.name == "Launch file" then
+                    config.python = get_python_path()
+                end
+            end
+            
+            -- Add custom configurations
             for _, config in ipairs(custom_configs) do
                 table.insert(dap.configurations.python, config)
             end

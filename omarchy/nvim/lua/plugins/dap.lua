@@ -100,7 +100,10 @@ return {
       dap.configurations.typescriptreact = vim.deepcopy(base_js_config)
 
       -- Setup dap-python with Mason's debugpy
-      require('dap-python').setup(vim.fn.stdpath("data") .. "/mason/packages/debugpy/venv/bin/python")
+      -- Use activated virtual environment if available, otherwise fall back to Mason's debugpy
+      local python_path = vim.env.VIRTUAL_ENV and (vim.env.VIRTUAL_ENV .. "/bin/python") 
+        or vim.fn.stdpath("data") .. "/mason/packages/debugpy/venv/bin/python"
+      require('dap-python').setup(python_path)
       
       -- Defer custom setup calls to add additional configurations (like the Telescope process picker)
       vim.defer_fn(function()
