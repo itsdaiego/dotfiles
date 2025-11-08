@@ -1,0 +1,117 @@
+@import "../omarchy/current/theme/waybar.css";
+
+* {
+  color: @foreground;
+  border: none;
+  border-radius: 0;
+  min-height: 40px;
+  font-family: 'Berkeley Mono';
+  font-size: 18px;
+}
+
+window#waybar {
+  background-color: transparent;
+}
+
+#waybar {
+  background-color: transparent;
+}
+
+.modules-left {
+  background-color: @background;
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin: 8px 6px;
+  border: 1px solid alpha(@border, 0.3);
+  box-shadow: 0 0 8px alpha(@border, 0.15);
+}
+
+.modules-center {
+  background-color: @background;
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin: 8px 6px;
+  border: 1px solid alpha(@border, 0.3);
+  box-shadow: 0 0 8px alpha(@border, 0.15);
+}
+
+.modules-right {
+  background-color: @background;
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin: 8px 6px;
+  border: 1px solid alpha(@border, 0.3);
+  box-shadow: 0 0 8px alpha(@border, 0.15);
+}
+
+
+
+#workspaces button {
+  all: initial;
+  padding: 0 6px;
+  margin: 0 1.5px;
+  min-width: 9px;
+}
+
+#workspaces button.empty {
+  opacity: 0.5;
+}
+
+#cpu,
+#memory,
+#battery,
+#pulseaudio,
+#custom-omarchy,
+#custom-screenrecording-indicator,
+#custom-update {
+  min-width: 12px;
+  margin: 0 7.5px;
+}
+
+#tray {
+  margin-right: 16px;
+}
+
+#tray > .passive,
+#tray > .active,
+#tray > .needs-attention {
+  padding: 0 12px;
+}
+
+#bluetooth {
+  margin-right: 17px;
+}
+
+#network {
+  margin-right: 13px;
+}
+
+#custom-expand-icon {
+  margin-right: 20px;
+}
+
+tooltip {
+  padding: 2px;
+}
+
+#custom-update {
+  font-size: 10px;
+}
+
+#clock {
+  margin-left: 8.75px;
+}
+
+.hidden {
+  opacity: 0;
+}
+
+#custom-screenrecording-indicator {
+  min-width: 12px;
+  margin-left: 8.75px;
+  font-size: 10px;
+}
+
+#custom-screenrecording-indicator.active {
+  color: #a55555;
+}
