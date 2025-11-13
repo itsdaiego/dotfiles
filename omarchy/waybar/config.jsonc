@@ -3,16 +3,15 @@
   "layer": "top",
   "position": "bottom",
   "spacing": 0,
-  "height": 36,
+  "height": 40,
   "modules-left": ["hyprland/workspaces", "hyprland/window"],
   "modules-center": ["clock", "custom/update", "custom/screenrecording-indicator"],
   "modules-right": [
-    
-    "group/tray-expander",
+    "memory",
+    "cpu",
     "bluetooth",
     "network",
     "pulseaudio",
-    "cpu",
     "battery"
   ],
   "hyprland/workspaces": {
@@ -158,12 +157,17 @@
 
   "cpu": {
     "interval": 5,
-    "format": "󰍛",
+    "format": "󰍛 {usage}%",
+    "on-click": "$TERMINAL -e btop"
+  },
+  "memory": {
+    "interval": 5,
+    "format": "󰘚 {percentage}%",
     "on-click": "$TERMINAL -e btop"
   },
   "clock": {
-    "format": "{:L%A %H:%M}",
-    "format-alt": "{:L%d %B W%V %Y}",
+    "format": "৻(  •̀ ᗜ •́  ৻)     {:%H:%M}      (づ ᴗ _ᴗ)づ",
+    "format-alt": "৻(  •̀ ᗜ •́  ৻)     {:%d %B %Y}      (づ ᴗ _ᴗ)づ",
     "tooltip": false,
     "on-click-right": "omarchy-launch-floating-terminal-with-presentation omarchy-tz-select"
   },
@@ -221,8 +225,15 @@
     "orientation": "inherit",
     "drawer": {
       "transition-duration": 600,
-      "children-class": "tray-group-item"
+      "children-class": "tray-group-item",
+      "transition-left-to-right": false
     },
+    "modules": ["tray", "custom/expand-icon"]
+  },
+  "custom/expand-icon": {
+    "format": "",
+    "tooltip": false
+  },
     "modules": ["custom/expand-icon", "tray"]
   },
   "custom/expand-icon": {
@@ -237,6 +248,6 @@
   },
   "tray": {
     "icon-size": 15,
-    "spacing": 17
+    "spacing": 12
   }
 }

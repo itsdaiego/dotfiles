@@ -1,4 +1,7 @@
 {
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportPrivateImportUsage": "none"
+  },
   "coc.preferences.formatOnSaveFiletypes": [
     "css",
     "markdown",
