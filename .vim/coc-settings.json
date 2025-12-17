@@ -1,4 +1,14 @@
 {
+  "diagnostic.errorSign": "E",
+  "diagnostic.warningSign": "W",
+  "diagnostic.infoSign": "I",
+  "diagnostic.hintSign": "H",
+  "diagnostic.displayByAle": false,
+  "diagnostic.virtualText": false,
+  "diagnostic.virtualTextCurrentLineOnly": false,
+  "diagnostic.enableMessage": "never",
+  "diagnostic.checkCurrentLine": false,
+  "diagnostic.enableHighlightLineNumber": false,
   "coc.preferences.formatOnSaveFiletypes": [
     "css",
     "markdown",
@@ -13,59 +23,43 @@
     "scala"
   ],
   "inlayHint.enable": false,
+  "snippets.ultisnips.directories": [
+    "UltiSnips",
+    "~/.config/nvim/utils/snips"
+  ],
+  "suggest.completionItemKindLabels": {
+    "method": "  ",
+    "function": "  ",
+    "variable": "[]",
+    "field": "  ",
+    "typeParameter": "<>",
+    "constant": "  ",
+    "class": " פּ ",
+    "interface": " 蘒",
+    "struct": "  ",
+    "event": "  ",
+    "operator": "  ",
+    "module": "  ",
+    "property": "  ",
+    "enum": " 練",
+    "reference": "  ",
+    "keyword": "  ",
+    "file": "  ",
+    "folder": " ﱮ ",
+    "color": "  ",
+    "unit": " 塞 ",
+    "snippet": "  ",
+    "text": "  ",
+    "constructor": "  ",
+    "value": "  ",
+    "enumMember": "  "
+  },
   "languageserver": {
-    // c++
-    "ccls": {
-      "command": "ccls",
-      "filetypes": [
-        "c",
-        "cpp",
-        "objc",
-        "objcpp"
-      ],
-      "rootPatterns": [
-        ".ccls",
-        "compile_commands.json",
-        ".vim/",
-        ".git/",
-        ".hg/"
-      ],
-      "initializationOptions": {
-        "cache": {
-          "directory": "/tmp/ccls"
-        }
-      }
-    },
-    "snippets.ultisnips.directories": [
-      "UltiSnips",
-      "~/.config/nvim/utils/snips"
-    ],
-    "clangd.arguments": ["-std=c++11"],
-    "suggest.completionItemKindLabels": {
-      "method": "  ",
-      "function": "  ",
-      "variable": "[]",
-      "field": "  ",
-      "typeParameter": "<>",
-      "constant": "  ",
-      "class": " פּ ",
-      "interface": " 蘒",
-      "struct": "  ",
-      "event": "  ",
-      "operator": "  ",
-      "module": "  ",
-      "property": "  ",
-      "enum": " 練",
-      "reference": "  ",
-      "keyword": "  ",
-      "file": "  ",
-      "folder": " ﱮ ",
-      "color": "  ",
-      "unit": " 塞 ",
-      "snippet": "  ",
-      "text": "  ",
-      "constructor": "  ",
-      "value": "  ",
-      "enumMember": "  "
+    "ty": {
+      "command": "ty",
+      "args": ["server"],
+      "filetypes": ["python"],
+      "rootPatterns": ["pyproject.toml", "setup.py", ".git"]
     }
   }
+}
