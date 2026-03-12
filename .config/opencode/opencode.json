@@ -28,15 +28,15 @@
         "qwen3-coder-30b-a3b": {
           "name": "Qwen3-Coder-30B-A3B (local)",
           "limit": {
-            "context": 8192,
-            "output": 4096
+            "context": 32768,
+            "output": 8192
           }
         },
         "qwen2.5-coder-14b": {
           "name": "Qwen2.5-Coder-14B (local)",
           "limit": {
-            "context": 8192,
-            "output": 2048
+            "context": 32768,
+            "output": 4096
           }
         }
       }
