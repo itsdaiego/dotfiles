@@ -1,5 +1,11 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "tui": {
+    "scroll_speed": 10,
+    "scroll_acceleration": {
+      "enabled": true
+    }
+  },
   "permission": {
     "read": {
       "*": "allow",
