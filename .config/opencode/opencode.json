@@ -25,11 +25,11 @@
         "baseURL": "http://127.0.0.1:8080/v1"
       },
       "models": {
-        "qwen2.5-coder-14b-local": {
-          "name": "Qwen2.5-Coder-14B (local)",
+        "qwen3-coder-30b-a3b": {
+          "name": "Qwen3-Coder-30B-A3B (local)",
           "limit": {
             "context": 8192,
-            "output": 2048
+            "output": 4096
           }
         }
       }
