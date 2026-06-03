@@ -12,6 +12,34 @@ function M.setup(dap)
     {
       type = 'pwa-node',
       request = 'attach',
+      name = 'Node.js: attach',
+      address = 'localhost',
+      port = 9229,
+      cwd = '${workspaceFolder}',
+      skipFiles = { '<node_internals>/**', '**/node_modules/**' },
+      sourceMaps = true,
+      pauseForSourceMap = true,
+      autoAttachChildProcesses = true,
+      outFiles = {
+        '${workspaceFolder}/.next/server/**/*.js',
+        '!${workspaceFolder}/node_modules/**',
+      },
+      resolveSourceMapLocations = {
+        '${workspaceFolder}/**',
+        '!**/node_modules/**',
+      },
+      sourceMapPathOverrides = {
+        ['webpack://_N_E/*'] = '${workspaceFolder}/*',
+        ['webpack:///*'] = '${workspaceFolder}/*',
+        ['webpack:///./src/*'] = '${workspaceFolder}/src/*',
+        ['../../../*'] = '${workspaceFolder}/*',
+        ['../../*'] = '${workspaceFolder}/*',
+        ['../*'] = '${workspaceFolder}/*',
+      },
+    },
+    {
+      type = 'pwa-node',
+      request = 'attach',
       name = 'Attach',
       processId = function()
         return coroutine.create(function(dap_run_co)

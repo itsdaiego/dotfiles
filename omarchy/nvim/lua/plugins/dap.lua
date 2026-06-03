@@ -83,6 +83,17 @@ return {
       dap.adapters["node2"] = dap.adapters["pwa-node"]
       dap.adapters["node"] = dap.adapters["pwa-node"]
 
+      local delve_path = vim.fn.stdpath("data") .. "/mason/bin/dlv"
+      dap.adapters.delve = {
+        type = "server",
+        port = "${port}",
+        executable = {
+          command = delve_path,
+          args = { "dap", "-l", "127.0.0.1:${port}" },
+        },
+      }
+      dap.adapters.go = dap.adapters.delve
+
       -- Basic JavaScript/TypeScript configurations (will be extended by dap.javascript.setup)
       -- Create separate tables for each filetype to avoid duplicate entries
       local base_js_config = {
@@ -118,18 +129,18 @@ return {
       dapui.setup({
         layouts = {
           { elements = {
-              { id = "scopes", size = 0.5 },
-              { id = "repl", size = 0.5 },
+              { id = "scopes", size = 0.3 },
+              { id = "repl", size = 0.3 },
             },
             position = "left",
             size = 60
           },
           { elements = {
-              { id = "breakpoints", size = 0.25 },
-              { id = "console", size = 0.25 },
+              { id = "breakpoints", size = 0.20 },
+              { id = "console", size = 0.80 },
             },
             position = "bottom",
-            size = 20
+            size = 40
           }
         },
         force_buffers = true,
@@ -149,7 +160,7 @@ return {
       dap.listeners.after.disconnect["dapui_config"] = close_dapui
 
       dap.set_log_level('DEBUG')
-      dap.defaults.fallback.exception_breakpoints = {'uncaught'}
+      dap.defaults.fallback.exception_breakpoints = {}
 
       dap.listeners.after.event_exited['test_exit'] = function(_, body)
         local exit_code = body.exitCode or 0
@@ -159,7 +170,7 @@ return {
 
       vim.fn.sign_define('DapBreakpoint', {text='🛑', texthl='', linehl='', numhl=''})
       vim.fn.sign_define('DapBreakpointCondition', {text='🔍', texthl='', linehl='', numhl=''})
-      vim.fn.sign_define('DapStopped', {text='👉', texthl='', linehl='', numhl=''})
+      vim.fn.sign_define('DapStopped', {text='🔥', texthl='', linehl='', numhl=''})
 
       -- Load telescope-dap extension with error handling and deferral
       vim.defer_fn(function()
