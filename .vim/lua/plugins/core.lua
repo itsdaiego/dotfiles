@@ -165,10 +165,21 @@ return {
   {
     "lewis6991/gitsigns.nvim",
     event = { "BufReadPre", "BufNewFile" },
-    config = true,
+    opts = {
+      on_attach = function(bufnr)
+        vim.keymap.set("n", "<leader>sp", require("gitsigns").preview_hunk, { buffer = bufnr, desc = "Preview Hunk" })
+      end,
+    },
   },
   { "airblade/vim-gitgutter", event = { "BufReadPre", "BufNewFile" } },
-  { "sindrets/diffview.nvim", cmd = { "DiffviewOpen", "DiffviewFileHistory" } },
+  {
+    "sindrets/diffview.nvim",
+    cmd = { "DiffviewOpen", "DiffviewFileHistory", "DiffviewClose" },
+    keys = {
+      { "<leader>sdo", "<cmd>DiffviewOpen<cr>", desc = "Diffview Open" },
+      { "<leader>sdc", "<cmd>DiffviewClose<cr>", desc = "Diffview Close" },
+    },
+  },
 
   -- UI Enhancements
   {
@@ -249,13 +260,31 @@ return {
     build = "make",
     config = function()
       require('avante').setup({
-        transparent = true,
-        -- Disable the window feature that's causing the error
-        -- disable_window = true,
+        provider = "openai",
         windows = {
+          position = "left",
           width = 50
+        },
+        providers = {
+          openai = {
+            endpoint = "https://api.openai.com/v1",
+            model = "gpt-4o-mini",
+            timeout = 30000,
+            extra_request_body = {
+              temperature = 0.75,
+              max_completion_tokens = 8192,
+            },
+          },
         }
       })
+      -- clear persisted chat history so every nvim session starts fresh
+      require("avante.path").clear()
+      vim.keymap.set({ "n", "v" }, "<leader>aa", function()
+        require("avante.api").ask({ floating = true, new_chat = true })
+      end, { desc = "avante: ask inline", noremap = true, silent = true })
+      vim.keymap.set("n", "<leader>aq", function()
+        require("avante").close_sidebar()
+      end, { desc = "avante: close", noremap = true, silent = true })
     end,
   },
   {
