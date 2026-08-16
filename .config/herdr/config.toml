@@ -1,0 +1,165 @@
+onboarding = false
+# herdr config — mirrors ~/.config/tmux/tmux.conf keybindings
+# See /home/daiego/.config/tmux/tmux.conf for the source bindings.
+
+[keys]
+# tmux default prefix is unset in tmux.conf, so it stays ctrl+b — same here.
+prefix = "ctrl+b"
+
+# Ctrl-b then 0–9 selects workspaces (projects), not tabs/windows.
+# Custom commands below keep this zero-indexed on Herdr 0.8.0 as well.
+switch_workspace = ""
+# Collapse or expand the right sidebar.
+toggle_sidebar = "prefix+b"
+# tmux: `bind-key V split-window -h` (pane appears to the right)
+split_horizontal = "prefix+s"
+# tmux: `bind-key S split-window -v` (pane appears below)
+split_vertical = "prefix+v"
+
+# tmux: `bind r source-file ~/.config/tmux/tmux.conf`
+reload_config = "prefix+r"
+# freed up from the default prefix+r (moved here since tmux used r for reload)
+resize_mode = "prefix+shift+r"
+
+# tmux: `bind h/j/k/l select-pane -L/-D/-U/-R` (these already matched
+# herdr's own defaults, restated here for clarity)
+focus_pane_left = "prefix+h"
+focus_pane_down = "prefix+j"
+focus_pane_up = "prefix+k"
+focus_pane_right = "prefix+l"
+
+# tmux: `bind -n M-h/M-j/M-k/M-l select-pane ...` (no prefix, direct alt+hjkl)
+[[keys.command]]
+key = "alt+h"
+type = "shell"
+command = "herdr pane focus --direction left --current"
+
+[[keys.command]]
+key = "alt+j"
+type = "shell"
+command = "herdr pane focus --direction down --current"
+
+[[keys.command]]
+key = "alt+k"
+type = "shell"
+command = "herdr pane focus --direction up --current"
+
+[[keys.command]]
+key = "alt+l"
+type = "shell"
+command = "herdr pane focus --direction right --current"
+
+# tmux: `bind -n M-Left/M-Right/M-Up/M-Down resize-pane -L/-R/-U/-D 10`
+[[keys.command]]
+key = "alt+left"
+type = "shell"
+command = "herdr pane resize --direction left --amount 10 --current"
+
+[[keys.command]]
+key = "alt+right"
+type = "shell"
+command = "herdr pane resize --direction right --amount 10 --current"
+
+[[keys.command]]
+key = "alt+up"
+type = "shell"
+command = "herdr pane resize --direction up --amount 10 --current"
+
+[[keys.command]]
+key = "alt+down"
+type = "shell"
+command = "herdr pane resize --direction down --amount 10 --current"
+
+# tmux: `bind-key M-j/M-k/M-h/M-l resize-pane -D/-U/-L/-R` (prefixed alt+hjkl)
+[[keys.command]]
+key = "prefix+alt+h"
+type = "shell"
+command = "herdr pane resize --direction left --amount 1 --current"
+
+[[keys.command]]
+key = "prefix+alt+j"
+type = "shell"
+command = "herdr pane resize --direction down --amount 1 --current"
+
+[[keys.command]]
+key = "prefix+alt+k"
+type = "shell"
+command = "herdr pane resize --direction up --amount 1 --current"
+
+[[keys.command]]
+key = "prefix+alt+l"
+type = "shell"
+command = "herdr pane resize --direction right --amount 1 --current"
+
+# Ctrl-b then a opens an agents-only picker.
+[[keys.command]]
+key = "prefix+a"
+type = "popup"
+command = "herdr-agent-picker"
+width = "80%"
+height = "80%"
+
+# Ctrl-b then w opens a projects-only picker (no tabs or panes).
+[[keys.command]]
+key = "prefix+w"
+type = "popup"
+command = "herdr-workspace-picker"
+width = "80%"
+height = "80%"
+
+# Zero-indexed project switching. The helper resolves the current sidebar/API order.
+[[keys.command]]
+key = "prefix+0"
+command = "herdr-workspace-focus-index 0"
+
+[[keys.command]]
+key = "prefix+1"
+command = "herdr-workspace-focus-index 1"
+
+[[keys.command]]
+key = "prefix+2"
+command = "herdr-workspace-focus-index 2"
+
+[[keys.command]]
+key = "prefix+3"
+command = "herdr-workspace-focus-index 3"
+
+[[keys.command]]
+key = "prefix+4"
+command = "herdr-workspace-focus-index 4"
+
+[[keys.command]]
+key = "prefix+5"
+command = "herdr-workspace-focus-index 5"
+
+[[keys.command]]
+key = "prefix+6"
+command = "herdr-workspace-focus-index 6"
+
+[[keys.command]]
+key = "prefix+7"
+command = "herdr-workspace-focus-index 7"
+
+[[keys.command]]
+key = "prefix+8"
+command = "herdr-workspace-focus-index 8"
+
+[[keys.command]]
+key = "prefix+9"
+command = "herdr-workspace-focus-index 9"
+
+[ui]
+# Keep projects and agents on the right; Ctrl-b then b still collapses/expands it.
+sidebar_position = "right"
+
+# Wider sidebar for agents and spaces.
+sidebar_width = 32
+sidebar_min_width = 20
+sidebar_max_width = 40
+
+# tmux: `set -g mouse on`
+mouse_capture = true
+
+[ui.sound]
+# no per-event (done vs needs-attention) toggle exists, only global on/off
+enabled = false

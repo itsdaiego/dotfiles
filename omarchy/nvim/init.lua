@@ -5,7 +5,7 @@ vim.opt.background = 'dark'
 
 -- Set Python provider (before anything else)
 vim.g.loaded_python_provider = 0  -- Disable Python 2
-vim.g.python3_host_prog = '/home/daiego/.local/share/mise/installs/python/3.14.0/bin/python3'
+vim.g.python3_host_prog = '/home/daiego/.local/share/nvim-python/bin/python'
 -- Ensure Python host is loaded before plugins
 vim.cmd([[runtime plugin/rplugin.vim]])
 
