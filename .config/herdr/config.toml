@@ -91,21 +91,22 @@ key = "prefix+alt+l"
 type = "shell"
 command = "herdr pane resize --direction right --amount 1 --current"
 
-# Ctrl-b then a opens an agents-only picker.
-[[keys.command]]
-key = "prefix+a"
-type = "popup"
-command = "herdr-agent-picker"
-width = "80%"
-height = "80%"
-
-# Ctrl-b then w opens a projects-only picker (no tabs or panes).
+# Ctrl-b then w: flat projects-only picker (built-in workspace_picker
+# and goto both drill into tabs/panes, this stays workspace-scoped).
 [[keys.command]]
 key = "prefix+w"
 type = "popup"
 command = "herdr-workspace-picker"
-width = "80%"
-height = "80%"
+width = "60%"
+height = "60%"
+
+# Ctrl-b then a: same flat picker style, scoped to agent panes only.
+[[keys.command]]
+key = "prefix+a"
+type = "popup"
+command = "herdr-agent-picker"
+width = "60%"
+height = "60%"
 
 # Zero-indexed project switching. The helper resolves the current sidebar/API order.
 [[keys.command]]
@@ -158,6 +159,10 @@ sidebar_width = 20
 sidebar_min_width = 20
 sidebar_max_width = 20
 
+# Hidden by default, full width for panes. Ctrl-b then b brings it back.
+sidebar_start_collapsed = true
+sidebar_collapsed_mode = "hidden"
+
 # tmux: `set -g mouse on`
 mouse_capture = true
 
@@ -168,6 +173,9 @@ pane_gaps = false
 pane_scrollbars = true
 # Remove the tab-number row whenever this space has a single tab.
 hide_tab_bar_when_single_tab = true
+
+# Move the tab row below the panes instead of above.
+tab_bar_position = "bottom"
 
 [ui.sound]
 # no per-event (done vs needs-attention) toggle exists, only global on/off

@@ -1,0 +1,8 @@
+#!/bin/bash
+set -euo pipefail
+
+sel=$(herdr workspace list | jq -r '.result.workspaces[] | "\(.number)\t\(.label)\t\(.workspace_id)"' \
+  | sort -n \
+  | fzf --with-nth=1,2 --delimiter='\t' --prompt="project> ")
+
+[ -n "$sel" ] && herdr workspace focus "$(printf '%s' "$sel" | cut -f3)"

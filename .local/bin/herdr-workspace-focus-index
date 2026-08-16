@@ -1,0 +1,12 @@
+#!/bin/bash
+set -euo pipefail
+
+# Zero-indexed like tmux base-index=0: prefix+0 = first workspace.
+idx="${1:?usage: herdr-workspace-focus-index <0-9>}"
+number=$((idx + 1))
+
+ws_id=$(herdr workspace list | jq -r --argjson n "$number" \
+  '.result.workspaces[] | select(.number == $n) | .workspace_id')
+
+[ -n "$ws_id" ] && herdr workspace focus "$ws_id"
+exit 0

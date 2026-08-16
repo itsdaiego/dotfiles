@@ -1,0 +1,15 @@
+#!/bin/bash
+set -euo pipefail
+
+sel=$(jq -n \
+  --argjson agents "$(herdr agent list)" \
+  --argjson workspaces "$(herdr workspace list)" \
+  -r '
+    ($workspaces.result.workspaces | map({(.workspace_id): .label}) | add) as $labels
+    | $agents.result.agents[]
+    | "\($labels[.workspace_id])\t\(.agent)\t\(.agent_status)\t\(.pane_id)"
+  ' \
+  | sort \
+  | fzf --with-nth=1,2,3 --delimiter='\t' --prompt="agent> ")
+
+[ -n "$sel" ] && herdr agent focus "$(printf '%s' "$sel" | cut -f4)"
