@@ -163,3 +163,8 @@ mouse_capture = true
 [ui.sound]
 # no per-event (done vs needs-attention) toggle exists, only global on/off
 enabled = false
+
+# Use the host terminal's ANSI palette. Omarchy updates that palette whenever
+# its theme changes, so Herdr's borders, highlights, and status colors follow.
+[theme]
+name = "terminal"
