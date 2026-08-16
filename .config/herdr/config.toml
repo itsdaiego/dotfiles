@@ -152,13 +152,22 @@ command = "herdr-workspace-focus-index 9"
 # Keep projects and agents on the right; Ctrl-b then b still collapses/expands it.
 sidebar_position = "right"
 
-# Wider sidebar for agents and spaces.
-sidebar_width = 32
+# Keep spaces/agents compact; one-character pane/workspace numbers cannot be
+# rendered smaller independently in a terminal UI.
+sidebar_width = 20
 sidebar_min_width = 20
-sidebar_max_width = 40
+sidebar_max_width = 20
 
 # tmux: `set -g mouse on`
 mouse_capture = true
+
+# Herdr-only chrome: use every terminal cell for panes.
+pane_borders = false
+pane_gaps = false
+# Keep pane scrollbars visible for navigation.
+pane_scrollbars = true
+# Remove the tab-number row whenever this space has a single tab.
+hide_tab_bar_when_single_tab = true
 
 [ui.sound]
 # no per-event (done vs needs-attention) toggle exists, only global on/off
