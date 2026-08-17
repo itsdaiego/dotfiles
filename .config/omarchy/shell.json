@@ -27,7 +27,7 @@
         { "id": "omarchy.power" },
         {
           "exec": "~/.config/omarchy/bar/scripts/cpu-usage",
-          "fontSize": 18,
+          "fontSize": 22,
           "id": "cpu-usage",
           "interval": 5,
           "onClick": "omarchy-launch-or-focus-tui btop",
@@ -36,7 +36,7 @@
         },
         {
           "exec": "~/.config/omarchy/bar/scripts/ram-usage",
-          "fontSize": 18,
+          "fontSize": 22,
           "id": "ram-usage",
           "interval": 5,
           "onClick": "omarchy-launch-or-focus-tui btop",
