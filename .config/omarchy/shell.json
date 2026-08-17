@@ -1,0 +1,57 @@
+{
+  "bar": {
+    "centerAnchor": "omarchy.clock",
+    "layout": {
+      "center": [
+        { "id": "omarchy.indicators" },
+        { "id": "omarchy.keyboard-layout" },
+        { "id": "omarchy.weather" },
+        { "id": "omarchy.system-update" },
+        {
+          "format": "৻(  •̀ ᗜ •́  ৻)     HH:mm      (づ ᴗ _ᴗ)づ",
+          "formatAlt": "d MMMM yyyy",
+          "id": "omarchy.clock",
+          "verticalFormat": "HH\n—\nmm"
+        }
+      ],
+      "left": [
+        { "id": "omarchy.menu" },
+        { "id": "omarchy.workspaces" }
+      ],
+      "right": [
+        { "id": "omarchy.tray" },
+        { "id": "omarchy.bluetooth" },
+        { "id": "omarchy.network" },
+        { "id": "omarchy.audio" },
+        { "id": "omarchy.monitor" },
+        { "id": "omarchy.power" },
+        {
+          "exec": "~/.config/omarchy/bar/scripts/cpu-usage",
+          "fontSize": 18,
+          "id": "cpu-usage",
+          "interval": 5,
+          "onClick": "omarchy-launch-or-focus-tui btop",
+          "tooltip": "CPU usage",
+          "type": "command"
+        },
+        {
+          "exec": "~/.config/omarchy/bar/scripts/ram-usage",
+          "fontSize": 18,
+          "id": "ram-usage",
+          "interval": 5,
+          "onClick": "omarchy-launch-or-focus-tui btop",
+          "tooltip": "Memory usage",
+          "type": "command"
+        }
+      ]
+    },
+    "position": "bottom",
+    "transparent": false
+  },
+  "idle": {
+    "lock": 300,
+    "screensaver": 150
+  },
+  "plugins": [],
+  "version": 1
+}
