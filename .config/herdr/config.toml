@@ -163,8 +163,9 @@ sidebar_collapsed_mode = "hidden"
 # tmux: `set -g mouse on`
 mouse_capture = true
 
-# Herdr-only chrome: use every terminal cell for panes.
-pane_borders = false
+# Keep tmux-style one-cell dividers between panes, without spacing or an outer frame.
+pane_borders = true
+pane_outer_borders = false
 pane_gaps = false
 # Keep pane scrollbars visible for navigation.
 pane_scrollbars = true
