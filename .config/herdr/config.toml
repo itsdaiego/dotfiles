@@ -150,9 +150,6 @@ key = "prefix+9"
 command = "herdr-workspace-focus-index 9"
 
 [ui]
-# Keep projects and agents on the right; Ctrl-b then b still collapses/expands it.
-sidebar_position = "right"
-
 # Keep spaces/agents compact; one-character pane/workspace numbers cannot be
 # rendered smaller independently in a terminal UI.
 sidebar_width = 20
