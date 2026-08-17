@@ -1,0 +1,73 @@
+#!/bin/bash
+set -euo pipefail
+
+STATE_DIR="/tmp/omarchy-voice-record"
+PIDFILE="$STATE_DIR/pid"
+LOCKFILE="$STATE_DIR/transcribing"
+AUDIOFILE="$STATE_DIR/audio.wav"
+PYTHON="$HOME/.local/share/omarchy-voice/venv312/bin/python3"
+MODEL="${OMARCHY_VOICE_MODEL:-small}"
+SOCKET="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/omarchy-voice.sock"
+MIC="alsa_input.usb-ARCANO_MARK-HI_ARCANO_MARK-HI-00.analog-stereo"
+
+mkdir -p "$STATE_DIR"
+
+if [[ -f "$PIDFILE" ]] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+  PID=$(cat "$PIDFILE")
+  kill -INT "$PID"
+  for _ in $(seq 1 50); do
+    kill -0 "$PID" 2>/dev/null || break
+    sleep 0.1
+  done
+  if kill -0 "$PID" 2>/dev/null; then
+    kill -KILL "$PID"
+    for _ in $(seq 1 20); do
+      kill -0 "$PID" 2>/dev/null || break
+      sleep 0.1
+    done
+  fi
+  if kill -0 "$PID" 2>/dev/null; then
+    rm -f "$PIDFILE"
+    notify-send -u critical "Voice dictation" "Recorder wouldn't stop, aborting"
+    exit 1
+  fi
+  rm -f "$PIDFILE"
+
+  touch "$LOCKFILE"
+  notify-send -u low -t 3000 "Voice dictation" "Transcribing…"
+
+  TEXT=$("$PYTHON" - "$SOCKET" "$AUDIOFILE" 2>/dev/null <<'PYEOF'
+import socket
+import sys
+
+socket_path, audio_path = sys.argv[1:]
+with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+    client.settimeout(60)
+    client.connect(socket_path)
+    client.sendall(audio_path.encode())
+    response = bytearray()
+    while chunk := client.recv(4096):
+        response.extend(chunk)
+print(response.decode(), end="")
+PYEOF
+  )
+
+  rm -f "$AUDIOFILE" "$LOCKFILE"
+
+  if [[ "$TEXT" == __ERROR__* ]]; then
+    notify-send -u critical "Voice dictation" "Transcription failed: ${TEXT#__ERROR__}"
+  elif [[ -n "$TEXT" ]]; then
+    printf '%s' "$TEXT" | wl-copy
+    notify-send -u low -t 4000 "Voice dictation" "$TEXT"
+  else
+    notify-send -u normal "Voice dictation" "No speech detected"
+  fi
+else
+  if [[ -f "$LOCKFILE" ]]; then
+    exit 0
+  fi
+  rm -f "$AUDIOFILE"
+  pw-record --target "$MIC" --rate 16000 --channels 1 "$AUDIOFILE" &
+  echo $! > "$PIDFILE"
+  notify-send -u low -t 2000 "Voice dictation" "Recording… press Super+D to stop"
+fi
