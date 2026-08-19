@@ -175,6 +175,20 @@ return {
   {
     "sindrets/diffview.nvim",
     cmd = { "DiffviewOpen", "DiffviewFileHistory", "DiffviewClose" },
+    opts = {
+      file_panel = {
+        listing_style = "list",             -- One of 'list' or 'tree'
+        tree_options = {                    -- Only applies when listing_style is 'tree'
+          flatten_dirs = true,              -- Flatten dirs that only contain one single dir
+          folder_statuses = "only_folded",  -- One of 'never', 'only_folded' or 'always'.
+        },
+        win_config = {                      -- See |diffview-config-win_config|
+          position = "right",
+          width = 20,
+          win_opts = {},
+        },
+      },
+    },
     keys = {
       { "<leader>sdo", "<cmd>DiffviewOpen<cr>", desc = "Diffview Open" },
       { "<leader>sdc", "<cmd>DiffviewClose<cr>", desc = "Diffview Close" },
