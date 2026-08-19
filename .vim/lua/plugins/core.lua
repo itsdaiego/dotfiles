@@ -194,6 +194,12 @@ return {
       { "<leader>sdc", "<cmd>DiffviewClose<cr>", desc = "Diffview Close" },
     },
   },
+  {
+    "MeanderingProgrammer/render-markdown.nvim",
+    dependencies = { "nvim-treesitter/nvim-treesitter", "nvim-tree/nvim-web-devicons" },
+    ft = { "markdown" },
+    opts = {},
+  },
 
   -- UI Enhancements
   {
