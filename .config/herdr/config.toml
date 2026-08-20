@@ -152,6 +152,7 @@ command = "herdr-workspace-focus-index 9"
 [ui]
 # Keep spaces/agents compact; one-character pane/workspace numbers cannot be
 # rendered smaller independently in a terminal UI.
+sidebar_position = "right"
 sidebar_width = 20
 sidebar_min_width = 20
 sidebar_max_width = 20
@@ -174,10 +175,17 @@ hide_tab_bar_when_single_tab = true
 
 # Move the tab row below the panes instead of above.
 tab_bar_position = "bottom"
+tab_bar_style = "dots"
 
 [ui.sound]
 # no per-event (done vs needs-attention) toggle exists, only global on/off
 enabled = false
+
+[ui.toast]
+# defaults to "off" — popups never fired even before muting sound.
+# "system" asks the OS notification service directly (dunst/mako/etc),
+# independent of outer-terminal focus quirks under Hyprland.
+delivery = "system"
 
 # Use the host terminal's ANSI palette. Omarchy updates that palette whenever
 # its theme changes, so Herdr's borders, highlights, and status colors follow.
