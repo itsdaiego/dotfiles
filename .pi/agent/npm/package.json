@@ -1,0 +1,8 @@
+{
+  "name": "pi-extensions",
+  "private": true,
+  "dependencies": {
+    "graphify-pi": "^0.3.0",
+    "pi-mcp-adapter": "^2.26.1"
+  }
+}

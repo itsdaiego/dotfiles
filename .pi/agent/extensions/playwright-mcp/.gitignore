@@ -1,0 +1,5 @@
+*
+!.gitignore
+!index.ts
+!package.json
+!package-lock.json
