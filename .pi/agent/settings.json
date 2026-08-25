@@ -8,6 +8,8 @@
   "tuiMode": "regular",
   "packages": [
     "npm:pi-mcp-adapter",
-    "npm:graphify-pi"
+    "npm:graphify-pi",
+    "npm:@tmustier/pi-usage-extension",
+    "npm:@agnishc/edb-diff-files"
   ]
 }
