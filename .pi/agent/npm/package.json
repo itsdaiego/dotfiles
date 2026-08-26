@@ -3,6 +3,8 @@
   "private": true,
   "dependencies": {
     "@agnishc/edb-diff-files": "^0.21.1",
+    "@narumitw/pi-btw": "^0.55.2",
+    "@narumitw/pi-goal": "^0.53.3",
     "@tmustier/pi-usage-extension": "^0.9.4",
     "graphify-pi": "^0.3.0",
     "pi-mcp-adapter": "^2.26.1"
