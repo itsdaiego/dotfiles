@@ -3,10 +3,16 @@
   "private": true,
   "dependencies": {
     "@agnishc/edb-diff-files": "^0.21.1",
-    "@narumitw/pi-btw": "^0.55.2",
-    "@narumitw/pi-goal": "^0.53.3",
+    "@earendil-works/pi-coding-agent": "^0.84.2",
+    "@earendil-works/pi-tui": "^0.84.3",
+    "@narumitw/pi-btw": "^0.55.3",
+    "@narumitw/pi-goal": "^0.54.2",
     "@tmustier/pi-usage-extension": "^0.9.4",
     "graphify-pi": "^0.3.0",
-    "pi-mcp-adapter": "^2.26.1"
+    "pi-mcp-adapter": "^2.28.0",
+    "pi-vim": "^0.14.1"
+  },
+  "scripts": {
+    "postinstall": "node ./patch-pi-ui.mjs"
   }
 }
