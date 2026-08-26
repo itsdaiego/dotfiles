@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { copyFile, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 async function patch(path, apply) {
@@ -46,3 +46,11 @@ await patch(resolve(modules, "pi-vim/index.ts"), (source) => {
   next = next.replace("  INSERT_CURSOR_SHAPE,\n", "");
   return next;
 });
+
+// edb-diff-files only supplied diffs inside Git repos and registered its
+// cleanup command before its main command. Keep our maintained override so
+// `/diff-files` is first, works outside Git, and supports `o` → Neovim.
+await copyFile(
+	resolve(import.meta.dirname, "overrides/edb-diff-files/index.ts"),
+	resolve(modules, "@agnishc/edb-diff-files/src/index.ts"),
+);

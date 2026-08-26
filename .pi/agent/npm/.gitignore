@@ -3,3 +3,6 @@
 !package.json
 !package-lock.json
 !patch-pi-ui.mjs
+!overrides/
+!overrides/edb-diff-files/
+!overrides/edb-diff-files/index.ts
