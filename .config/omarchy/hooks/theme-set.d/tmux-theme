@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# Regenerate tmux's theme from the newly active Omarchy theme and reload any running tmux server.
+
+~/.local/bin/omarchy-tmux-theme

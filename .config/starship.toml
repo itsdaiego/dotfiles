@@ -1,30 +1,32 @@
-add_newline = false
+add_newline = true
+command_timeout = 200
+format = "[$directory$git_branch$git_status]($style)$character"
 
 [character]
-success_symbol = '[ #](bold green)'
-error_symbol = "[ x](bold red)"
-vicmd_symbol = "[ V](bold green)"
-
-[git_status]
-disabled = false
-
-[git_commit]
-commit_hash_length = 7
-tag_disabled = false
-only_detached = false
-
-[battery]
-disabled = true
-
-[python]
-disabled = true
-
-[cmake]
-disabled = true
+error_symbol = "[✗](bold cyan)"
+success_symbol = "[❯](bold cyan)"
 
 [directory]
-read_only = "(read only)"
+truncation_length = 2
+truncation_symbol = "…/"
+repo_root_style = "bold cyan"
+repo_root_format = "[$repo_root]($repo_root_style)[$path]($style)[$read_only]($read_only_style) "
 
-[git_metrics]
-disabled = false
-format = '([+$added]($added_style)) ([-$deleted]($deleted_style)) '
+[git_branch]
+format = "[$branch]($style) "
+style = "italic cyan"
+
+[git_status]
+format     = '[$all_status]($style)'
+style      = "cyan"
+ahead      = "⇡${count} "
+diverged   = "⇕⇡${ahead_count}⇣${behind_count} "
+behind     = "⇣${count} "
+conflicted = " "
+up_to_date = " "
+untracked  = "? "
+modified   = " "
+stashed    = ""
+staged     = ""
+renamed    = ""
+deleted    = ""

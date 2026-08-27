@@ -152,6 +152,7 @@ command = "herdr-workspace-focus-index 9"
 [ui]
 # Keep spaces/agents compact; one-character pane/workspace numbers cannot be
 # rendered smaller independently in a terminal UI.
+# The sidebar opens on the right when toggled with Ctrl-b then b.
 sidebar_position = "right"
 sidebar_width = 20
 sidebar_min_width = 20
@@ -175,6 +176,7 @@ hide_tab_bar_when_single_tab = true
 
 # Move the tab row below the panes instead of above.
 tab_bar_position = "bottom"
+# Use compact dot tabs whenever a workspace has more than one tab.
 tab_bar_style = "dots"
 
 [ui.sound]

@@ -3,10 +3,18 @@
     "centerAnchor": "omarchy.clock",
     "layout": {
       "center": [
-        { "id": "omarchy.indicators" },
-        { "id": "omarchy.keyboard-layout" },
-        { "id": "omarchy.weather" },
-        { "id": "omarchy.system-update" },
+        {
+          "id": "omarchy.indicators"
+        },
+        {
+          "id": "omarchy.keyboard-layout"
+        },
+        {
+          "id": "omarchy.weather"
+        },
+        {
+          "id": "omarchy.system-update"
+        },
         {
           "format": "৻(  •̀ ᗜ •́  ৻)     HH:mm      (づ ᴗ _ᴗ)づ",
           "formatAlt": "d MMMM yyyy",
@@ -15,16 +23,32 @@
         }
       ],
       "left": [
-        { "id": "omarchy.menu" },
-        { "id": "omarchy.workspaces" }
+        {
+          "id": "omarchy.menu"
+        },
+        {
+          "id": "omarchy.workspaces"
+        }
       ],
       "right": [
-        { "id": "omarchy.tray" },
-        { "id": "omarchy.bluetooth" },
-        { "id": "omarchy.network" },
-        { "id": "omarchy.audio" },
-        { "id": "omarchy.monitor" },
-        { "id": "omarchy.power" },
+        {
+          "id": "omarchy.tray"
+        },
+        {
+          "id": "omarchy.bluetooth"
+        },
+        {
+          "id": "omarchy.network"
+        },
+        {
+          "id": "omarchy.audio"
+        },
+        {
+          "id": "omarchy.monitor"
+        },
+        {
+          "id": "omarchy.power"
+        },
         {
           "exec": "~/.config/omarchy/bar/scripts/cpu-usage",
           "fontSize": 22,
@@ -49,8 +73,8 @@
     "transparent": false
   },
   "idle": {
-    "lock": 300,
-    "screensaver": 150
+    "lock": 18000,
+    "screensaver": 18000
   },
   "plugins": [],
   "version": 1

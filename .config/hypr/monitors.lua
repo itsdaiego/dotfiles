@@ -1,5 +1,5 @@
--- Omarchy 4 monitor layout.
--- Acer XB271HU primary on the left, LG DualUp secondary on the right.
+-- Restored from dotfiles after the Omarchy 4 migration.
+-- Current desktop outputs: Acer XB271HU primary on the left, LG DualUp on the right.
 
 hl.env("GDK_SCALE", "1")
 

@@ -1,0 +1,49 @@
+general.import = [ "~/.local/state/omarchy/current/theme/alacritty.toml" ]
+
+[env]
+TERM = "xterm-256color"
+
+[font]
+# Berkeley Mono Medium (active)
+normal = { family = "Berkeley Mono Condensed" }
+bold = { family = "Berkeley Mono Condensed" }
+italic = { family = "Berkeley Mono Condensed" }
+
+# CaskaydiaMono Nerd Font
+# normal = { family = "Berkeley Mono Condensed" }
+# bold = { family = "Berkeley Mono Condensed" }
+# italic = { family = "Berkeley Mono Condensed" }
+
+# JetBrains Mono
+# normal = { family = "Berkeley Mono Condensed" }
+# bold = { family = "Berkeley Mono Condensed" }
+# italic = { family = "Berkeley Mono Condensed" }
+
+# JetBrainsMono Nerd Font
+# normal = { family = "Berkeley Mono Condensed" }
+# bold = { family = "Berkeley Mono Condensed" }
+# italic = { family = "Berkeley Mono Condensed" }
+size = 24
+# offset = { x = -2, y = 0 }
+
+[window]
+padding.x = 14
+padding.y = 14
+decorations = "None"
+opacity = 0.97
+
+[keyboard]
+bindings = [
+{ key = "Insert", mods = "Shift", action = "Paste" },
+{ key = "Insert", mods = "Control", action = "Copy" },
+# Send Shift+Return as CSI-u so TUIs can distinguish it from Return without treating it as Alt+Return.
+{ key = "Return", mods = "Shift", chars = "\u001B[13;2u" },
+# Legacy encoding sends Alt+Shift+Return the same as Alt+Return; send CSI-u so tmux can match M-S-Enter.
+{ key = "Return", mods = "Alt|Shift", chars = "\u001B[13;4u" }
+]
+
+[scrolling]
+multiplier = 8
+
+[terminal]
+osc52 = "CopyPaste"
