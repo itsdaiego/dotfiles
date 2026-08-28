@@ -1,34 +1,24 @@
 #!/usr/bin/env sh
 
-sketchybar --add item        cpu.top right                 \
-           --set cpu.top     label.font="$FONT:Medium:7" \
-                             label=CPU                     \
-                             icon.drawing=off              \
-                             width=0                       \
-                             y_offset=6                    \
-                             background.padding_right=10   \
-                                                           \
-           --add item        cpu.percent right             \
-           --set cpu.percent label.font="$FONT:Bold:12"   \
-                             label=CPU                     \
-                             y_offset=-4                   \
-                             width=40                      \
-                             icon.drawing=off              \
-                             update_freq=2                 \
-                             background.padding_right=10   \
-                                                           \
-           --add graph       cpu.sys right 100             \
-           --set cpu.sys     width=0                       \
-                             graph.color=$RED              \
-                             graph.fill_color=$RED         \
-                             label.drawing=off             \
-                             icon.drawing=off              \
-                             background.padding_right=10   \
-                                                           \
-           --add graph       cpu.user right 100            \
-           --set cpu.user    graph.color=$BLUE             \
-                             update_freq=2                 \
-                             label.drawing=off             \
-                             icon.drawing=off              \
-                             background.padding_right=10   \
+# One compact CPU item keeps the right-hand group on the same text scale as
+# the workspace switcher. The hidden graphs still receive data for later use.
+sketchybar --add item        cpu.percent right              \
+           --set cpu.percent icon=󰍛                          \
+                             label.font="$FONT:Medium:13.0" \
+                             icon.font="$NERD_FONT:Bold:14.0" \
+                             label=CPU                       \
+                             y_offset=0                      \
+                             update_freq=5                   \
+                             background.padding_right=4      \
+                                                            \
+           --add graph       cpu.sys right 1                 \
+           --set cpu.sys     drawing=off                     \
+                             label.drawing=off               \
+                             icon.drawing=off                \
+                                                            \
+           --add graph       cpu.user right 1                \
+           --set cpu.user    drawing=off                     \
+                             update_freq=5                   \
+                             label.drawing=off               \
+                             icon.drawing=off                \
                              script="$PLUGIN_DIR/cpu.sh"

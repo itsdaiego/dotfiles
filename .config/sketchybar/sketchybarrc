@@ -1,179 +1,78 @@
-#!/bin/bash
+#!/bin/sh
+PLUGIN_DIR="$HOME/.config/sketchybar/plugins"
+ITEM_DIR="$HOME/.config/sketchybar/items"
 
-# Color Definitions
-BACKGROUND_COLOR="0xff2C2B28"
-HIGHLIGHT_COLOR="0xffAE5630"
-TEXT_COLOR="0xffF5F5F5"
-GREEN_COLOR="0xff8FCF77"
-BLUE_COLOR="0xff5699AF"
+source $HOME/.config/sketchybar/colors.sh
+source $HOME/.config/sketchybar/icons.sh
 
-# Bar Appearance
-sketchybar --bar height=50 \
-                 position=top \
-                 padding_left=10 \
-                 padding_right=10 \
-                 color=$BACKGROUND_COLOR \
+export FONT="JetBrainsMono Nerd Font"
+export NERD_FONT="JetBrainsMono Nerd Font"
+
+# Keep the bar at the top; Yabai reserves space below it for windows.
+sketchybar --bar height=32              \
+                 blur_radius=60         \
+                 position=top           \
+                 margin=0               \
+                 y_offset=2             \
+                 padding_left=8         \
+                 padding_right=8        \
+                 color=$TRANSPARENT     \
                  shadow=off
 
-# Global Defaults
-sketchybar --default updates=when_shown \
-                     drawing=on \
-                     icon.font="JetBrainsMono Nerd Font:Bold:19.0" \
-                     icon.color=$TEXT_COLOR \
-                     icon.padding_left=5 \
-                     icon.padding_right=5 \
-                     label.font="JetBrainsMono Nerd Font:Bold:19.0" \
-                     label.color=$TEXT_COLOR \
-                     label.padding_left=10 \
-                     label.padding_right=10 \
-                     background.height=50 \
-                     background.padding_left=5 \
-                     background.padding_right=5
+sketchybar --default updates=when_shown                       \
+                     drawing=on                               \
+                     icon.font="$NERD_FONT:Bold:14.0"      \
+                     icon.color=$WHITE                        \
+                     label.font="$FONT:Light:13.0"          \
+                     label.color=$WHITE                       \
+                     label.padding_left=4                     \
+                     label.padding_right=4                    \
+                     icon.padding_left=4                      \
+                     icon.padding_right=4
 
-# Left Items
-sketchybar --set brave_icon icon.padding_left=10 icon.padding_right=10 \
-                            background.padding_left=10 background.padding_right=10 \
-           --set float_button label.padding_left=10 label.padding_right=10 \
-                               background.padding_left=10 background.padding_right=10 \
-           --set current_app label.padding_left=10 label.padding_right=10 \
-                              background.padding_left=10 background.padding_right=10
+source $ITEM_DIR/spaces.sh
+source $ITEM_DIR/window_title.sh
+source $ITEM_DIR/clock.sh
+source $ITEM_DIR/battery.sh
+source $ITEM_DIR/cpu.sh
+source $ITEM_DIR/vpn.sh
+source $ITEM_DIR/wifi.sh
+source $ITEM_DIR/darkside.sh
 
-# Workspaces
-for i in {1..10}
-do
-  sketchybar --add space space.$i left \
-             --set space.$i associated_space=$i \
-                             icon=$i \
-                             background.color=$BACKGROUND_COLOR \
-                             background.drawing=on \
-                             background.padding_left=5 \
-                             background.padding_right=5 \
-                             script="~/.config/sketchybar/plugins/space.sh"
-done
+# Keep all status controls on a consistent, larger type scale.
+sketchybar --set clock label.font="$FONT:Light:16.0"              \
+           --set battery icon.font="$NERD_FONT:Bold:17.0"         \
+                         label.font="$FONT:Light:16.0"             \
+           --set cpu.percent icon.font="$NERD_FONT:Bold:17.0"     \
+                             label.font="$FONT:Medium:16.0"        \
+           --set wifi.control icon.font="$NERD_FONT:Bold:17.0"    \
+           --set appearance icon.font="$NERD_FONT:Bold:17.0"      \
+           --set vpn icon.font="$NERD_FONT:Bold:17.0"
 
-# Center Items
-# Current Application
-sketchybar --add item current_app center \
-           --set current_app script="~/.config/sketchybar/plugins/current_app.sh" \
-                               update_freq=2 \
-                               background.color=$BACKGROUND_COLOR \
-                               background.drawing=on
+# Apple logo, then workspaces, then the app title -- all in one left group.
+sketchybar --add bracket left_cluster space.1 space.2 space.3 space.4 space.5 space.6 space.7 space.8 space.9 space.10 window_title \
+           --set left_cluster background.color=$GROUP_BG                         \
+                              background.border_color=$GROUP_BORDER               \
+                              background.border_width=1                           \
+                              background.corner_radius=10                         \
+                              background.height=28                                \
+                              background.padding_left=9                           \
+                              background.padding_right=9                          \
+                              background.shadow.drawing=on                        \
+                              background.shadow.color=0x66000000                  \
+                              background.shadow.distance=3                        \
+           --add bracket status_cluster clock battery cpu.top cpu.percent cpu.sys cpu.user vpn wifi.control appearance \
+           --set status_cluster background.color=$GROUP_BG                         \
+                                background.border_color=$GROUP_BORDER               \
+                                background.border_width=1                           \
+                                background.corner_radius=10                         \
+                                background.height=28                                \
+                                background.padding_left=9                           \
+                                background.padding_right=9                          \
+                                background.shadow.drawing=on                        \
+                                background.shadow.color=0x66000000                  \
+                                background.shadow.distance=3
 
-# Right Items
-# Battery
-sketchybar --add item battery right \
-           --set battery script="~/.config/sketchybar/plugins/battery.sh" \
-                         update_freq=10 \
-                         background.color=$HIGHLIGHT_COLOR \
-                         background.drawing=on \
-                         icon.padding_right=5 \
-                         label.padding_left=5 \
-                         background.padding_left=7 \
-                         background.padding_right=7
-
-# Volume
-sketchybar --add item volume right \
-           --set volume script="~/.config/sketchybar/plugins/volume.sh" \
-                        update_freq=1 \
-                        background.color=$BLUE_COLOR \
-                        background.drawing=on \
-                        icon.padding_right=5 \
-                        label.padding_left=5 \
-                        background.padding_left=7 \
-                        background.padding_right=7
-
-# WiFi
-sketchybar --add item wifi right \
-           --set wifi script="~/.config/sketchybar/plugins/wifi.sh" \
-                      update_freq=5 \
-                      background.color=$HIGHLIGHT_COLOR \
-                      background.drawing=on \
-                      icon.padding_right=5 \
-                      label.padding_left=5 \
-                      background.padding_left=7 \
-                      background.padding_right=7
-
-# Date
-sketchybar --add item date right \
-           --set date script="~/.config/sketchybar/plugins/date.sh" \
-                      update_freq=10 \
-                      background.color=$BACKGROUND_COLOR \
-                      background.drawing=on \
-                      icon.padding_right=5 \
-                      label.padding_left=5 \
-                      background.padding_left=7 \
-                      background.padding_right=7
-
-# Finalizing Setup
 sketchybar --update
 
-# Plugin Scripts
-mkdir -p ~/.config/sketchybar/plugins
-
-cat > ~/.config/sketchybar/plugins/space.sh << EOL
-#!/bin/bash
-
-if [ "\$SELECTED" = "true" ]; then
-  sketchybar --set \$NAME background.color=$HIGHLIGHT_COLOR
-else
-  sketchybar --set \$NAME background.color=$BACKGROUND_COLOR
-fi
-EOL
-
-cat > ~/.config/sketchybar/plugins/current_app.sh << EOL
-#!/bin/bash
-
-CURRENT_APP=\$(osascript -e 'tell application "System Events" to set frontApp to name of first application process whose frontmost is true')
-sketchybar --set \$NAME label="\$CURRENT_APP"
-EOL
-
-cat > ~/.config/sketchybar/plugins/battery.sh << EOL
-#!/bin/bash
-
-PERCENTAGE=\$(pmset -g batt | grep -Eo "\d+%" | cut -d% -f1)
-CHARGING=\$(pmset -g batt | grep 'AC Power')
-
-if [ "\$CHARGING" != "" ]; then
-  ICON=""
-else
-  ICON=""
-fi
-
-sketchybar --set \$NAME icon="\$ICON" label="\${PERCENTAGE}%"
-EOL
-
-cat > ~/.config/sketchybar/plugins/volume.sh << EOL
-#!/bin/bash
-
-VOLUME=\$(osascript -e 'output volume of (get volume settings)')
-MUTED=\$(osascript -e 'output muted of (get volume settings)')
-
-if [ "\$MUTED" = "true" ]; then
-  ICON="婢"
-else
-  ICON="墳"
-fi
-
-sketchybar --set \$NAME icon="\$ICON" label="\${VOLUME}%"
-EOL
-
-cat > ~/.config/sketchybar/plugins/wifi.sh << EOL
-#!/bin/bash
-
-SSID=\$(/System/Library/PrivateFrameworks/Apple80211.framework/Resources/airport -I | awk -F': ' '/ SSID/ {print \$2}')
-
-if [ -z "\$SSID" ]; then
-  sketchybar --set \$NAME label="Disconnected" icon=睊
-else
-  sketchybar --set \$NAME label="\$SSID" icon=
-fi
-EOL
-
-cat > ~/.config/sketchybar/plugins/date.sh << EOL
-#!/bin/bash
-
-DATE=\$(date '+%d/%m %H:%M')
-sketchybar --set \$NAME label="\$DATE"
-EOL
-
-chmod +x ~/.config/sketchybar/plugins/*.sh
+echo "sketchybar configuration loaded.."

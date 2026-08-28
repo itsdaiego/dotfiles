@@ -1,42 +1,22 @@
-#!/usr/bin/env sh
+SPACE_ICONS=("1" "2" "3" "4" "5" "6" "7" "8" "9" "10")
 
-PLUGIN_DIR="$HOME/.config/sketchybar/plugins"
-FONT="JetBrainsMono Nerd Font"
-
-# Add spaces and set properties
-for i in {1..10}
+for i in "${!SPACE_ICONS[@]}"
 do
-    sid=$(($i))
-    sketchybar --add space space.$sid left                                  \
-               --set space.$sid associated_space=$sid                       \
-                                 icon=󰄯                                     \
-                                 icon.padding_left=10                       \
-                                 icon.padding_right=15                      \
-                                 icon.color=0xff888888                      \
-                                 label.drawing=off                          \
-                                 script="$PLUGIN_DIR/spaces.sh"              \
-                                 click_script="yabai -m space --focus $sid" \
-                                 icon.font="$FONT:Bold:22.0"                \
-               --subscribe space.$sid front_app_switched space_changed window_focus
+    sid=$(($i+1))
+    sketchybar --add space space.$sid left                           \
+        --set space.$sid associated_space=$sid                       \
+                         icon=${SPACE_ICONS[i]}                      \
+                         icon.padding_left=8                         \
+                         icon.padding_right=8                        \
+                         background.padding_left=5                   \
+                         background.padding_right=5                  \
+                         background.color=$WORKSPACE_ACTIVE          \
+                         background.corner_radius=7                  \
+                         background.height=22                        \
+                         background.drawing=off                      \
+                         label.drawing=off                           \
+                         update_freq=2                               \
+                         script="$PLUGIN_DIR/space.sh"               \
+                         click_script="$PLUGIN_DIR/focus_space.sh $sid" \
+                         icon.font="$FONT:Medium:13.0"
 done
-
-# Script to update the workspace icons
-cat << 'EOF' > "$PLUGIN_DIR/spaces.sh"
-#!/usr/bin/env sh
-
-active_space=$(/usr/local/bin/yabai -m query --spaces --space | jq '.index')
-
-echo $active_space > /tmp/active_space
-
-for sid in {1..10}
-do
-    echo $sid >> /tmp/active_compare
-    if [ "$sid" -eq "$active_space" ]; then
-        sketchybar --set space.$sid icon=󰄯 icon.color=0xff888888
-    else
-        sketchybar --set space.$sid icon=󰄰 icon.color=0xffffffff
-    fi
-done
-EOF
-
-chmod +x "$PLUGIN_DIR/spaces.sh"
