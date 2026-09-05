@@ -7,6 +7,8 @@ local builtin = require('telescope.builtin')
 keymap('n', '<leader>f', builtin.find_files, { desc = 'Find files' })
 keymap('n', '<leader>g', builtin.live_grep, { desc = 'Live grep' })
 keymap('n', '<leader>s', builtin.git_status, { desc = 'Git status' })
+keymap('n', '<leader>gs', builtin.git_status, { desc = 'Git status' })
+keymap('n', ',nn', '<Plug>(GitGutterNextHunk)', { desc = 'Next Git hunk' })
 keymap('n', '<leader>b', builtin.buffers, { desc = 'Buffers' })
 keymap('n', '<leader>h', builtin.help_tags, { desc = 'Help tags' })
 keymap('n', '<leader>t', ':Telescope file_browser path=%:p:h select_buffer=true<CR>',
