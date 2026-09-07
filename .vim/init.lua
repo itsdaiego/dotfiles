@@ -56,9 +56,64 @@ vim.opt.guicursor = ""
 -- NERDTree alias
 vim.cmd([[command! NT NERDTree]])
 
+-- Follow the quickfix cursor in a real source window rather than a preview.
+-- The quickfix window retains focus, so j/k keeps moving through the list.
+local quickfix_follow = vim.api.nvim_create_augroup("QuickfixFollow", { clear = true })
+vim.api.nvim_create_autocmd("CursorMoved", {
+  group = quickfix_follow,
+  callback = function(args)
+    local quickfix_win = vim.api.nvim_get_current_win()
+    if vim.bo[args.buf].buftype ~= "quickfix" or vim.fn.win_gettype(quickfix_win) ~= "quickfix" then
+      return
+    end
+
+    -- The quickfix-list index is only updated by jumping, so explicitly use
+    -- the selected quickfix line as the :cc count.
+    local entry = vim.api.nvim_win_get_cursor(quickfix_win)[1]
+    vim.cmd("silent! " .. entry .. "cc")
+
+    -- :cc can load a buffer directly from the quickfix list without a normal
+    -- file-opening path. Ensure its filetype is detected and its Tree-sitter
+    -- highlighter attaches before returning focus to quickfix.
+    local source_win = vim.api.nvim_get_current_win()
+    if source_win ~= quickfix_win then
+      local source_buf = vim.api.nvim_win_get_buf(source_win)
+      if vim.bo[source_buf].filetype == "" then
+        local filetype = vim.filetype.match({ buf = source_buf })
+        if filetype then
+          vim.bo[source_buf].filetype = filetype
+        end
+      end
+      pcall(vim.treesitter.start, source_buf)
+
+      -- Refresh GitGutter for targets that :cc reuses without reading again.
+      -- This keeps its signs and <Plug>(GitGutterNextHunk) navigation usable.
+      vim.api.nvim_win_call(source_win, function()
+        vim.cmd("silent! GitGutter")
+      end)
+      -- Also attach Gitsigns' hunk actions. Its signcolumn is disabled in
+      -- the plugin config, so GitGutter remains the only gutter renderer.
+      pcall(function()
+        require("gitsigns.actions").attach({
+          bufnr = source_buf,
+          trigger = "QuickfixFollow",
+        })
+      end)
+    end
+
+    if vim.api.nvim_win_is_valid(quickfix_win) then
+      vim.api.nvim_set_current_win(quickfix_win)
+    end
+  end,
+})
+
+
 -- Key mappings
 vim.keymap.set('i', 'jj', '<Esc>')
 vim.keymap.set('t', 'jj', '<C-\\><C-n>')
+vim.keymap.set('n', '<leader>sp', function()
+  require('gitsigns').preview_hunk()
+end, { desc = 'Preview Git hunk' })
 
 -- Setup Telescope
 local telescope = require('telescope')

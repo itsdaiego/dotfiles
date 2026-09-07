@@ -171,16 +171,26 @@ return {
 
   -- Git
   { "tpope/vim-fugitive", cmd = { "Git", "Gstatus", "Gblame", "Gpush", "Gpull" } },
+  -- GitGutter owns the change signs and <Plug>(GitGutter*Hunk) mappings.
+  -- It must be available before quickfix opens a target source buffer.
+  { "airblade/vim-gitgutter", lazy = false },
   {
     "lewis6991/gitsigns.nvim",
-    event = { "BufReadPre", "BufNewFile" },
+    lazy = false,
     opts = {
+      -- Let GitGutter be the sole provider of gutter signs; retain Gitsigns'
+      -- hunk preview and other actions without the competing orange pipes.
+      signcolumn = false,
+      numhl = false,
+      linehl = false,
       on_attach = function(bufnr)
-        vim.keymap.set("n", "<leader>sp", require("gitsigns").preview_hunk, { buffer = bufnr, desc = "Preview Hunk" })
+        vim.keymap.set("n", "<leader>sp", require("gitsigns").preview_hunk, {
+          buffer = bufnr,
+          desc = "Preview Hunk",
+        })
       end,
     },
   },
-  { "airblade/vim-gitgutter", event = { "BufReadPre", "BufNewFile" } },
   {
     "sindrets/diffview.nvim",
     cmd = { "DiffviewOpen", "DiffviewFileHistory", "DiffviewClose" },
