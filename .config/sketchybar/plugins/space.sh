@@ -3,7 +3,8 @@
 
 sid=$(printf '%s' "$NAME" | awk -F. '{print $NF}')
 
-apps=$(/usr/local/bin/yabai -m query --windows --space "$sid" 2>/dev/null | jq -r '[.[] | select(.subrole == "AXStandardWindow") | .app] | unique | .[]')
+YABAI="${YABAI_BIN:-$(command -v yabai 2>/dev/null || printf /usr/local/bin/yabai)}"
+apps=$("$YABAI" -m query --windows --space "$sid" 2>/dev/null | jq -r '[.[] | select(.subrole == "AXStandardWindow") | .app] | unique | .[]')
 if [ -z "$apps" ]; then
   icon_str="$sid"
 else

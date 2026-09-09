@@ -12,7 +12,7 @@ yabai -m config window_placement second_child
 
 # The top bar occupies the existing top gap; release the old bottom-bar gap
 # so tiled windows extend down into that recovered space.
-yabai -m config top_padding 4
+yabai -m config top_padding 0
 yabai -m config bottom_padding 8
 
 yabai -m config left_padding 10
@@ -40,3 +40,29 @@ yabai -m rule --add app="^System Settings$" manage=off
 yabai -m rule --add app="^Calculator$" manage=off
 yabai -m rule --add app="^Karabiner-Elements$" manage=off
 yabai -m rule --add app="^QuickTime Player$" manage=off
+
+# Assign Spaces 1-2 to the first display and Spaces 3-4 to the second display.
+# The helper is a no-op while only the MacBook display is connected.
+yabai -m signal --remove label=assign-monitor-spaces-display-added 2>/dev/null
+yabai -m signal --remove label=assign-monitor-spaces-display-removed 2>/dev/null
+yabai -m signal --remove label=assign-monitor-spaces-system-woke 2>/dev/null
+yabai -m signal --add event=display_added label=assign-monitor-spaces-display-added action="$HOME/.local/bin/yabai-assign-monitor-spaces"
+yabai -m signal --add event=display_removed label=assign-monitor-spaces-display-removed action="$HOME/.local/bin/yabai-assign-monitor-spaces"
+yabai -m signal --add event=system_woke label=assign-monitor-spaces-system-woke action="$HOME/.local/bin/yabai-assign-monitor-spaces"
+
+# The Denis Erdogan SketchyBar profile recalculates its height and Yabai top
+# reservation from the current monitor count whenever displays change.
+yabai -m signal --remove label=sketchybar-layout-display-added 2>/dev/null
+yabai -m signal --remove label=sketchybar-layout-display-removed 2>/dev/null
+yabai -m signal --remove label=sketchybar-layout-system-woke 2>/dev/null
+yabai -m signal --add event=display_added label=sketchybar-layout-display-added action="$HOME/.config/sketchybar/themes/deniserdogan/reload-for-display-change.sh"
+yabai -m signal --add event=display_removed label=sketchybar-layout-display-removed action="$HOME/.config/sketchybar/themes/deniserdogan/reload-for-display-change.sh"
+yabai -m signal --add event=system_woke label=sketchybar-layout-system-woke action="$HOME/.config/sketchybar/themes/deniserdogan/reload-for-display-change.sh"
+
+# Reload the scripting addition whenever Dock restarts. This requires the
+# matching passwordless sudoers rule for the current yabai binary.
+yabai -m signal --remove label=load-yabai-scripting-addition 2>/dev/null
+yabai -m signal --add event=dock_did_restart label=load-yabai-scripting-addition action="sudo /opt/homebrew/bin/yabai --load-sa"
+"$HOME/.local/bin/yabai-assign-monitor-spaces" >/dev/null 2>&1 &
+# Re-apply the monitor-aware SketchyBar geometry on every Yabai restart.
+"$HOME/.config/sketchybar/themes/deniserdogan/reload-for-display-change.sh" >/dev/null 2>&1 &

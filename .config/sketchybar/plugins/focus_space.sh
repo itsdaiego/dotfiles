@@ -9,8 +9,18 @@ case "$space" in
   *) exit 2 ;;
 esac
 
-SKETCHYBAR="/opt/homebrew/opt/sketchybar/bin/sketchybar"
-YABAI="/usr/local/bin/yabai"
+# Resolve through PATH on the destination Homebrew install, but retain the
+# source Mac's local Yabai fallback. Optional overrides support custom paths.
+SKETCHYBAR="${SKETCHYBAR_BIN:-sketchybar}"
+if [ -n "${YABAI_BIN:-}" ]; then
+  YABAI="$YABAI_BIN"
+elif command -v yabai >/dev/null 2>&1; then
+  YABAI="$(command -v yabai)"
+elif [ -x /usr/local/bin/yabai ]; then
+  YABAI=/usr/local/bin/yabai
+else
+  exit 127
+fi
 
 "$SKETCHYBAR" \
   --set space.1 background.drawing=off \

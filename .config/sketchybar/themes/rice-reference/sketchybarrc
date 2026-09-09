@@ -1,0 +1,81 @@
+# Source structure: github.com/Jozefhdez/sketchybar-config @ 2afbeee
+# Only the palette is substituted with this machine's Kitty Melange palette.
+CONFIG_DIR="$HOME/.config/sketchybar/themes/rice-reference"
+export CONFIG_DIR
+ROOT="$HOME/.config/sketchybar"
+PLUGIN_DIR="$CONFIG_DIR/plugins"
+source "$ROOT/colors.sh"
+
+FONT="Hack Nerd Font"
+APP_FONT="sketchybar-app-font"
+REF_BAR=0xcc292522
+
+# Exact reference geometry and typography.
+sketchybar --bar position=top height=37 blur_radius=30 color=$REF_BAR
+sketchybar --default padding_left=8 padding_right=8 \
+  icon.font="$FONT:Bold:17.0" label.font="$FONT:Bold:14.0" \
+  icon.color=$WHITE label.color=$WHITE \
+  icon.padding_left=10 icon.padding_right=4 \
+  label.padding_left=4 label.padding_right=10 \
+  background.drawing=off background.corner_radius=6 background.height=25 \
+  animation.duration=0.3 animation.easing="ease-in-out"
+
+# Mission Control spaces with the reference's per-space app icon strip.
+for sid in 1 2 3 4 5 6 7 8 9 10; do
+  sketchybar --add space "reference.space.$sid" left \
+             --set "reference.space.$sid" associated_space=$sid \
+                                           icon=$sid \
+                                           background.color=$BLACK \
+                                           background.corner_radius=6 \
+                                           background.height=25 \
+                                           label.font="$APP_FONT:Regular:16.0" \
+                                           label.padding_right=20 \
+                                           label.y_offset=-1 \
+                                           icon.color=$WHITE label.color=$WHITE \
+                                           script="$PLUGIN_DIR/space.sh"
+done
+
+sketchybar --add item reference.space_separator left \
+           --set reference.space_separator icon="􀆊" \
+                                         icon.padding_left=4 \
+                                         label.drawing=off \
+                                         background.drawing=off \
+                                         icon.color=$WHITE \
+                                         script="$PLUGIN_DIR/space_windows.sh" \
+           --subscribe reference.space_separator space_windows_change \
+           --add item reference.front_app left \
+           --set reference.front_app icon.drawing=on \
+                                     icon.font="$APP_FONT:Regular:16.0" \
+                                     icon.color=$WHITE background.drawing=off \
+                                     script="$PLUGIN_DIR/front_app.sh" \
+           --subscribe reference.front_app front_app_switched
+
+# Reference now-playing component: shown only when Spotify is playing.
+sketchybar --add item reference.media center \
+           --set reference.media script="$PLUGIN_DIR/media.sh" \
+                                label.max_chars=23 icon.padding_left=0 \
+                                scroll_texts=on icon="" icon.color=$WHITE \
+                                background.drawing=off update_freq=5
+
+# Reference right-hand sequence: clock, volume, battery, CPU, GitHub identity.
+sketchybar --add item reference.clock right \
+           --set reference.clock update_freq=10 icon="" \
+                                script="$PLUGIN_DIR/clock.sh" icon.color=$WHITE \
+           --add item reference.volume right \
+           --set reference.volume script="$PLUGIN_DIR/volume.sh" icon.color=$WHITE \
+           --subscribe reference.volume volume_change \
+           --add item reference.battery right \
+           --set reference.battery update_freq=120 script="$PLUGIN_DIR/battery.sh" \
+                                  icon.color=$WHITE \
+           --subscribe reference.battery system_woke power_source_change \
+           --add item reference.cpu right \
+           --set reference.cpu update_freq=10 icon="" script="$PLUGIN_DIR/cpu.sh" \
+                              icon.color=$WHITE label.drawing=on \
+           --add item reference.logo right \
+           --set reference.logo icon="󰊤" label="daiego" label.drawing=on \
+                               icon.color=$WHITE script="echo Loading" \
+                               click_script="open https://github.com" \
+                               icon.highlight_color=$WHITE icon.highlight=on
+
+sketchybar --update
+echo "SketchyBar rice-reference profile loaded."

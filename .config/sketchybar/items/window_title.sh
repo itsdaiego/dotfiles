@@ -2,7 +2,9 @@
 
 sketchybar --add item window_title left                     \
 --set window_title    script="$PLUGIN_DIR/window_title.sh" \
-icon.drawing=off                     \
+icon.drawing=on                      \
+icon.font="sketchybar-app-font:Regular:16.0" \
+icon.padding_right=2                  \
 label.font="$FONT:Medium:16.0"           \
 label.padding_right=6                    \
 --subscribe window_title front_app_switched
