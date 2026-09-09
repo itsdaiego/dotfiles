@@ -1,10 +1,6 @@
 return {
   -- LSP and Completion
   {
-    "neovim/nvim-lspconfig",
-    event = { "BufReadPre", "BufNewFile" },
-  },
-  {
     "neoclide/coc.nvim",
     branch = "release",
     event = { "BufReadPre", "BufNewFile" },
@@ -12,14 +8,56 @@ return {
       -- Some servers have issues with backup files
       vim.opt.backup = false
       vim.opt.writebackup = false
-      
+
       -- Having longer updatetime (default is 4000 ms = 4s) leads to noticeable delays
       vim.opt.updatetime = 300
-      
+
       -- Always show the signcolumn
       vim.opt.signcolumn = "yes"
+
+      -- Auto-installed coc extensions: JS/TS, Go, Rust, C/C++, JSON/YAML/HTML/CSS
+      -- (Python uses the manual "ty" languageserver entry in coc-settings.json instead)
+      vim.g.coc_global_extensions = {
+        "coc-json",
+        "coc-tsserver",
+        "coc-go",
+        "coc-rust-analyzer",
+        "coc-clangd",
+        "coc-html",
+        "coc-css",
+        "coc-yaml",
+        "coc-snippets",
+      }
     end,
     config = function()
+      -- Insert-mode completion: <Tab>/<S-Tab> navigate the coc popup menu when
+      -- visible, otherwise jump UltiSnips snippets, otherwise send a real Tab.
+      local function coc_or_snippet_tab(direction)
+        local key = direction == "next" and "<Tab>" or "<S-Tab>"
+        if vim.fn["coc#pum#visible"]() == 1 then
+          return direction == "next" and vim.fn["coc#pum#next"](1) or vim.fn["coc#pum#prev"](1)
+        end
+        local jump = direction == "next" and "UltiSnips#CanJumpForwards" or "UltiSnips#CanJumpBackwards"
+        if vim.fn[jump]() == 1 then
+          return vim.fn.feedkeys(vim.api.nvim_replace_termcodes(
+            direction == "next" and "<C-r>=UltiSnips#JumpForwards()<CR>" or "<C-r>=UltiSnips#JumpBackwards()<CR>",
+            true, true, true), "")
+        end
+        return key
+      end
+      vim.keymap.set("i", "<Tab>", function() return coc_or_snippet_tab("next") end, { expr = true, silent = true })
+      vim.keymap.set("i", "<S-Tab>", function() return coc_or_snippet_tab("prev") end, { expr = true, silent = true })
+
+      -- Confirm the selected completion, or insert a newline if the menu isn't open.
+      -- Must be a string rhs, not a Lua callback: auto-pairs' AutoPairsTryInit (runs on
+      -- every BufEnter) reads maparg('<CR>', 'i', 0, 1).rhs to chain its own bracket-aware
+      -- <CR> behavior. Callback-mapped keys have no 'rhs' key on this Neovim build, which
+      -- throws E716 there and breaks coc's nvim_command batching.
+      vim.keymap.set("i", "<CR>", [[coc#pum#visible() ? coc#pum#confirm() : "\<CR>"]], { expr = true, silent = true })
+
+      -- Manually trigger completion
+      vim.keymap.set("i", "<C-space>", "coc#refresh()", { silent = true, expr = true })
+
       -- GoTo code navigation
       vim.keymap.set("n", "gd", "<Plug>(coc-definition)", {silent = true})
       vim.keymap.set("n", "gy", "<Plug>(coc-type-definition)", {silent = true})
@@ -94,47 +132,55 @@ return {
     end
   },
 
-  -- Treesitter
+  -- Treesitter: Neovim 0.12 requires nvim-treesitter's rewritten main branch.
   {
-      "nvim-treesitter/nvim-treesitter",
-      build = ":TSUpdate",
-      event = { "BufReadPost", "BufNewFile" },
-      dependencies = {
-        "nvim-treesitter/nvim-treesitter-context",
-      },
-      config = function()
-        local status_ok, treesitter = pcall(require, "nvim-treesitter.configs")
-        if status_ok then
-          treesitter.setup({
-            ensure_installed = { "lua", "vim", "vimdoc", "python", "javascript", "typescript", "go", "rust" },
-            auto_install = true,
-            highlight = { enable = true },
-            indent = { enable = true },
-            fold = { enable = true },
-          })
-        end
+    "nvim-treesitter/nvim-treesitter",
+    branch = "main",
+    lazy = false,
+    build = ":TSUpdate",
+    dependencies = { "nvim-treesitter/nvim-treesitter-context" },
+    config = function()
+      local languages = {
+        "lua", "vim", "vimdoc", "markdown", "markdown_inline",
+        "javascript", "typescript", "tsx", "python", "go", "rust", "c", "cpp",
+        "json", "yaml", "bash",
+      }
+      require("nvim-treesitter").setup({
+        install_dir = vim.fn.stdpath("data") .. "/site",
+      })
+      require("nvim-treesitter").install(languages)
 
-        local context_ok, context = pcall(require, 'treesitter-context')
-        if context_ok then
-          context.setup{
-          enable = true, -- Enable this plugin (Can be enabled/disabled later via commands)
-          multiwindow = false, -- Enable multiwindow support.
-          max_lines = 10, -- How many lines the window should span. Values <= 0 mean no limit.
-          min_window_height = 5, -- Minimum editor window height to enable context. Values <= 0 mean no limit.
-          line_numbers = true,
-          multiline_threshold = 1000, -- Maximum number of lines to show for a single context
-          trim_scope = 'outer', -- Which context lines to discard if `max_lines` is exceeded. Choices: 'inner', 'outer'
-          mode = 'cursor',  -- Line used to calculate context. Choices: 'cursor', 'topline'
-          -- Separator between context and content. Should be a single character string, like '-'.
-          -- When separator is set, the context will only show up when there are at least 2 lines above cursorline.
-          separator = nil,
-          zindex = 20, -- The Z-index of the context window
-          on_attach = nil, -- (fun(buf: integer): boolean) return false to disable attaching
-        }
-        end
-      end,
-    },
-  { "nvim-treesitter/nvim-treesitter-textobjects", dependencies = { "nvim-treesitter/nvim-treesitter" } },
+      vim.api.nvim_create_autocmd("FileType", {
+        group = vim.api.nvim_create_augroup("UserTreesitter", { clear = true }),
+        callback = function(args)
+          -- Avante manages its own markdown parser; attaching another highlighter causes
+          -- the Tree-sitter `node:range()` error while its buffer is being rewritten.
+          if vim.bo[args.buf].filetype ~= "Avante" then
+            pcall(vim.treesitter.start, args.buf)
+          end
+        end,
+      })
+
+      require("treesitter-context").setup({
+        multiwindow = false,
+        max_lines = 10,
+        min_window_height = 5,
+        line_numbers = true,
+        multiline_threshold = 1000,
+        trim_scope = "outer",
+        mode = "cursor",
+        zindex = 20,
+        on_attach = function(bufnr)
+          return vim.bo[bufnr].filetype ~= "Avante"
+        end,
+      })
+    end,
+  },
+  {
+    "nvim-treesitter/nvim-treesitter-textobjects",
+    branch = "main",
+    dependencies = { "nvim-treesitter/nvim-treesitter" },
+  },
 
   -- Telescope and dependencies
   {
@@ -193,11 +239,135 @@ return {
   },
   {
     "sindrets/diffview.nvim",
-    cmd = { "DiffviewOpen", "DiffviewFileHistory", "DiffviewClose" },
+    -- Load at startup so the guarded :DiffviewOpen command is always available.
+    -- Diffview normally uses Neovim's cwd, which can be outside the project even
+    -- when the current buffer belongs to a Git repository.
+    lazy = false,
+    opts = {
+      file_panel = {
+        listing_style = "tree",             -- One of 'list' or 'tree'
+        tree_options = {                    -- Only applies when listing_style is 'tree'
+          flatten_dirs = true,              -- Flatten dirs that only contain one single dir
+          folder_statuses = "only_folded",  -- One of 'never', 'only_folded' or 'always'.
+        },
+        win_config = {                      -- See |diffview-config-win_config|
+          position = "right",
+          width = 20,
+          win_opts = {},
+        },
+      },
+    },
+    config = function(_, opts)
+      require("diffview").setup(opts)
+
+      -- Diffview labels its two-way panes A (old) and B (new), but creates
+      -- them as A-left/B-right. Keep B (the added/current version) on the
+      -- left and A (the removed/previous version) on the right. Merge layouts
+      -- are deliberately unchanged: their panes have different semantics.
+      local async = require("diffview.async")
+      local Window = require("diffview.scene.window").Window
+      local Diff2Hor = require("diffview.scene.layouts.diff_2_hor").Diff2Hor
+      local api = vim.api
+      local await = async.await
+
+      Diff2Hor.create = async.void(function(self, pivot)
+        self:create_pre()
+        pivot = pivot or self:find_pivot()
+        assert(api.nvim_win_is_valid(pivot), "Layout creation requires a valid window pivot!")
+
+        for _, win in ipairs(self.windows) do
+          if win.id ~= pivot then
+            win:close(true)
+          end
+        end
+
+        -- Create B first so it is the left pane, then create A immediately
+        -- before the pivot; closing the pivot leaves B-left/A-right.
+        api.nvim_win_call(pivot, function()
+          vim.cmd("aboveleft vsp")
+          local winid = api.nvim_get_current_win()
+          if self.b then self.b:set_id(winid) else self.b = Window({ id = winid }) end
+        end)
+        api.nvim_win_call(pivot, function()
+          vim.cmd("aboveleft vsp")
+          local winid = api.nvim_get_current_win()
+          if self.a then self.a:set_id(winid) else self.a = Window({ id = winid }) end
+        end)
+
+        api.nvim_win_close(pivot, true)
+        self.windows = { self.a, self.b }
+        await(self:create_post())
+      end)
+
+      local function repo_root(path)
+        local git_root = vim.fn.systemlist({ "git", "-C", path, "rev-parse", "--show-toplevel" })
+        if vim.v.shell_error == 0 and git_root[1] then
+          return git_root[1]
+        end
+
+        if vim.fn.executable("hg") == 1 then
+          local hg_root = vim.fn.systemlist({ "hg", "--cwd", path, "root" })
+          if vim.v.shell_error == 0 and hg_root[1] then
+            return hg_root[1]
+          end
+        end
+      end
+
+      local function current_repo_root()
+        local buffer_name = vim.api.nvim_buf_get_name(0)
+        local candidates = { vim.fn.getcwd() }
+        if buffer_name ~= "" then
+          table.insert(candidates, 1, vim.fs.dirname(vim.fs.normalize(buffer_name)))
+        end
+
+        for _, path in ipairs(candidates) do
+          local root = repo_root(path)
+          if root then
+            return root
+          end
+        end
+      end
+
+      vim.api.nvim_create_user_command("DiffviewOpen", function(ctx)
+        -- Preserve Diffview's handling of explicit directories and path lists.
+        -- Otherwise, anchor the view to the current buffer's repository instead
+        -- of an unrelated Neovim working directory.
+        local has_explicit_location = false
+        for _, arg in ipairs(ctx.fargs) do
+          if arg == "--" or arg == "-C" or arg:sub(1, 2) == "-C" then
+            has_explicit_location = true
+            break
+          end
+        end
+
+        if not has_explicit_location then
+          local root = current_repo_root()
+          if not root then
+            vim.notify(
+              "Diffview needs a Git or Mercurial repository. Open a project file first.",
+              vim.log.levels.WARN,
+              { title = "Diffview" }
+            )
+            return
+          end
+          local args = vim.list_extend({ "-C" .. root }, ctx.fargs)
+          require("diffview").open(args)
+          return
+        end
+
+        require("diffview").open(ctx.fargs)
+      end, { nargs = "*", complete = "customlist,v:lua.require'diffview'.completion", force = true })
+    end,
     keys = {
       { "<leader>sdo", "<cmd>DiffviewOpen<cr>", desc = "Diffview Open" },
       { "<leader>sdc", "<cmd>DiffviewClose<cr>", desc = "Diffview Close" },
     },
+  },
+  {
+    "MeanderingProgrammer/render-markdown.nvim",
+    dependencies = { "nvim-treesitter/nvim-treesitter", "nvim-tree/nvim-web-devicons" },
+    ft = { "markdown" },
+    opts = {},
   },
 
   -- UI Enhancements
@@ -232,6 +402,24 @@ return {
     dependencies = { "nvim-tree/nvim-web-devicons" },
     cmd = { "Trouble", "TroubleToggle" },
   },
+  {
+    "kevinhwang91/nvim-bqf",
+    ft = "qf",
+    opts = {
+      auto_resize_height = true,
+      preview = {
+        -- Preview the entry beneath the quickfix cursor, including filetype
+        -- syntax highlighting, without jumping away from the quickfix list.
+        -- Actual source buffers are opened by the quickfix CursorMoved hook
+        -- in init.lua. Keep bqf's floating preview available manually via `p`.
+        auto_preview = false,
+        -- bqf accepts rows rather than a percentage; calculate 90% at startup.
+        win_height = math.max(1, math.floor(vim.o.lines * 0.9)),
+        win_vheight = math.max(1, math.floor(vim.o.lines * 0.9)),
+        delay_syntax = 50,
+      },
+    },
+  },
   { "mhinz/vim-startify" },
   { "ryanoasis/vim-devicons" },
   { "norcalli/nvim-colorizer.lua", config = true },
@@ -259,7 +447,26 @@ return {
     end
   },
   { "skwp/greplace.vim", cmd = "Greplace" },
-  { "dense-analysis/ale", event = { "BufReadPost", "BufNewFile" } },
+  {
+    "dense-analysis/ale",
+    event = { "BufReadPost", "BufNewFile" },
+    init = function()
+      -- Diffview buffers contain Git snapshots, not filesystem paths. Never
+      -- pass their `diffview://` names to ALE's LSP linters.
+      vim.g.ale_pattern_options = vim.tbl_extend("force", vim.g.ale_pattern_options or {}, {
+        ["^diffview://"] = { ale_enabled = 0 },
+      })
+
+      -- Set this before ALE's BufWinEnter lint hook as an extra safeguard.
+      vim.api.nvim_create_autocmd({ "BufEnter", "BufWinEnter" }, {
+        group = vim.api.nvim_create_augroup("DisableAleForDiffview", { clear = true }),
+        pattern = "diffview://*",
+        callback = function(args)
+          vim.b[args.buf].ale_enabled = false
+        end,
+      })
+    end,
+  },
   { "ggreer/the_silver_searcher", cmd = "Ag" },
   { "vim-test/vim-test", cmd = { "TestNearest", "TestFile", "TestSuite" } },
   
