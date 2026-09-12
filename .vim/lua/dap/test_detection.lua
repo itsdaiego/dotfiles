@@ -149,7 +149,7 @@ local function dotted_python_path(root, file_path)
   return relative_to(root, file_path):gsub('%.py$', ''):gsub('/', '.')
 end
 
-local function detect_python_test(node, ts_utils)
+local function detect_python_test(node)
   local test_func
   local class_hierarchy = {}
   local has_pytest_markers = false
@@ -175,7 +175,7 @@ local function detect_python_test(node, ts_utils)
     if node:type() == "function_definition" then
       local name_node = node:child(1)
       if name_node then
-        local func_name = ts_utils.get_node_text(name_node)[1]
+        local func_name = vim.treesitter.get_node_text(name_node, 0)
         if vim.startswith(func_name, "test_") and not test_func then
           test_func = func_name
         end
@@ -183,7 +183,7 @@ local function detect_python_test(node, ts_utils)
     elseif node:type() == "class_definition" then
       local name_node = node:child(1)
       if name_node then
-        table.insert(class_hierarchy, 1, ts_utils.get_node_text(name_node)[1])
+        table.insert(class_hierarchy, 1, vim.treesitter.get_node_text(name_node, 0))
       end
     end
     node = node:parent()
@@ -204,13 +204,13 @@ local function detect_python_test(node, ts_utils)
   return test_func, test_class, is_pytest
 end
 
-local function detect_go_test(node, ts_utils)
+local function detect_go_test(node)
   local test_func
   while node do
     if node:type() == "function_declaration" then
       local name_node = node:child(1)
       if name_node then
-        local func_name = ts_utils.get_node_text(name_node)[1]
+        local func_name = vim.treesitter.get_node_text(name_node, 0)
         if vim.startswith(func_name, "Test") then
           test_func = func_name
           break
@@ -222,7 +222,7 @@ local function detect_go_test(node, ts_utils)
   return test_func
 end
 
-local function detect_js_test(node, ts_utils)
+local function detect_js_test(node)
   local test_func
   while node do
     if node:type() == "expression_statement" then
@@ -230,13 +230,13 @@ local function detect_js_test(node, ts_utils)
       if call and call:type() == "call_expression" then
         local func = call:child(0)
         if func and func:type() == "identifier" then
-          local func_name = ts_utils.get_node_text(func)[1]
+          local func_name = vim.treesitter.get_node_text(func, 0)
           if func_name == "it" or func_name == "test" then
             local args = call:child(1)
             if args and args:named_child_count() > 0 then
               local desc = args:named_child(0)
               if desc then
-                test_func = vim.trim(ts_utils.get_node_text(desc)[1], '"\'')
+                test_func = vim.trim(vim.treesitter.get_node_text(desc, 0), '"\'')
                 break
               end
             end
@@ -246,13 +246,13 @@ local function detect_js_test(node, ts_utils)
     elseif node:type() == "call_expression" then
       local func = node:child(0)
       if func and func:type() == "identifier" then
-        local func_name = ts_utils.get_node_text(func)[1]
+        local func_name = vim.treesitter.get_node_text(func, 0)
         if func_name == "it" or func_name == "test" then
           local args = node:child(1)
           if args and args:named_child_count() > 0 then
             local desc = args:named_child(0)
             if desc then
-              test_func = vim.trim(ts_utils.get_node_text(desc)[1], '"\'')
+              test_func = vim.trim(vim.treesitter.get_node_text(desc, 0), '"\'')
               break
             end
           end
@@ -288,8 +288,8 @@ local function find_jest_binary(start_dir)
 end
 
 function M.run_nearest_test(dap)
-  local ts_utils = require('nvim-treesitter.ts_utils')
-  local node = ts_utils.get_node_at_cursor()
+  vim.treesitter.get_parser(0):parse()
+  local node = vim.treesitter.get_node()
 
   if not node then
     vim.notify("No treesitter node found at cursor", vim.log.levels.ERROR)
@@ -299,7 +299,7 @@ function M.run_nearest_test(dap)
   local filetype = vim.bo.filetype
 
   if filetype == "python" then
-    local test_func, test_class, is_pytest = detect_python_test(node, ts_utils)
+    local test_func, test_class, is_pytest = detect_python_test(node)
 
     if not test_func then
       vim.notify("No test function found at cursor position", vim.log.levels.ERROR)
@@ -407,7 +407,7 @@ function M.run_nearest_test(dap)
     end
 
   elseif filetype == "go" then
-    local test_func = detect_go_test(node, ts_utils)
+    local test_func = detect_go_test(node)
 
     if not test_func then
       vim.notify("No test function found at cursor position", vim.log.levels.ERROR)
@@ -428,7 +428,7 @@ function M.run_nearest_test(dap)
     })
 
   elseif filetype == "typescript" or filetype == "javascript" or filetype == "javascript.jsx" then
-    local test_func = detect_js_test(node, ts_utils)
+    local test_func = detect_js_test(node)
 
     if not test_func then
       vim.notify("No test function found at cursor position", vim.log.levels.ERROR)
