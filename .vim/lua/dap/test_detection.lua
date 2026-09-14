@@ -149,6 +149,52 @@ local function dotted_python_path(root, file_path)
   return relative_to(root, file_path):gsub('%.py$', ''):gsub('/', '.')
 end
 
+-- Marks that only change test behavior, never used with `-m` to select tests.
+local NON_SELECTION_MARKS = {
+  parametrize = true, skip = true, skipif = true, xfail = true,
+  usefixtures = true, asyncio = true, filterwarnings = true, timeout = true,
+  freeze_time = true, django_db = true, flaky = true, repeat_ = true,
+  dependency = true, order = true, benchmark = true, anyio = true,
+}
+
+-- Finds the selection marker for a test, so repos that gate pytest behind
+-- `-m <marker>` (butler's conftest raises without one) still run from DAP.
+local function detect_pytest_marker(test_func)
+  local bufnr = vim.api.nvim_get_current_buf()
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+
+  local def_pattern = '^%s*def%s+' .. vim.pesc(test_func) .. '%s*%('
+  local def_row
+  for i, line in ipairs(lines) do
+    if line:match(def_pattern) then
+      def_row = i
+      break
+    end
+  end
+
+  if def_row then
+    for i = def_row - 1, 1, -1 do
+      local line = lines[i]
+      local mark = line:match('^%s*@pytest%.mark%.([%w_]+)')
+      if mark and not NON_SELECTION_MARKS[mark] then
+        return mark
+      end
+      if not (mark or line:match('^%s*@') or line:match('^%s*$') or line:match('^%s*[%)%],]')) then
+        break
+      end
+    end
+  end
+
+  for _, line in ipairs(lines) do
+    local mark = line:match('^%s*pytestmark%s*=%s*pytest%.mark%.([%w_]+)')
+    if mark and not NON_SELECTION_MARKS[mark] then
+      return mark
+    end
+  end
+
+  return nil
+end
+
 local function detect_python_test(node)
   local test_func
   local class_hierarchy = {}
@@ -287,6 +333,14 @@ local function find_jest_binary(start_dir)
   return './node_modules/jest/bin/jest.js'
 end
 
+local function pytest_args(test_path, test_func)
+  local marker = detect_pytest_marker(test_func)
+  if marker then
+    return { '-m', marker, test_path }
+  end
+  return { test_path }
+end
+
 function M.run_nearest_test(dap)
   vim.treesitter.get_parser(0):parse()
   local node = vim.treesitter.get_node()
@@ -326,7 +380,7 @@ function M.run_nearest_test(dap)
         request = 'launch',
         name = 'Pytest Test',
         module = 'pytest',
-        args = { test_path },
+        args = pytest_args(test_path, test_func),
         pythonPath = python_path,
         console = 'integratedTerminal',
         cwd = project_root,
@@ -368,7 +422,7 @@ function M.run_nearest_test(dap)
           request = 'launch',
           name = 'Pytest Test (Fallback)',
           module = 'pytest',
-          args = { test_path },
+          args = pytest_args(test_path, test_func),
           pythonPath = python_path,
           console = 'integratedTerminal',
           cwd = project_root,
