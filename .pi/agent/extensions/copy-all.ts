@@ -5,6 +5,7 @@ type ClipboardCommand = { command: string; args: string[] };
 
 function clipboardCommands(): ClipboardCommand[] {
   const commands: ClipboardCommand[] = [];
+  if (process.platform === "darwin") commands.push({ command: "pbcopy", args: [] });
   if (process.env.WAYLAND_DISPLAY) commands.push({ command: "wl-copy", args: [] });
   if (process.env.DISPLAY) {
     commands.push({ command: "xclip", args: ["-selection", "clipboard"] });
@@ -39,7 +40,7 @@ async function copyToClipboard(text: string): Promise<string> {
       errors.push(`${command.command}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
-  throw new Error(errors.length ? errors.join("; ") : "No Wayland or X11 clipboard command is available");
+  throw new Error(errors.length ? errors.join("; ") : "No supported clipboard command is available");
 }
 
 /** Return only visible message text; omit thinking, tool calls, images, and metadata. */
