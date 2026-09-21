@@ -1,1 +1,13 @@
 **/.DS_Store
+
+# Pi runtime state and per-machine credentials
+.pi/agent/auth.json
+.pi/agent/mcp.json
+.pi/agent/mcp-cache.json
+.pi/agent/models-store.json
+.pi/agent/trust.json
+.pi/agent/sessions/
+.pi/agent/sessions.backup*/
+.pi/agent/npm/node_modules/
+.pi/agent/extensions/**/node_modules/
+.pi/agent/bin/

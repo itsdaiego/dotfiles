@@ -1,5 +1,6 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth } from "@earendil-works/pi-tui";
+import { replaceReferences } from "./resume-screenshot-paths.ts";
 
 /** Keep the latest submitted request in a one-line overlay at screen row zero. */
 export default function latestPromptHeader(pi: ExtensionAPI) {
@@ -8,7 +9,7 @@ export default function latestPromptHeader(pi: ExtensionAPI) {
   let overlayHandle: { hide(): void; unfocus(): void } | undefined;
 
   function toOneLine(text: string): string {
-    return text.replace(/\s+/g, " ").trim();
+    return replaceReferences(text).replace(/\s+/g, " ").trim();
   }
 
   function restoreLatestPrompt(ctx: ExtensionContext): void {
