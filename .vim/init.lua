@@ -65,6 +65,7 @@ vim.keymap.set('t', 'jj', '<C-\\><C-n>')
 vim.keymap.set('n', '<leader>sp', function()
   require('gitsigns').preview_hunk()
 end, { desc = 'Preview Git hunk' })
+require("git_commit_history").setup()
 
 local function navigate_git_change(direction)
   if require("git.branch_diff_quickfix").nav_hunk(direction) then
