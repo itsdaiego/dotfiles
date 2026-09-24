@@ -1,7 +1,15 @@
 -- Enable true colors support
-vim.opt.termguicolors = false
+vim.opt.termguicolors = true
 -- Set background to dark
 vim.opt.background = 'dark'
+-- Legacy Tree-sitter highlighting is disabled below for Neovim 0.12
+-- compatibility; retain syntax coloring through Vim's syntax engine.
+vim.cmd('syntax enable')
+
+vim.opt.foldmethod = 'indent'
+vim.opt.foldlevel = 50
+vim.opt.foldenable = false
+
 
 -- Set Python provider (before anything else)
 vim.g.loaded_python_provider = 0  -- Disable Python 2
@@ -27,14 +35,27 @@ vim.opt.rtp:prepend(lazypath)
 vim.g.mapleader = ","
 vim.g.maplocalleader = ","
 
+vim.g.avante = {
+  log_level = "WARN",
+}
+
 -- Load lazy.nvim
 require("lazy").setup("plugins")
 
 -- Set colorscheme
-vim.cmd.colorscheme('handmadehero')
+-- vim.g.gruvbox_material_palette = 'gruvbox'
+-- vim.cmd.colorscheme('duotone-darkdesert')
+local theme_switcher_current = vim.fn.expand('~/.config/theme-switcher/nvim/current.lua')
+if vim.fn.filereadable(theme_switcher_current) == 1 then
+  dofile(theme_switcher_current)
+else
+  vim.cmd.colorscheme('melange')
+end
+-- vim.cmd.colorscheme('zenbones')
+-- vim.cmd.colorscheme('monotone')
 -- Enable transparent background
-vim.api.nvim_set_hl(0, "Normal", { bg = "NONE" })
-vim.api.nvim_set_hl(0, "NormalFloat", { bg = "NONE" })
+-- vim.api.nvim_set_hl(0, "Normal", { bg = "NONE" })
+-- vim.api.nvim_set_hl(0, "NormalFloat", { bg = "NONE" })
 
 -- Basic settings
 vim.opt.number = true
@@ -45,9 +66,11 @@ vim.opt.expandtab = true
 vim.opt.timeoutlen = 1000
 vim.opt.list = true
 vim.opt.listchars = {
+  trail = " ",
+  eol = "↵",
   tab = "✝ ",
-  trail = "·",
-  eol = "↲"
+  tab = "  ",
+
 }
 
 -- Keep cursor shape consistent (block) in all modes
@@ -58,6 +81,11 @@ vim.cmd([[command! NT NERDTree]])
 
 require("git.setup").setup()
 
+-- Spawn ClaudeCode by pressing leader cc
+vim.keymap.set("n", "<leader>cc", ":ClaudeCode<CR>", {silent = true, noremap = true})
+
+-- run "Git Blame" by running <leader>qq
+vim.cmd([[command! -nargs=0 GitBlame :Gitsigns blame]])
 
 -- Key mappings
 vim.keymap.set('i', 'jj', '<Esc>')
@@ -65,6 +93,10 @@ vim.keymap.set('t', 'jj', '<C-\\><C-n>')
 vim.keymap.set('n', '<leader>sp', function()
   require('gitsigns').preview_hunk()
 end, { desc = 'Preview Git hunk' })
+vim.keymap.set('n', '<leader>gs', function()
+  require('telescope.builtin').git_status()
+end, { desc = 'Git status' })
+
 require("git_commit_history").setup()
 
 local function navigate_git_change(direction)
@@ -150,3 +182,6 @@ telescope.setup({
 -- Load extensions
 telescope.load_extension('fzf')
 telescope.load_extension('file_browser')
+
+vim.g.copilot_no_tab_map = true
+vim.api.nvim_set_keymap("i", "<C-j>", 'copilot#Accept("<Tab>")', { expr = true, silent = true, replace_keycodes = false })
