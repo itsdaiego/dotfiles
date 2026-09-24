@@ -66,6 +66,30 @@ vim.keymap.set('n', '<leader>sp', function()
   require('gitsigns').preview_hunk()
 end, { desc = 'Preview Git hunk' })
 
+local function navigate_git_change(direction)
+  if require("git.branch_diff_quickfix").nav_hunk(direction) then
+    return
+  end
+  if vim.wo.diff then
+    vim.cmd("normal! " .. (direction == "next" and "]c" or "[c"))
+    vim.cmd("normal! zz")
+    return
+  end
+
+  require("gitsigns").nav_hunk(direction, { target = "all", wrap = true }, function(err)
+    if not err then
+      vim.cmd("normal! zz")
+    end
+  end)
+end
+
+vim.keymap.set("n", "]c", function()
+  navigate_git_change("next")
+end, { desc = "Next Git change" })
+vim.keymap.set("n", "[c", function()
+  navigate_git_change("prev")
+end, { desc = "Previous Git change" })
+
 -- Setup Telescope
 local telescope = require('telescope')
 telescope.setup({
