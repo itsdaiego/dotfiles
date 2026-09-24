@@ -1,4 +1,5 @@
 return {
+  { "shaunsingh/nord.nvim" },
   {
     "rose-pine/neovim",
     name = "rose-pine",
@@ -21,6 +22,7 @@ return {
       vim.g.gruvbox_material_transparent_background = 1
       vim.g.gruvbox_material_diagnostic_text_highlight = 1
       vim.g.gruvbox_material_diagnostic_line_highlight = 1
+      vim.g.gruvbox_material_diagnostic_virtual_text = 'grey'
     end,
   },
   {
@@ -60,6 +62,8 @@ return {
   { "jckmgns/curtailed" },
   { "alljokecake/naysayer-theme.nvim" },
   { "lifepillar/vim-gruvbox8" },
+  { "morhetz/gruvbox" },
+  -- { "ellisonleao/gruvbox.nvim" },
   { "fcpg/vim-farout" },
   { "kooparse/vim-color-desert-night" },
   { "luisiacc/gruvbox-baby" },
@@ -74,4 +78,50 @@ return {
   { "YorickPeterse/vim-paper" },
   { "mcchrish/zenbones.nvim" },
   { "tjdevries/colorbuddy.nvim" },
-}
+  {
+    "ptdewey/monalisa-nvim",
+    priority = 1000,
+  },
+  {
+    "darwinfroese/prairie",
+    version = false,
+    lazy = false,
+    priority = 1000,
+  },
+ {
+    "kamwitsta/vinyl.nvim",
+    config = function()
+      require("vinyl").setup({
+        overrides = {
+          ["@string"] = {fg="#00ff00"},
+        },
+      })
+    end
+  },
+  {
+    "ramojus/mellifluous.nvim",
+    -- version = "v0.*", -- uncomment for stable config (some features might be missed if/when v1 comes out)
+    config = function()
+      require("mellifluous").setup({}) -- optional, see configuration section.
+      vim.cmd("colorscheme mellifluous")
+    end,
+  },
+  {
+    "ptdewey/darkearth-nvim",
+    priority = 1000,
+  },
+  {
+	  "zenbones-theme/zenbones.nvim",
+	  -- Optionally install Lush. Allows for more configuration or extending the colorscheme
+	  -- If you don't want to install lush, make sure to set g:zenbones_compat = 1
+	  -- In Vim, compat mode is turned on as Lush only works in Neovim.
+	  dependencies = "rktjmp/lush.nvim",
+	  lazy = false,
+	  priority = 1000,
+	  -- you can set set configuration options here
+	  -- config = function()
+		  --     vim.g.zenbones_darken_comments = 45
+		  --     vim.cmd.colorscheme('zenbones')
+		  -- end
+	  }
+  }
