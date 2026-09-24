@@ -1,14 +1,4 @@
 {
-  "diagnostic.errorSign": "E",
-  "diagnostic.warningSign": "W",
-  "diagnostic.infoSign": "I",
-  "diagnostic.hintSign": "H",
-  "diagnostic.displayByAle": false,
-  "diagnostic.virtualText": false,
-  "diagnostic.virtualTextCurrentLineOnly": false,
-  "diagnostic.enableMessage": "never",
-  "diagnostic.checkCurrentLine": false,
-  "diagnostic.enableHighlightLineNumber": false,
   "coc.preferences.formatOnSaveFiletypes": [
     "css",
     "markdown",
@@ -23,43 +13,47 @@
     "scala"
   ],
   "inlayHint.enable": false,
+  // Use coc-clangd with Apple Clang so the macOS SDK headers are discovered.
+  "clangd.path": "/Library/Developer/CommandLineTools/usr/bin/clangd",
   "snippets.ultisnips.directories": [
-    "UltiSnips",
-    "~/.config/nvim/utils/snips"
-  ],
-  "suggest.completionItemKindLabels": {
-    "method": "  ",
-    "function": "  ",
-    "variable": "[]",
-    "field": "  ",
-    "typeParameter": "<>",
-    "constant": "  ",
-    "class": " פּ ",
-    "interface": " 蘒",
-    "struct": "  ",
-    "event": "  ",
-    "operator": "  ",
-    "module": "  ",
-    "property": "  ",
-    "enum": " 練",
-    "reference": "  ",
-    "keyword": "  ",
-    "file": "  ",
-    "folder": " ﱮ ",
-    "color": "  ",
-    "unit": " 塞 ",
-    "snippet": "  ",
-    "text": "  ",
-    "constructor": "  ",
-    "value": "  ",
-    "enumMember": "  "
+      "UltiSnips",
+      "~/.config/nvim/utils/snips"
+    ],
+    "suggest.completionItemKindLabels": {
+      "method": "  ",
+      "function": "  ",
+      "variable": "[]",
+      "field": "  ",
+      "typeParameter": "<>",
+      "constant": "  ",
+      "class": " פּ ",
+      "interface": " 蘒",
+      "struct": "  ",
+      "event": "  ",
+      "operator": "  ",
+      "module": "  ",
+      "property": "  ",
+      "enum": " 練",
+      "reference": "  ",
+      "keyword": "  ",
+      "file": "  ",
+      "folder": " ﱮ ",
+      "color": "  ",
+      "unit": " 塞 ",
+      "snippet": "  ",
+      "text": "  ",
+      "constructor": "  ",
+      "value": "  ",
+      "enumMember": "  "
+    },
+  "gopls": {
+    "completeUnimported": true,
+    "usePlaceholders": true,
+    "analyses": {
+      "unusedparams": true,
+      "shadow": true
+    },
+    "staticcheck": true
   },
-  "languageserver": {
-    "ty": {
-      "command": "ty",
-      "args": ["server"],
-      "filetypes": ["python"],
-      "rootPatterns": ["pyproject.toml", "setup.py", ".git"]
-    }
-  }
+  "snippets.ultisnips.pythonPrompt": false
 }
