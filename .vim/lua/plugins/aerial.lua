@@ -7,10 +7,9 @@ return {
       { "<leader>m", "<cmd>AerialToggle!<CR>", desc = "aerial: toggle symbol outline" },
     },
     opts = {
-      -- coc.nvim is the LSP client here, and it does not register with vim.lsp,
-      -- so aerial's "lsp" backend never receives symbols. Treesitter parsers in
-      -- ~/.local/share/nvim/site/parser cover the languages used in this config.
-      backends = { "treesitter", "markdown", "man" },
+      -- Prefer native LSP symbols and fall back to Tree-sitter where a server
+      -- does not implement document symbols.
+      backends = { "lsp", "treesitter", "markdown", "man" },
       layout = {
         max_width = { 45, 0.25 },
         min_width = 25,
