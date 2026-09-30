@@ -301,31 +301,6 @@ return {
   { "Konfekt/FastFold", event = "VeryLazy" },
   { "github/copilot.vim", event = "InsertEnter" },
   { "skwp/greplace.vim", cmd = "Greplace" },
-  {
-    "dense-analysis/ale",
-    enabled = false, -- Replaced by native LSP diagnostics and nvim-lint.
-    event = { "BufReadPost", "BufNewFile" },
-    init = function()
-      -- Native vim.lsp owns language-server diagnostics. Keep ALE from
-      -- starting a second client/linter for the same buffers.
-      vim.g.ale_linters = {}
-
-      -- Diffview buffers contain Git snapshots, not filesystem paths. Never
-      -- pass their `diffview://` names to ALE's LSP linters.
-      vim.g.ale_pattern_options = vim.tbl_extend("force", vim.g.ale_pattern_options or {}, {
-        ["^diffview://"] = { ale_enabled = 0 },
-      })
-
-      -- Set this before ALE's BufWinEnter lint hook as an extra safeguard.
-      vim.api.nvim_create_autocmd({ "BufEnter", "BufWinEnter" }, {
-        group = vim.api.nvim_create_augroup("DisableAleForDiffview", { clear = true }),
-        pattern = "diffview://*",
-        callback = function(args)
-          vim.b[args.buf].ale_enabled = false
-        end,
-      })
-    end,
-  },
   { "ggreer/the_silver_searcher", cmd = "Ag" },
   { "vim-test/vim-test", cmd = { "TestNearest", "TestFile", "TestSuite" } },
 

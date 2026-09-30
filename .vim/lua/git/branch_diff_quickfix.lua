@@ -116,8 +116,6 @@ local function snapshot_buffer(root, ref, path)
 
   local buffer = vim.api.nvim_create_buf(false, true)
   vim.bo[buffer].bufhidden = "hide"
-  -- ALE starts its own pyright client even on nofile buffers.
-  vim.b[buffer].ale_enabled = 0
   vim.api.nvim_buf_set_lines(buffer, 0, -1, false, lines)
   vim.bo[buffer].modifiable = false
   vim.api.nvim_buf_set_name(buffer, "gitreview://" .. ref:sub(1, 10) .. "/" .. path)
