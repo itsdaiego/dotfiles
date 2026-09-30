@@ -233,6 +233,14 @@ return {
 
   -- UI Enhancements
   {
+    "taigrr/zoom.nvim",
+    config = function()
+      require("zoom").setup({
+        key = "<leader>z",
+      })
+    end,
+  },
+  {
     "nvim-lualine/lualine.nvim",
     dependencies = { "nvim-tree/nvim-web-devicons" },
     event = "VeryLazy",
