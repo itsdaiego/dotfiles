@@ -7,6 +7,7 @@ Install with: `claude plugin add <url>`
 | Plugin | Description | Install |
 |--------|-------------|---------|
 | caveman | Ultra-compressed communication (~75% token savings) | `claude plugin add https://github.com/JuliusBrussee/caveman` |
+| humanizer | Rewrite AI-sounding prose without changing its meaning | `claude plugin marketplace add blader/humanizer` then `claude plugin install humanizer@humanizer` |
 | playwright-skill | Browser automation with Playwright | `claude plugin add https://github.com/lackeyjb/playwright-skill` |
 | vercel-plugin | Vercel platform integration | `claude plugin add https://github.com/vercel/vercel-plugin` |
 
@@ -42,6 +43,8 @@ cp -r dotfiles/.claude/commands/ ~/.claude/commands/
 
 # 2. Install marketplace plugins
 claude plugin add https://github.com/JuliusBrussee/caveman
+claude plugin marketplace add blader/humanizer
+claude plugin install humanizer@humanizer
 claude plugin add https://github.com/lackeyjb/playwright-skill
 claude plugin add https://github.com/vercel/vercel-plugin
 ```

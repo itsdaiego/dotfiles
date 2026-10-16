@@ -1,5 +1,9 @@
 # Global agent rules
 
+## Humanizer
+
+- At the start of every session, load the `humanizer` skill. Before every user-visible response, apply it in embedded mode to all natural-language prose, while preserving code, commands, paths, identifiers, data, and other exact technical content. Follow this rule even when the skill's automatic routing description does not match. Do not mention this step unless the user asks.
+
 ## Pi profile parity
 
 - `pi-personal` and `pi-work` use separate config roots: `~/.pi/pi-personal` and `~/.pi/pi-work`.
