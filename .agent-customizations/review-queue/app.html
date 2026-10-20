@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MR Review Queue</title>
+<style>
+:root { --bg:#f7f7f5; --card:#fff; --fg:#1d1d1b; --muted:#6b6b66; --line:#e3e2dd; --ok:#1f7a45; --ok-bg:#e6f4ec; --bad:#b3261e; --bad-bg:#fbe9e7; --warn:#8a5a00; --warn-bg:#fdf2dc; --info:#1a5fb4; --info-bg:#e7effa; --code:#f0efeb; --link:#1a5fb4; --sel:#eef3fb; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#161615; --card:#1f1f1d; --fg:#ecebe7; --muted:#a3a29c; --line:#34332f; --ok:#6fd49a; --ok-bg:#16301f; --bad:#ff8a80; --bad-bg:#3a1b18; --warn:#f2c46b; --warn-bg:#3a2e12; --info:#8ab4f8; --info-bg:#1b2738; --code:#2a2a27; --link:#8ab4f8; --sel:#232b36; } }
+:root[data-theme="dark"] { --bg:#161615; --card:#1f1f1d; --fg:#ecebe7; --muted:#a3a29c; --line:#34332f; --ok:#6fd49a; --ok-bg:#16301f; --bad:#ff8a80; --bad-bg:#3a1b18; --warn:#f2c46b; --warn-bg:#3a2e12; --info:#8ab4f8; --info-bg:#1b2738; --code:#2a2a27; --link:#8ab4f8; --sel:#232b36; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:14.5px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif; }
+a { color:var(--link); text-decoration:none; } a:hover { text-decoration:underline; }
+code { background:var(--code); padding:1px 5px; border-radius:4px; font-size:.88em; word-break:break-word; }
+button, select, input { font:inherit; color:var(--fg); }
+button { border:1px solid var(--line); background:var(--card); border-radius:7px; padding:5px 11px; cursor:pointer; }
+button:hover:not(:disabled) { border-color:var(--muted); }
+button.primary { background:var(--info); border-color:var(--info); color:var(--card); font-weight:600; }
+button:disabled { opacity:.55; cursor:default; }
+select, input[type=search] { border:1px solid var(--line); background:var(--card); border-radius:7px; padding:5px 8px; }
+.wrap { max-width:1500px; margin:0 auto; padding:24px 16px 48px; }
+.top { display:flex; justify-content:space-between; gap:12px; align-items:flex-end; flex-wrap:wrap; }
+h1 { font-size:24px; margin:0; }
+.muted { color:var(--muted); } .small { font-size:12.5px; }
+.stats { display:flex; gap:10px; flex-wrap:wrap; margin:16px 0; }
+.stat { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 14px; min-width:130px; cursor:pointer; }
+.stat b { display:block; font-size:22px; }
+.stat.on { outline:2px solid var(--info); }
+.filters { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
+.filters label { font-size:12.5px; color:var(--muted); display:flex; gap:5px; align-items:center; }
+.layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.05fr); gap:16px; align-items:start; }
+.list { display:flex; flex-direction:column; gap:8px; }
+.row { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 12px; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; cursor:pointer; }
+.row.sel { background:var(--sel); border-color:var(--info); }
+.row .t { font-weight:600; }
+.row .sub { font-size:12.5px; color:var(--muted); margin-top:2px; }
+.badges { display:flex; gap:5px; flex-wrap:wrap; margin-top:6px; }
+.side { display:flex; flex-direction:column; gap:6px; align-items:flex-end; justify-content:space-between; }
+.urg { font-size:12px; color:var(--muted); white-space:nowrap; }
+.urg b { color:var(--fg); font-size:15px; }
+.pill { display:inline-block; padding:1px 8px; border-radius:999px; font-size:11.5px; font-weight:600; white-space:nowrap; }
+.ok { background:var(--ok-bg); color:var(--ok); } .bad { background:var(--bad-bg); color:var(--bad); } .warn { background:var(--warn-bg); color:var(--warn); } .info { background:var(--info-bg); color:var(--info); } .grey { background:var(--code); color:var(--muted); }
+.panel { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; position:sticky; top:12px; max-height:calc(100vh - 24px); overflow:auto; }
+.panel h2 { font-size:17px; margin:0; }
+.panel h4 { margin:16px 0 5px; font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+.ph { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+.actions { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+.box { margin-top:12px; padding:9px 12px; border-radius:8px; }
+.facts { display:grid; grid-template-columns:auto 1fr; gap:3px 10px; margin-top:12px; font-size:13px; }
+.facts dt { color:var(--muted); } .facts dd { margin:0; }
+.crit { border-left:3px solid var(--bad); padding:8px 12px; margin:8px 0; background:var(--bad-bg); border-radius:0 8px 8px 0; }
+.crit .ct { font-weight:600; }
+pre.comment { white-space:pre-wrap; background:var(--card); border:1px solid var(--line); border-radius:6px; padding:9px; font:12.5px/1.5 ui-monospace,Menlo,monospace; margin:6px 0 0; }
+pre.full { white-space:pre-wrap; font:12.5px/1.5 ui-monospace,Menlo,monospace; background:var(--code); padding:10px; border-radius:8px; max-height:480px; overflow:auto; }
+ul, ol { padding-left:20px; margin:4px 0; } li { margin:2px 0; }
+.empty { padding:30px; text-align:center; color:var(--muted); }
+.toast { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:var(--fg); color:var(--bg); padding:8px 14px; border-radius:8px; font-size:13px; opacity:0; transition:opacity .2s; pointer-events:none; max-width:90vw; }
+.toast.show { opacity:1; }
+.banner { background:var(--warn-bg); color:var(--warn); padding:8px 12px; border-radius:8px; font-size:13px; margin-top:12px; }
+details summary { cursor:pointer; font-weight:600; margin-top:12px; }
+@media (max-width:980px) { .layout { grid-template-columns:1fr; } .panel { position:static; max-height:none; } }
+</style></head><body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1>MR review queue</h1>
+      <div class="muted small" id="sub"></div>
+    </div>
+    <div class="actions" id="topActions"></div>
+  </div>
+  <div id="modeBanner"></div>
+  <div class="stats" id="stats"></div>
+  <div class="filters">
+    <input type="search" id="q" placeholder="Search title, branch, !iid" style="min-width:220px">
+    <label>Sort <select id="sort">
+      <option value="urgency">Review urgency</option>
+      <option value="oldest">Oldest first</option>
+      <option value="updated">Recently updated</option>
+      <option value="author">Author</option>
+      <option value="iid">MR number</option>
+    </select></label>
+    <label>Author <select id="author"><option value="">All</option></select></label>
+    <label>State <select id="state">
+      <option value="">All</option>
+      <option value="needs">Needs review (no teammate yet)</option>
+      <option value="approvable">Can approve</option>
+      <option value="blocked">Don't approve yet</option>
+      <option value="unreviewed">Not reviewed by this tool</option>
+      <option value="stale">Review is stale</option>
+      <option value="mine">Approved by you</option>
+    </select></label>
+    <label>CI <select id="ci">
+      <option value="">All</option>
+      <option value="success">Passed</option>
+      <option value="failed">Failed</option>
+      <option value="running">Running or waiting</option>
+      <option value="none">No pipeline</option>
+    </select></label>
+    <label><input type="checkbox" id="hideMine" checked> Hide MRs you approved</label>
+  </div>
+  <div class="layout">
+    <div class="list" id="list"></div>
+    <div class="panel" id="panel"><div class="empty">Pick an MR to see its summary.</div></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const BOOT = /*__BOOT__*/null;
+let DATA = BOOT.data;
+const SERVER = BOOT.server;
+let JOBS = {};
+let selected = null;
+const MR_BASE = "https://gitlab.com/butlerinc/butler/-/merge_requests/";
+const SCRIPT = "~/.agent-customizations/review-queue/scripts/review_one.py";
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const md = s => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/!(\d{4,6})/g, (_, n) => `<a href="${MR_BASE}${n}" target="_blank">!${n}</a>`);
+const ul = items => items && items.length ? "<ul>" + items.map(i => `<li>${md(i)}</li>`).join("") + "</ul>" : '<p class="muted small">None.</p>';
+const days = iso => iso ? (Date.now() - new Date(iso).getTime()) / 86400000 : 0;
+const ago = iso => { const d = days(iso); return d < 1 ? Math.max(1, Math.round(d * 24)) + "h" : Math.round(d) + "d"; };
+
+function store(k, v) { try { if (v === undefined) return localStorage.getItem("rq." + k); localStorage.setItem("rq." + k, v); } catch (e) { return null; } }
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2600); }
+
+function byIid() { const m = {}; DATA.mrs.forEach(x => m[x.live.iid] = x); return m; }
+function parentOf(x) { return DATA.mrs.find(y => y.live.source_branch === x.live.target_branch) || null; }
+function childrenOf(x) { return DATA.mrs.filter(y => y.live.target_branch === x.live.source_branch); }
+
+function ciInfo(ci) {
+  const s = ci.status;
+  if (s === "success") return { cls: "ok", label: "CI passed", key: "success" };
+  if (s === "failed") return { cls: "bad", label: "CI failed" + (ci.failed_jobs.length ? ": " + ci.failed_jobs.slice(0, 3).join(", ") + (ci.failed_jobs.length > 3 ? "…" : "") : ""), key: "failed" };
+  if (s === "running" || s === "pending" || s === "created" || s === "waiting_for_resource" || s === "preparing" || s === "manual" || s === "scheduled") {
+    if (!ci.running_jobs && ci.manual_jobs) return { cls: "warn", label: "CI auto jobs done, manual waiting", key: "running" };
+    return { cls: "warn", label: `CI ${s}` + (ci.running_jobs ? ` (${ci.running_jobs} jobs)` : ""), key: "running" };
+  }
+  if (s === "canceled" || s === "skipped") return { cls: "grey", label: "CI " + s, key: "none" };
+  return { cls: "grey", label: "No pipeline", key: "none" };
+}
+
+function urgency(x) {
+  const l = x.live, r = x.review, parts = [];
+  if (l.approved_by_me) return { score: -100, parts: ["you approved it"] };
+  let s = 0;
+  const add = (n, why) => { s += n; parts.push((n > 0 ? "+" : "") + n + " " + why); };
+  if (l.needs_review) add(40, "no teammate started a review");
+  if (!l.draft && l.ci.status === "success" && !l.has_conflicts) add(20, "draft off, CI green, no conflicts");
+  if (!r) add(10, "not reviewed by this tool yet");
+  if (x.stale) add(10, "head moved after the last review");
+  if (r && r.new_critical && r.new_critical.length) add(10, "has new critical findings to post");
+  const age = Math.min(14, Math.round(days(l.created_at)));
+  if (age) add(age, `open ${age}d (max 14)`);
+  if (l.draft) add(-30, "draft");
+  if (parentOf(x)) add(-10, "stacked on an open MR");
+  if (l.ci.status === "failed") add(-10, "CI failed");
+  return { score: s, parts };
+}
+
+function bucket(x) {
+  if (x.live.approved_by_me) return "mine";
+  if (x.review && x.review.can_approve && !x.stale) return "approvable";
+  return "blocked";
+}
+
+function teamPill(l) {
+  if (l.approved_by_me) return '<span class="pill ok">You approved</span>';
+  if (l.needs_review) return '<span class="pill warn">Needs review</span>';
+  return `<span class="pill grey">Started by ${esc(l.team_started_by.join(", "))}</span>`;
+}
+
+function verdictPill(x) {
+  if (x.live.approved_by_me) return "";
+  if (!x.review) return '<span class="pill grey">Not reviewed</span>';
+  if (x.stale) return '<span class="pill warn">Review stale</span>';
+  return x.review.can_approve ? '<span class="pill ok">Can approve</span>' : `<span class="pill bad">Don't approve yet</span>`;
+}
+
+function jobState(iid) { return JOBS[String(iid)] || null; }
+
+function reviewButton(x, small) {
+  const j = jobState(x.live.iid);
+  const busy = j && (j.state === "queued" || j.state === "running");
+  const label = busy ? (j.state === "queued" ? "Queued…" : "Reviewing…") : (x.review ? "Re-review" : "Start review");
+  return `<button class="${x.review && !x.stale ? "" : "primary"}" data-review="${x.live.iid}" ${busy ? "disabled" : ""}${small ? ' style="font-size:12.5px;padding:3px 9px"' : ""}>${label}</button>`;
+}
+
+function filtered() {
+  const q = $("q").value.trim().toLowerCase(), a = $("author").value, st = $("state").value, ci = $("ci").value, hide = $("hideMine").checked;
+  let rows = DATA.mrs.filter(x => {
+    const l = x.live;
+    if (hide && l.approved_by_me && st !== "mine") return false;
+    if (a && l.author !== a) return false;
+    if (ci && ciInfo(l.ci).key !== ci) return false;
+    if (st === "needs" && !l.needs_review) return false;
+    if (st === "approvable" && bucket(x) !== "approvable") return false;
+    if (st === "blocked" && bucket(x) !== "blocked") return false;
+    if (st === "unreviewed" && x.review) return false;
+    if (st === "stale" && !x.stale) return false;
+    if (st === "mine" && !l.approved_by_me) return false;
+    if (q && !(`!${l.iid} ${l.title} ${l.source_branch} ${l.author}`.toLowerCase().includes(q))) return false;
+    return true;
+  });
+  const sort = $("sort").value;
+  const cmp = {
+    urgency: (p, r) => urgency(r).score - urgency(p).score,
+    oldest: (p, r) => new Date(p.live.created_at) - new Date(r.live.created_at),
+    updated: (p, r) => new Date(r.live.updated_at) - new Date(p.live.updated_at),
+    author: (p, r) => p.live.author.localeCompare(r.live.author) || r.live.iid - p.live.iid,
+    iid: (p, r) => r.live.iid - p.live.iid,
+  }[sort];
+  return rows.sort(cmp);
+}
+
+function renderStats() {
+  const open = DATA.mrs.filter(x => !x.live.approved_by_me);
+  const cards = [
+    ["needs", "var(--warn)", DATA.mrs.filter(x => x.live.needs_review).length, "need review (no teammate yet)"],
+    ["approvable", "var(--ok)", open.filter(x => bucket(x) === "approvable").length, "can approve"],
+    ["blocked", "var(--bad)", open.filter(x => bucket(x) === "blocked").length, "don't approve yet"],
+    ["unreviewed", "var(--info)", open.filter(x => !x.review).length, "not reviewed by this tool"],
+    ["", "var(--fg)", open.reduce((n, x) => n + ((x.review && x.review.new_critical) || []).length, 0), "new critical findings"],
+  ];
+  $("stats").innerHTML = cards.map(([k, c, n, label]) => `<div class="stat ${k && $("state").value === k ? "on" : ""}" data-stat="${k}"><b style="color:${c}">${n}</b>${label}</div>`).join("");
+}
+
+function renderList() {
+  const rows = filtered();
+  if (!rows.length) { $("list").innerHTML = '<div class="empty">No MRs match these filters.</div>'; return; }
+  $("list").innerHTML = rows.map(x => {
+    const l = x.live, u = urgency(x), ci = ciInfo(l.ci), p = parentOf(x);
+    const nc = x.review && x.review.new_critical ? x.review.new_critical.length : 0;
+    return `<div class="row ${selected === l.iid ? "sel" : ""}" data-iid="${l.iid}">
+      <div>
+        <div class="t"><a href="${esc(l.url)}" target="_blank" onclick="event.stopPropagation()">!${l.iid}</a> ${esc(l.title)}</div>
+        <div class="sub">${esc(l.author)} · opened ${ago(l.created_at)} ago · updated ${ago(l.updated_at)} ago${p ? ` · stacked on !${p.live.iid}` : ""}</div>
+        <div class="badges">${teamPill(l)}
+          ${ci.key !== "none" && l.ci.url ? `<a href="${esc(l.ci.url)}" target="_blank" onclick="event.stopPropagation()"><span class="pill ${ci.cls}">${esc(ci.label)}</span></a>` : `<span class="pill ${ci.cls}">${esc(ci.label)}</span>`}
+          ${l.draft ? '<span class="pill grey">Draft</span>' : ""}
+          ${l.has_conflicts ? '<span class="pill bad">Conflicts</span>' : ""}
+          ${nc ? `<span class="pill bad">${nc} new critical</span>` : ""}
+          ${verdictPill(x)}
+        </div>
+      </div>
+      <div class="side">
+        <div class="urg" title="${esc(u.parts.join("\n"))}">urgency <b>${u.score > -100 ? u.score : "–"}</b></div>
+        ${reviewButton(x, true)}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderPanel() {
+  const x = byIid()[selected];
+  if (!x) { $("panel").innerHTML = '<div class="empty">Pick an MR to see its summary.</div>'; return; }
+  const l = x.live, r = x.review, d = (r && r.digest) || {}, ci = ciInfo(l.ci), j = jobState(l.iid);
+  const p = parentOf(x), kids = childrenOf(x), u = urgency(x);
+  let html = `<div class="ph"><div>
+      <h2><a href="${esc(l.url)}" target="_blank">!${l.iid}</a> ${esc(l.title)}</h2>
+      <div class="muted small">${esc(l.author)} · <code>${esc(l.source_branch)}</code> → <code>${esc(l.target_branch)}</code></div>
+    </div><div class="actions">${reviewButton(x)}<a href="${esc(l.url)}" target="_blank"><button>Open MR ↗</button></a></div></div>`;
+  if (j) {
+    const cls = j.state === "failed" ? "bad" : j.state === "done" ? "ok" : "info";
+    const txt = j.state === "failed" ? "Review failed: " + j.error : j.state === "done" ? "Review finished." : j.state === "queued" ? "Review queued." : `Review running (${j.runner}) since ${new Date(j.started * 1000).toLocaleTimeString()}. Takes 5 to 15 minutes.`;
+    html += `<div class="box ${cls} small">${esc(txt)} ${SERVER ? `<a href="#" data-log="${l.iid}">Show log</a>` : ""}</div><pre class="full" id="log" hidden></pre>`;
+  }
+  if (x.stale) html += `<div class="banner">The head moved to <code>${esc(l.sha.slice(0, 10))}</code> after this review (reviewed <code>${esc(r.head_sha.slice(0, 10))}</code>). Re-review before you approve.</div>`;
+  if (r) html += `<div class="box ${r.can_approve && !x.stale ? "ok" : "bad"}"><strong>${l.approved_by_me ? "You approved this." : r.can_approve ? "Can approve." : "Don't approve yet."}</strong> ${md(r.verdict_reason)}</div>`;
+  else html += `<div class="box info">No review yet. Start one to get the read-mr summary and the review-mr findings.</div>`;
+  html += `<dl class="facts">
+    <dt>Team review</dt><dd>${l.approved_by_me ? "you approved" : l.needs_review ? "nobody on the team (" + esc(DATA.team.join(", ")) + ") started" : "started by " + esc(l.team_started_by.map(n => n + (l.team_comments[n] ? ` (${l.team_comments[n]} notes)` : "") + (l.team_approved.includes(n) ? " (approved)" : "")).join(", "))}</dd>
+    <dt>CI</dt><dd>${l.ci.url ? `<a href="${esc(l.ci.url)}" target="_blank"><span class="pill ${ci.cls}">${esc(ci.label)}</span></a>` : `<span class="pill ${ci.cls}">${esc(ci.label)}</span>`}${l.ci.failed_jobs.length ? `<div class="small">Failed jobs: ${l.ci.failed_jobs.map(esc).join(", ")}</div>` : ""}</dd>
+    <dt>Merge</dt><dd>${esc(l.merge_status)}${l.has_conflicts ? ' <span class="pill bad">Conflicts</span>' : ""}${l.draft ? ' <span class="pill grey">Draft</span>' : ""}</dd>
+    <dt>Approvals</dt><dd>${l.approved_by.length ? esc(l.approved_by.join(", ")) : "none"}${l.approvals_left ? ` · ${l.approvals_left} left` : ""}</dd>
+    ${p || kids.length ? `<dt>Stack</dt><dd>${p ? `stacked on !${p.live.iid}` : ""}${p && kids.length ? " · " : ""}${kids.map(k => `!${k.live.iid}`).join(", ")}${kids.length ? " sits on top" : ""}</dd>` : ""}
+    <dt>Urgency</dt><dd title="${esc(u.parts.join("\n"))}">${u.score > -100 ? u.score : "–"} <span class="muted small">(${esc(u.parts.join(", "))})</span></dd>
+    ${r ? `<dt>Ready</dt><dd>${r.ready ? "yes" : "no"}. ${md(r.ready_reason)}</dd>` : ""}
+  </dl>`.replace(/!(\d{4,6})(?![^<]*<\/a>)/g, (m, n) => `<a href="${MR_BASE}${n}" target="_blank">!${n}</a>`);
+  if (r) {
+    html += "<h4>Summary (read-mr)</h4>";
+    html += `<p>${md(d.tldr)}</p>${d.terms ? `<p class="muted small"><b>Terms:</b> ${md(d.terms)}</p>` : ""}`;
+    html += `<h4>Key points</h4><ol>${(d.key_points || []).map(k => `<li>${md(k)}</li>`).join("")}</ol>`;
+    html += `<h4>Before → after</h4>${ul(d.before_after)}<h4>Risk and rollout</h4>${ul(d.risk)}`;
+    html += `<h4>Where to look</h4>${(d.where_to_look || []).length ? "<ul>" + d.where_to_look.map(w => `<li><code>${esc(w.path)}</code>: ${md(w.why)}</li>`).join("") + "</ul>" : '<p class="muted small">None.</p>'}`;
+    html += `<h4>Gaps and mismatches</h4>${ul(d.gaps)}`;
+    html += "<h4>New critical findings (not flagged yet)</h4>";
+    html += (r.new_critical || []).length ? r.new_critical.map((c, i) => `<div class="crit"><div class="ct">${md(c.title)}</div>
+        <div class="small"><code>${esc(c.file)}${c.line ? ":" + c.line : ""}</code></div><p>${md(c.detail)}</p>
+        <div class="small muted">Suggested comment <button data-copy="${i}" style="font-size:11.5px;padding:1px 7px">Copy</button></div>
+        <pre class="comment" id="cm${i}">${esc(c.suggested_comment)}</pre></div>`).join("") : '<p class="muted small">None.</p>';
+    if ((r.already_flagged_critical || []).length) html += "<h4>Already flagged critical</h4><ul>" + r.already_flagged_critical.map(a => `<li><a href="${esc(a.link)}" target="_blank">${md(a.title)}</a> <span class="muted small">(${esc(a.author)}, ${esc(a.state)})</span></li>`).join("") + "</ul>";
+    if ((r.open_threads_needing_fix || []).length) html += `<details><summary>Open threads (${r.open_threads_needing_fix.length})</summary><ul>` + r.open_threads_needing_fix.map(t => `<li><a href="${esc(t.link)}" target="_blank">${esc(t.author)}</a>: ${md(t.problem)} <span class="pill warn">${esc(t.status)}</span></li>`).join("") + "</ul></details>";
+    if (x.review_file) html += SERVER ? `<details id="fullReview"><summary>Full review-mr file</summary><pre class="full">Loading…</pre></details>` : `<p class="muted small">Full review: <code>${esc(x.review_file)}</code></p>`;
+  }
+  $("panel").innerHTML = html;
+}
+
+function renderTop() {
+  $("sub").textContent = `${DATA.mrs.length} open MRs with ${DATA.me || "you"} as reviewer · butlerinc/butler` + (DATA.fetched_at ? ` · fetched ${ago(DATA.fetched_at)} ago` : "");
+  if (SERVER) {
+    const rj = JOBS.refresh, busy = rj && rj.state === "running";
+    $("topActions").innerHTML = `<label class="small muted">Runner <select id="runner"><option value="claude">Claude Code</option><option value="pi">Pi</option></select></label>
+      <button id="refresh" ${busy ? "disabled" : ""}>${busy ? "Refreshing…" : "Refresh from GitLab"}</button>`;
+    $("runner").value = store("runner") || SERVER.runner || "claude";
+    $("runner").onchange = e => store("runner", e.target.value);
+    $("modeBanner").innerHTML = "";
+  } else {
+    $("topActions").innerHTML = "";
+    $("modeBanner").innerHTML = `<div class="banner">Static copy. Review buttons copy a command. For one-click reviews, run <code>python3 -I ~/.agent-customizations/review-queue/scripts/serve.py</code> and open <code>http://127.0.0.1:8787</code>.</div>`;
+  }
+}
+
+function renderAll() { renderTop(); renderStats(); renderList(); renderPanel(); }
+
+async function startReview(iid) {
+  if (!SERVER) {
+    const cmd = `python3 -I ${SCRIPT} ${iid}`;
+    try { await navigator.clipboard.writeText(cmd); toast("Copied: " + cmd); } catch (e) { toast(cmd); }
+    return;
+  }
+  const runner = ($("runner") && $("runner").value) || "claude";
+  const res = await fetch("/api/review", { method: "POST", headers: { "X-Token": SERVER.token, "Content-Type": "application/json" }, body: JSON.stringify({ iid, runner }) });
+  if (res.status === 409) return toast(`!${iid} is already being reviewed.`);
+  if (!res.ok) return toast("Could not start the review: " + res.status);
+  JOBS = await res.json();
+  toast(`Started review of !${iid} with ${runner}.`);
+  renderAll(); poll();
+}
+
+async function refresh() {
+  const res = await fetch("/api/refresh", { method: "POST", headers: { "X-Token": SERVER.token } });
+  if (res.ok) { JOBS = await res.json(); renderTop(); poll(); }
+}
+
+let polling = false;
+async function poll() {
+  if (polling || !SERVER) return;
+  polling = true;
+  try {
+    while (true) {
+      await new Promise(r => setTimeout(r, 4000));
+      const prev = JSON.stringify(JOBS);
+      JOBS = await (await fetch("/api/jobs")).json();
+      if (JSON.stringify(JOBS) !== prev) {
+        DATA = await (await fetch("/api/data")).json();
+        renderAll();
+        Object.entries(JOBS).forEach(([k, v]) => { if (v.state === "done" && !(JSON.parse(prev)[k] || {}).state?.match(/done/)) toast(k === "refresh" ? "Queue refreshed." : `Review of !${k} finished.`); if (v.state === "failed" && (JSON.parse(prev)[k] || {}).state !== "failed") toast(k === "refresh" ? "Refresh failed." : `Review of !${k} failed.`); });
+      }
+      if (!Object.values(JOBS).some(j => j.state === "queued" || j.state === "running")) break;
+    }
+  } finally { polling = false; }
+}
+
+document.addEventListener("click", async e => {
+  const t = e.target.closest("[data-review],[data-iid],[data-stat],[data-copy],[data-log],#refresh");
+  if (!t) return;
+  if (t.id === "refresh") return refresh();
+  if (t.dataset.review) { e.stopPropagation(); return startReview(Number(t.dataset.review)); }
+  if (t.dataset.copy !== undefined) { navigator.clipboard.writeText($("cm" + t.dataset.copy).innerText).then(() => { t.textContent = "Copied"; setTimeout(() => t.textContent = "Copy", 1200); }); return; }
+  if (t.dataset.log) { e.preventDefault(); const pre = $("log"); pre.hidden = !pre.hidden; if (!pre.hidden) pre.textContent = await (await fetch("/api/log/" + t.dataset.log)).text(); return; }
+  if (t.dataset.stat !== undefined) { $("state").value = $("state").value === t.dataset.stat ? "" : t.dataset.stat; if (t.dataset.stat === "mine") $("hideMine").checked = false; saveFilters(); return renderAll(); }
+  if (t.dataset.iid) { selected = Number(t.dataset.iid); store("selected", selected); renderList(); renderPanel(); loadFullReview(); }
+});
+
+document.addEventListener("toggle", e => { if (e.target.id === "fullReview" && e.target.open) loadFullReview(); }, true);
+async function loadFullReview() {
+  const d = $("fullReview");
+  if (!d || !d.open || !SERVER) return;
+  d.querySelector("pre").textContent = await (await fetch("/api/review-file/" + selected)).text();
+}
+
+const FILTERS = ["q", "sort", "author", "state", "ci"];
+function saveFilters() { FILTERS.forEach(k => store("f." + k, $(k).value)); store("f.hideMine", $("hideMine").checked ? "1" : "0"); }
+function initFilters() {
+  const authors = [...new Set(DATA.mrs.map(x => x.live.author))].sort();
+  $("author").innerHTML = '<option value="">All</option>' + authors.map(a => `<option>${esc(a)}</option>`).join("");
+  FILTERS.forEach(k => { const v = store("f." + k); if (v !== null && v !== undefined) $(k).value = v; });
+  const h = store("f.hideMine"); if (h !== null && h !== undefined) $("hideMine").checked = h === "1";
+  FILTERS.concat(["hideMine"]).forEach(k => $(k).addEventListener(k === "q" ? "input" : "change", () => { saveFilters(); renderStats(); renderList(); }));
+  const s = Number(store("selected"));
+  const first = filtered()[0];
+  selected = DATA.mrs.some(x => x.live.iid === s) ? s : first ? first.live.iid : null;
+}
+
+initFilters();
+renderAll();
+if (SERVER) fetch("/api/jobs").then(r => r.json()).then(j => { JOBS = j; renderAll(); poll(); });
+</script>
+</body></html>
