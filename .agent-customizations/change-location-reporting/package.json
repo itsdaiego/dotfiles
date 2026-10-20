@@ -1,0 +1,8 @@
+{
+  "name": "change-location-reporting",
+  "private": true,
+  "type": "module",
+  "pi": {
+    "extensions": ["./pi-extension.ts"]
+  }
+}
