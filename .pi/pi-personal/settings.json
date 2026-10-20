@@ -1,0 +1,13 @@
+{
+  "lastChangelogVersion": "0.87.1",
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-5.6-terra",
+  "packages": [
+    "npm:pi-mcp-adapter",
+    "npm:pi-vim"
+  ],
+  "extensions": [
+    "/Users/daiego/.pi/agent/extensions/vim-jj.ts"
+  ],
+  "theme": "dark"
+}

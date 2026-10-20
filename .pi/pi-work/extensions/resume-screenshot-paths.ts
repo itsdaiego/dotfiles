@@ -1,0 +1,1 @@
+../../agent/extensions/resume-screenshot-paths.ts

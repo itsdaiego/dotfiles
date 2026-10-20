@@ -1,0 +1,1 @@
+../../agent/extensions/copy-all.ts
