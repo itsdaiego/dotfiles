@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "clerk": {
+      "url": "https://mcp.clerk.com/mcp"
+    },
+    "grafana": {
+      "url": "https://mcp.grafana.com/mcp"
+    },
+    "retell": {
+      "url": "https://mcp.retellai.com/mcp",
+      "auth": "bearer",
+      "bearerTokenStore": true
+    },
+    "google-calendar": {
+      "command": "gws-mcp-server",
+      "args": [
+        "--services",
+        "calendar"
+      ]
+    },
+    "sentry": {
+      "url": "https://mcp.sentry.dev/mcp"
+    }
+  }
+}
