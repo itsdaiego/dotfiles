@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>On-call Intake</title>
+<style>
+:root {
+  --bg: #f6f6f4; --panel: rgba(255, 255, 255, 0.82); --text: #1d1d1b; --muted: #6b6b66; --border: #e2e1dc;
+  --accent: #3b5bdb; --pending: #e8590c; --doing: #1971c2; --done: #2f9e44; --error-bg: #fff4e6;
+  --glow-a: rgba(59, 91, 219, 0.28); --glow-b: rgba(232, 89, 12, 0.20); --dot: rgba(29, 29, 27, 0.13);
+  --sev-urgent: #c92a2a; --sev-high: #e8590c; --sev-medium: #b08800; --sev-low: #6b6b66;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #161615; --panel: rgba(32, 32, 30, 0.82); --text: #ecebe6; --muted: #9a9a93; --border: #33332f;
+    --accent: #748ffc; --pending: #ff922b; --doing: #4dabf7; --done: #51cf66; --error-bg: #3a2a14;
+    --glow-a: rgba(116, 143, 252, 0.26); --glow-b: rgba(255, 146, 43, 0.16); --dot: rgba(236, 235, 230, 0.07);
+    --sev-urgent: #ff6b6b; --sev-high: #ff922b; --sev-medium: #fcc419; --sev-low: #9a9a93; }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh; color: var(--text); font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(circle at 12% 8%, var(--glow-a), transparent 42%),
+    radial-gradient(circle at 88% 92%, var(--glow-b), transparent 45%),
+    radial-gradient(var(--dot) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 22px 22px;
+  background-attachment: fixed;
+}
+.card, .tabs { backdrop-filter: blur(6px); }
+main { max-width: 960px; margin: 0 auto; padding: 20px 16px 48px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; margin-bottom: 16px; }
+h1 { font-size: 20px; margin: 0; }
+.meta { color: var(--muted); font-size: 12px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.tabs { display: flex; gap: 4px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 3px; }
+.tab { border: 0; background: none; color: var(--muted); padding: 6px 14px; border-radius: 6px; cursor: pointer; font: inherit; }
+.tab[aria-selected="true"] { background: var(--bg); color: var(--text); font-weight: 600; }
+.count { display: inline-block; min-width: 20px; margin-left: 6px; padding: 0 6px; border-radius: 10px; font-size: 12px; color: #fff; }
+.tab[data-status="pending"] .count { background: var(--pending); }
+.tab[data-status="doing"] .count { background: var(--doing); }
+.tab[data-status="done"] .count { background: var(--done); }
+select, .btn { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+.btn:hover, select:hover { border-color: var(--accent); }
+.error { background: var(--error-bg); border: 1px solid var(--pending); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; }
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.card-head { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; margin-bottom: 6px; }
+.author { font-weight: 600; }
+.chip { font-size: 11px; padding: 1px 7px; border-radius: 10px; border: 1px solid var(--border); color: var(--muted); }
+.chip.me { border-color: var(--accent); color: var(--accent); }
+.chip.reopened { border-color: var(--pending); color: var(--pending); }
+.text { white-space: pre-wrap; word-break: break-word; max-height: 9em; overflow: hidden; }
+.card-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+.links { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; margin-right: auto; }
+.links a { color: var(--accent); }
+.walle-session { font-weight: 600; }
+.chip.handoff { border-color: var(--doing); color: var(--doing); }
+.sev { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 10px; color: #fff; text-transform: uppercase; letter-spacing: 0.03em; }
+.sev.urgent { background: var(--sev-urgent); }
+.sev.high { background: var(--sev-high); }
+.sev.medium { background: var(--sev-medium); }
+.sev.low { background: var(--sev-low); }
+.sev-source { color: var(--muted); font-size: 12px; }
+.sev-source a { color: inherit; }
+.handoff-title { font-weight: 600; margin-bottom: 4px; }
+.handoff-note { white-space: pre-wrap; word-break: break-word; }
+.empty { color: var(--muted); text-align: center; padding: 40px 0; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>On-call Intake</h1>
+    <span class="meta" id="meta"></span>
+  </header>
+  <div id="error"></div>
+  <div class="toolbar">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-status="pending">Pending<span class="count">0</span></button>
+      <button class="tab" role="tab" data-status="doing">Doing<span class="count">0</span></button>
+      <button class="tab" role="tab" data-status="done">Done<span class="count">0</span></button>
+    </div>
+    <div>
+      <select id="severity" aria-label="Filter by severity">
+        <option value="all">All severities</option>
+        <option value="urgent">Urgent</option>
+        <option value="high">High</option>
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
+        <option value="none">No severity</option>
+      </select>
+      <select id="channel" aria-label="Filter by channel"></select>
+      <select id="sort" aria-label="Sort by date">
+        <option value="newest">Most recent first</option>
+        <option value="oldest">Oldest first</option>
+        <option value="priority">Handoff priority</option>
+      </select>
+      <button class="btn" id="poll">Poll now</button>
+    </div>
+  </div>
+  <div id="list"></div>
+</main>
+<script>
+const STATUSES = ["pending", "doing", "done"];
+const LABELS = { pending: "Pending", doing: "Doing", done: "Done" };
+let state = { items: [], meta: {}, config: {} };
+let tab = readPref("tab", "pending");
+let sort = readPref("sort", "newest");
+let severity = readPref("severity", "all");
+let channel = readPref("channel", "all");
+
+function readPref(key, fallback) {
+  try { return localStorage.getItem("oncall-" + key) || fallback; } catch { return fallback; }
+}
+function writePref(key, value) {
+  try { localStorage.setItem("oncall-" + key, value); } catch {}
+}
+
+function slackToText(text, handle) {
+  return text
+    .replace(/<!subteam\^[A-Z0-9]+(?:\|([^>]+))?>/g, (_, name) => "@" + (name || handle))
+    .replace(/<@S[A-Z0-9]+>/g, "@" + handle)
+    .replace(/<@[A-Z0-9]+\|([^>]+)>/g, "@$1")
+    .replace(/<@([A-Z0-9]+)>/g, "@$1")
+    .replace(/<#[A-Z0-9]+\|([^>]+)>/g, "#$1")
+    .replace(/<(https?:[^|>]+)\|([^>]+)>/g, "$2")
+    .replace(/<(https?:[^>]+)>/g, "$1")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+}
+
+function fmtTime(ts) {
+  return new Date(parseFloat(ts) * 1000).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+function fmtIso(iso) {
+  return iso ? new Date(iso).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : "never";
+}
+function lastPing(item) { return item.pings[item.pings.length - 1]; }
+function priority(item) { return item.handoff ? item.handoff.priority || 50 : 100; }
+function severityLevel(item) { return item.severity ? item.severity.level : "none"; }
+function matchesSeverity(item) { return severity === "all" || severityLevel(item) === severity; }
+function matchesChannel(item) { return channel === "all" || item.channel_id === channel; }
+function matchesFilters(item) { return matchesSeverity(item) && matchesChannel(item); }
+function channelLabel(name) { return "#" + name.replace(/^#/, ""); }
+
+function renderChannels() {
+  const counts = new Map();
+  state.items.forEach(i => {
+    const entry = counts.get(i.channel_id) || { name: i.channel_name, count: 0 };
+    entry.count += 1;
+    counts.set(i.channel_id, entry);
+  });
+  if (channel !== "all" && !counts.has(channel)) channel = "all";
+  const channels = [...counts].sort((a, b) => b[1].count - a[1].count || a[1].name.localeCompare(b[1].name));
+  document.getElementById("channel").replaceChildren(
+    el("option", { value: "all", text: `All channels (${channels.length})` }),
+    ...channels.map(([id, c]) => el("option", { value: id, text: `${channelLabel(c.name)} (${c.count})` })),
+  );
+  document.getElementById("channel").value = channel;
+}
+
+function el(tag, attrs, children) {
+  const node = document.createElement(tag);
+  Object.entries(attrs || {}).forEach(([k, v]) => k === "text" ? (node.textContent = v) : node.setAttribute(k, v));
+  (children || []).forEach(c => c && node.appendChild(c));
+  return node;
+}
+
+function render() {
+  document.querySelectorAll(".tab").forEach(btn => {
+    const s = btn.dataset.status;
+    btn.setAttribute("aria-selected", String(s === tab));
+    btn.querySelector(".count").textContent = state.items.filter(i => i.status === s && matchesFilters(i)).length;
+  });
+  renderChannels();
+  document.getElementById("sort").value = sort;
+  document.getElementById("severity").value = severity;
+  const meta = state.meta;
+  document.getElementById("meta").textContent =
+    `Last poll ${fmtIso(meta.last_poll_at)} · last success ${fmtIso(meta.last_success_at)} · every ${Math.round((state.config.poll_seconds || 300) / 60)} min · last ${state.config.window_days || 7} days`;
+  const errorBox = document.getElementById("error");
+  errorBox.replaceChildren(meta.last_error ? el("div", { class: "error", text: meta.last_error }) : document.createTextNode(""));
+
+  const items = state.items
+    .filter(i => i.status === tab && matchesFilters(i))
+    .sort((a, b) => sort === "priority"
+      ? priority(a) - priority(b) || parseFloat(lastPing(b).ts) - parseFloat(lastPing(a).ts)
+      : (parseFloat(lastPing(b).ts) - parseFloat(lastPing(a).ts)) * (sort === "newest" ? 1 : -1));
+  const list = document.getElementById("list");
+  if (!items.length) {
+    const where = channel === "all" ? "" : ` in ${channelLabel(state.items.find(i => i.channel_id === channel).channel_name)}`;
+    const filtered = where + (severity === "all" ? "" : ` with ${severity === "none" ? "no" : severity} severity`);
+    list.replaceChildren(el("div", { class: "empty", text: `Nothing in ${LABELS[tab]}${filtered}.` }));
+    return;
+  }
+  list.replaceChildren(...items.map(card));
+}
+
+function card(item) {
+  const ping = lastPing(item);
+  const handoff = item.handoff;
+  const pingChip = ping.kind === "handoff" ? null
+    : el("span", { class: "chip" + (ping.kind === "me" ? " me" : ""), text: ping.kind === "me" ? "@you" : "@" + (state.config.usergroup_handle || "oncall") });
+  const sev = item.severity;
+  const sevSource = sev && el("span", { class: "sev-source", title: "Where the severity comes from" }, [
+    sev.url ? el("a", { href: sev.url, target: "_blank", rel: "noopener", text: sev.source }) : document.createTextNode(sev.source),
+  ]);
+  const head = el("div", { class: "card-head" }, [
+    sev ? el("span", { class: "sev " + sev.level, text: sev.level }) : null,
+    sevSource,
+    handoff ? el("span", { class: "chip handoff", text: handoff.priority ? `handoff · #${handoff.priority}` : "handoff" }) : null,
+    el("span", { class: "author", text: ping.author }),
+    el("span", { class: "meta", text: `${channelLabel(item.channel_name)} · ${fmtTime(ping.ts)}` }),
+    pingChip,
+    item.pings.length > 1 ? el("span", { class: "chip", text: `${item.pings.length} pings` }) : null,
+    item.reopened ? el("span", { class: "chip reopened", text: "pinged again" }) : null,
+    item.my_last_reply_ts ? el("span", { class: "chip me", text: `you replied ${fmtTime(item.my_last_reply_ts)}` }) : null,
+  ]);
+  const link = (href, text, cls) => el("a", { href, target: "_blank", rel: "noopener", text, class: cls || "" });
+  const links = el("div", { class: "links" }, [
+    link(ping.permalink, "Open in Slack"),
+    handoff ? link(handoff.doc_url, "Handoff doc") : null,
+    item.walle_session_url ? link(item.walle_session_url, "WALL-E session", "walle-session") : null,
+    item.walle_request_link ? link(item.walle_request_link, "WALL-E thread") : null,
+    item.walle_requested_at && !item.walle_session_url ? el("span", { class: "meta", text: "WALL-E is on it…" }) : null,
+  ]);
+  const foot = el("div", { class: "card-foot" }, [
+    links,
+    ...STATUSES.filter(s => s !== item.status).map(s => {
+      const btn = el("button", { class: "btn", text: "→ " + LABELS[s] });
+      btn.addEventListener("click", () => move(item.id, s));
+      return btn;
+    }),
+  ]);
+  const body = handoff
+    ? el("div", {}, [
+        el("div", { class: "handoff-title", text: handoff.title }),
+        el("div", { class: "handoff-note", text: handoff.note }),
+      ])
+    : el("div", { class: "text", text: slackToText(ping.text, state.config.usergroup_handle) });
+  return el("div", { class: "card" }, [head, body, foot]);
+}
+
+async function load() {
+  try {
+    state = await (await fetch("/api/items")).json();
+  } catch {
+    state.meta = { ...state.meta, last_error: "Dashboard server is not reachable. Run: oncall.py status" };
+  }
+  render();
+}
+
+async function move(id, status) {
+  await fetch(`/api/items/${encodeURIComponent(id)}/status`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }),
+  });
+  await load();
+}
+
+document.querySelectorAll(".tab").forEach(btn => btn.addEventListener("click", () => {
+  tab = btn.dataset.status; writePref("tab", tab); render();
+}));
+document.getElementById("sort").addEventListener("change", e => { sort = e.target.value; writePref("sort", sort); render(); });
+document.getElementById("channel").addEventListener("change", e => { channel = e.target.value; writePref("channel", channel); render(); });
+document.getElementById("severity").addEventListener("change", e => { severity = e.target.value; writePref("severity", severity); render(); });
+document.getElementById("poll").addEventListener("click", async e => {
+  e.target.disabled = true;
+  await fetch("/api/poll", { method: "POST" });
+  e.target.disabled = false;
+  await load();
+});
+
+load();
+setInterval(load, 30000);
+</script>
+</body>
+</html>
