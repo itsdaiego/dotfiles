@@ -1,0 +1,8 @@
+{
+  "name": "atomic-commit-discipline",
+  "private": true,
+  "type": "module",
+  "pi": {
+    "extensions": ["./pi-extension.ts"]
+  }
+}
