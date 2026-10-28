@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -91,6 +92,7 @@ class StartReviewerTests(unittest.TestCase):
         side_effect=[
             {"sha": "abc123", "state": "opened", "draft": False, "diff_refs": {}},
             {"sha": "abc123", "state": "opened", "draft": False, "diff_refs": {}},
+            {"sha": "abc123", "state": "opened", "draft": False, "diff_refs": {}},
         ],
     )
     def test_only_new_critical_is_published(
@@ -128,6 +130,7 @@ class StartReviewerTests(unittest.TestCase):
         side_effect=[
             {"sha": "abc123", "state": "opened", "draft": False, "diff_refs": {}},
             {"sha": "abc123", "state": "opened", "draft": False, "diff_refs": {}},
+            {"sha": "abc123", "state": "opened", "draft": False, "diff_refs": {}},
         ],
     )
     def test_matching_existing_draft_is_reused(
@@ -149,6 +152,117 @@ class StartReviewerTests(unittest.TestCase):
         reviewer.act_on_result(candidate(), result, "me", {"actions": {}})
         create_draft.assert_not_called()
         publish_draft.assert_called_once_with(123, 88)
+
+    def test_fingerprint_ignores_generated_wording(self) -> None:
+        first = {
+            "file": "service.py",
+            "line": 10,
+            "title": "[adversarial: correctness] Lost update",
+            "detail": "Long explanation one",
+            "suggested_comment": "Fix it one way.",
+        }
+        second = {
+            "file": "service.py",
+            "line": 10,
+            "title": "Lost update",
+            "detail": "Different explanation",
+            "suggested_comment": "Fix it another way.",
+        }
+        self.assertEqual(
+            reviewer.finding_fingerprint(123, "abc123", first),
+            reviewer.finding_fingerprint(123, "abc123", second),
+        )
+
+    def test_review_activity_detects_teammate_and_unexpected_own_notes(self) -> None:
+        notes = [
+            {"system": False, "author": {"username": "teammate"}, "body": "Reviewing"},
+        ]
+        with patch.object(reviewer, "discussion_notes", return_value=notes):
+            self.assertTrue(
+                reviewer.review_activity_exists(
+                    123,
+                    author="author",
+                    me="me",
+                    team={"teammate"},
+                    allowed_my_note_bodies=set(),
+                )
+            )
+        own_notes = [
+            {"system": False, "author": {"username": "me"}, "body": "My manual note"},
+        ]
+        with patch.object(reviewer, "discussion_notes", return_value=own_notes):
+            self.assertTrue(
+                reviewer.review_activity_exists(
+                    123,
+                    author="author",
+                    me="me",
+                    team={"teammate"},
+                    allowed_my_note_bodies={"Automated critical note"},
+                )
+            )
+
+    @patch.object(reviewer, "delete_draft")
+    @patch.object(reviewer, "publish_draft")
+    @patch.object(reviewer, "existing_drafts", return_value={"Fix it.": 88})
+    @patch.object(reviewer, "existing_note_bodies", return_value=set())
+    @patch.object(reviewer, "approval_usernames", return_value={"someone_else"})
+    @patch.object(reviewer, "still_untouched", side_effect=[True, True, False])
+    @patch.object(
+        reviewer,
+        "live_mr",
+        side_effect=[
+            {"sha": "abc123", "state": "opened", "draft": False, "diff_refs": {}},
+            {"sha": "abc123", "state": "opened", "draft": False, "diff_refs": {}},
+            {"sha": "changed", "state": "opened", "draft": False, "diff_refs": {}},
+        ],
+    )
+    def test_preexisting_draft_is_not_deleted_when_state_changes(
+        self,
+        _live_mr,
+        _still_untouched,
+        _approvals,
+        _existing_notes,
+        _existing_drafts,
+        publish_draft,
+        delete_draft,
+    ) -> None:
+        result = {
+            "head_sha": "abc123",
+            "can_approve": False,
+            "new_critical": [{"suggested_comment": "Fix it."}],
+        }
+        reviewer.act_on_result(candidate(), result, "me", {"actions": {}})
+        publish_draft.assert_not_called()
+        delete_draft.assert_not_called()
+
+    @patch.object(reviewer, "act_on_result")
+    @patch.object(reviewer, "load_state", return_value={"actions": {}})
+    @patch.object(reviewer, "result_is_current", return_value=True)
+    @patch.object(
+        reviewer,
+        "load_result",
+        return_value={"head_sha": "abc123", "can_approve": True, "new_critical": []},
+    )
+    @patch.object(reviewer, "review", return_value=(123, None))
+    @patch.object(reviewer, "refresh_queue")
+    def test_cycle_refreshes_queue_once_then_uses_live_action_guards(
+        self,
+        refresh_queue,
+        _review,
+        _load_result,
+        _result_is_current,
+        _load_state,
+        act_on_result,
+    ) -> None:
+        queue = {"me": "me", "team": ["teammate"], "mrs": [candidate()]}
+        refresh_queue.return_value = queue
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with patch.object(reviewer, "WORK_DIR", Path(temp_dir)), patch.object(
+                reviewer, "LOCK_FILE", Path(temp_dir) / "cycle.lock"
+            ):
+                self.assertEqual(reviewer.cycle(), 0)
+        self.assertEqual(refresh_queue.call_count, 1)
+        act_on_result.assert_called_once()
 
 
 if __name__ == "__main__":
