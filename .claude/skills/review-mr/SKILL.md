@@ -53,6 +53,12 @@ for d in json.load(sys.stdin):
 
 Paginate if there are more than 100. Save the output to the scratchpad, and pass it to any review subagent.
 
+### 1a. Classify the private Wall-E risk
+
+For every MR, invoke the `walle-review-risk` skill after you fetch its metadata and refs. Follow its MR workflow so it classifies the exact source head against the policy from the target branch.
+
+This result is private review metadata for Daiego. Do not add it to the MR description, post it to GitLab, or let it change the approval verdict. Record the low, medium, high, or unavailable result, matched rules and paths, content signals, policy ref, and any classifier uncertainty in the local review file. If the skill cannot classify the MR, report it as unavailable. Do not guess or substitute an LLM judgment.
+
 ### 2. Understand the change
 
 - Read the MR description and any linked issues for context.
@@ -92,6 +98,17 @@ For each changed file, read the full current version (not just the diff) to unde
 - Check if the change duplicates logic from another module.
 - Suggest augmenting existing abstractions rather than creating parallel ones.
 
+### 3a. Check feature gating
+
+A change to a gated feature must not reach users who do not have the feature. Do this check on every MR, also on small bug fixes.
+
+1. Find the gates the MR touches. Look for feature toggle checks (for example `resolved_feature_toggles_all_enabled`, `useFeatureToggle`), experimental directories (their `AGENTS.md` says so), and record types that exist only behind a toggle (for example, lead triggers exist only when `LeadAutoAgents` is on).
+2. For each changed hunk in shared code, ask: does this change behavior, output, wording, API responses, status codes, logs, metrics, or UI for a user or organization that does not have the toggle? A shared code path is one that also serves ungated features, such as matter triggers next to lead triggers.
+3. A fix for a gated feature must stay inside the gate. It must either run only on the gated path (for example, only for lead triggers) or check the toggle. Matter behavior, and behavior for organizations with the toggle off, must stay the same as on the target branch.
+4. Also flag a change that loosens a gate: a removed or weakened toggle check, a check that moves from organization scope to user scope or back, a new entry point (route, webhook, task, UI element) without a toggle check, or a gated UI element that becomes visible.
+
+Report each leak as a Critical Issue. Name the file and line, the gate, and who outside the gate sees the change. When the MR description says "Who is affected: every firm" or similar for a gated feature's fix, treat that as a leak until the diff proves otherwise.
+
 ### 3b. Check each finding against existing comments and the current head
 
 Give every finding exactly one status:
@@ -123,6 +140,10 @@ Use this structure:
 ## Summary
 
 <1-2 sentence summary of what the MR does and your overall assessment>
+
+## Wall-E risk (private)
+
+<Low / medium / high / unavailable, with the policy ref, matched rules and paths, content signals, and uncertainty. This does not affect the verdict.>
 
 ## Verdict
 
@@ -264,3 +285,4 @@ When the MR touches multiple independent areas (e.g. backend + frontend, or mult
 - Secrets or credentials in code
 - Missing codegen after DTO changes
 - Stale MR description that no longer matches the final diff
+- A fix or change for a gated feature that also changes behavior for users outside the gate (see step 3a)

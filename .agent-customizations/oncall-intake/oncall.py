@@ -66,6 +66,17 @@ DEFAULT_CONFIG = {
     "port": 47821,
     "ignore_own_messages": True,
     "my_mention_channel_ids": ["C08NLEVC6AY"],
+    "source_channel_ids": ["C01NBFKGRCP", "C0B0XQPDXPX", "C09AFN8BVDJ"],
+    "intake_check_channel_ids": ["C01NBFKGRCP"],
+    "intake_scope": (
+        "Intake owns: phone calls and telephony integrations (RingCentral, Dialpad, call sync, recordings, "
+        "transcripts, call agents), the Retell voice agent, live intake assist, transfer rules, intake call "
+        "scoring, auto agents and their triggers and runs, CRM and case management integrations and lead "
+        "sync (LeadDocket, Filevine, Litify, Clio and similar), data ingest, email routing, intake forms, "
+        "and case comms (texts and emails to clients). Intake does not own: Ask Eve chat and its tools, "
+        "case work, drafting, blueprints, demand letters, document upload and OCR, medical records, "
+        "analyst, or general infrastructure."
+    ),
     "window_days": 7,
     "ignore_user_ids": ["USLACK"],
     "ignore_channel_ids": ["C0C0YFLFUR4"],
@@ -83,6 +94,13 @@ MCP_LINEAR_ISSUE_TOOL = "mcp__linear__get_issue"
 WALLE_PROMPT = """<@{walle_user_id}> Help me troubleshoot this on-call ping from #{channel_name} faster: {permalink}
 Read the whole thread. Tell me the likely root cause, the evidence for it, and what I should check or do first.
 Reply here only. Do not post in the original thread."""
+INTAKE_CHECK_PROMPT = """Decide whether each production alert below belongs to the intake team.
+{scope}
+
+Reply with only a JSON object. Use each alert key as a property, with the value {{"intake": true or false, "reason": "<at most 12 words>"}}.
+
+{alerts}"""
+INTAKE_CHECK_MAX_ALERTS = 10
 MCP_MAX_PAGES = 5
 MCP_CALL_PROMPT = """Call {tool} exactly once with exactly these arguments, then reply "done":
 {arguments}"""
@@ -177,6 +195,7 @@ def search_mentions(token: str, config: dict) -> list[dict]:
         f"@{config['usergroup_handle']} after:{after}",
     ]
     queries += [f"<@{config['user_id']}> in:<#{c}> after:{after}" for c in config["my_mention_channel_ids"]]
+    queries += [f"in:<#{c}> after:{after}" for c in config["source_channel_ids"]]
     return search_web_api(token, queries)
 
 
@@ -287,6 +306,8 @@ def search_mentions_via_mcp(config: dict, after_ts: float) -> list[dict]:
         matches.extend(mcp_search_all(config, after_ts, keywords=[keyword]))
     for channel_id in config["my_mention_channel_ids"]:
         matches.extend(mcp_search_all(config, after_ts, keywords=[f"<@{config['user_id']}>"], filters=f"in:<#{channel_id}>"))
+    for channel_id in config["source_channel_ids"]:
+        matches.extend(mcp_search_all(config, after_ts, filters=f"in:<#{channel_id}>"))
     return matches
 
 
@@ -306,6 +327,8 @@ def mention_kind(text: str, channel_id: str | None, config: dict) -> str | None:
         return "oncall"
     if channel_id in config["my_mention_channel_ids"] and f"<@{config['user_id']}" in text:
         return "me"
+    if channel_id in config["source_channel_ids"]:
+        return "source"
     return None
 
 
@@ -427,8 +450,79 @@ def in_shift(ts: str, meta: dict) -> bool:
 
 
 def counts(ping: dict, channel_id: str, meta: dict, config: dict) -> bool:
+    """Return True when a ping puts its item on the dashboard.
+
+    A source message in intake_check_channel_ids counts only after the intake
+    check marks it as intake work. An unchecked message stays hidden.
+    """
     kind = mention_kind(ping["text"], channel_id, config)
-    return kind == "me" or (kind == "oncall" and in_shift(ping["ts"], meta))
+    if kind == "source" and channel_id in config["intake_check_channel_ids"] and ping.get("intake") is not True:
+        return False
+    return kind == "me" or (kind in ("oncall", "source") and in_shift(ping["ts"], meta))
+
+
+def run_claude_prompt(config: dict, prompt: str) -> str:
+    env = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}
+    result = subprocess.run(
+        [config["claude_bin"], "-p", prompt, "--model", config["claude_model"], "--output-format", "json", "--max-turns", "1"],
+        capture_output=True, text=True, timeout=180, env=env, cwd=str(DATA_DIR),
+    )
+    payload = json.loads(result.stdout or "{}")
+    if payload.get("is_error") or "result" not in payload:
+        raise RuntimeError(f"claude -p failed: {(payload.get('result') or result.stderr or result.stdout).strip()[-300:]}")
+    return payload["result"]
+
+
+def read_alert_text(config: dict, channel_id: str, ts: str) -> str:
+    raw = run_mcp_tool(config, MCP_READ_THREAD_TOOL, {"channel_id": channel_id, "message_ts": ts, "limit": 1, "response_format": "concise"})
+    text = json.loads(raw).get("messages", "")
+    return re.sub(r"\n+No thread mess+ages\s*$", "", re.sub(r"^THREAD: ", "", text)).strip()
+
+
+def check_intake_alerts(config: dict, limit: int = INTAKE_CHECK_MAX_ALERTS) -> list[str]:
+    """Mark each unchecked source message in intake_check_channel_ids as intake work or not.
+
+    Only messages inside the window and Daiego's shift get checked. Bot alerts
+    such as Sentry have no Slack text, so the message is read first and its text
+    is stored on the ping. One headless `claude -p` run classifies the batch.
+    Returns error strings. A failed check leaves the messages unchecked for the next poll.
+    """
+    start = window_start(config)
+    with locked_store() as store:
+        meta = store["meta"]
+        wanted = [
+            (item["id"], dict(ping))
+            for item in store["items"].values() if item["channel_id"] in config["intake_check_channel_ids"]
+            for ping in item["pings"]
+            if ping.get("kind") == "source" and "intake" not in ping
+            and float(ping["ts"]) >= start and in_shift(ping["ts"], meta)
+        ]
+    wanted = sorted(wanted, key=lambda w: -float(w[1]["ts"]))[:limit]
+    if not wanted:
+        return []
+    errors = []
+    for item_id, ping in wanted:
+        if not ping["text"].strip():
+            try:
+                ping["text"] = read_alert_text(config, item_id.split("-", 1)[0], ping["ts"])
+            except (RuntimeError, OSError, subprocess.TimeoutExpired, json.JSONDecodeError) as exc:
+                errors.append(f"read alert {ping['ts']}: {exc}")
+    alerts = "\n\n".join(f"### a{n}\nFrom: {p['author']}\n{p['text'][:1500]}" for n, (_, p) in enumerate(wanted))
+    try:
+        answer = run_claude_prompt(config, INTAKE_CHECK_PROMPT.format(scope=config["intake_scope"], alerts=alerts))
+        verdicts = json.loads(answer[answer.index("{"):answer.rindex("}") + 1])
+    except (RuntimeError, OSError, subprocess.TimeoutExpired, json.JSONDecodeError, ValueError) as exc:
+        return errors + [f"intake check: {exc}"]
+    with locked_store() as store:
+        for n, (item_id, ping) in enumerate(wanted):
+            verdict = verdicts.get(f"a{n}")
+            if not isinstance(verdict, dict) or not ping["text"].strip():
+                continue
+            stored = next(p for p in store["items"][item_id]["pings"] if p["ts"] == ping["ts"])
+            stored["text"] = ping["text"]
+            stored["intake"] = verdict.get("intake") is True
+            stored["intake_reason"] = str(verdict.get("reason") or "")[:200]
+    return errors
 
 
 def visible_items(store: dict, config: dict) -> list[dict]:
@@ -437,7 +531,9 @@ def visible_items(store: dict, config: dict) -> list[dict]:
     Hides items whose latest ping is before the window (today plus the previous
     `window_days - 1` days). Also hides items with no counted ping: a counted ping
     is an on-call ping inside Daiego's shift, or a mention of Daiego in
-    my_mention_channel_ids. Direct messages never count. Hidden items stay in pings.json.
+    my_mention_channel_ids. Direct messages never count. An item in
+    intake_check_channel_ids that Daiego moved out of pending stays visible
+    without the intake check. Hidden items stay in pings.json.
     """
     start = window_start(config)
     meta = store["meta"]
@@ -446,7 +542,10 @@ def visible_items(store: dict, config: dict) -> list[dict]:
         if i.get("handoff")
         or (
             float(i["pings"][-1]["ts"]) >= start
-            and any(counts(p, i["channel_id"], meta, config) for p in i["pings"])
+            and (
+                any(counts(p, i["channel_id"], meta, config) for p in i["pings"])
+                or (i["status"] != "pending" and i["channel_id"] in config["intake_check_channel_ids"])
+            )
         )
     ]
 
@@ -503,11 +602,12 @@ def poll_once(since_days: float | None = None) -> dict:
         meta["last_success_at"] = meta["last_poll_at"]
         changed = merge_matches(store, matches, config)
         moved = apply_my_replies(store, replies, config)
+    intake_errors = check_intake_alerts(config)
     walle = request_walle_help(config)
     walle_errors = walle["errors"] + link_walle_sessions(config)
-    linear_errors = fetch_linear_priorities(config)
-    if walle_errors or linear_errors:
-        parts = (["WALL-E: " + "; ".join(walle_errors)] if walle_errors else []) + linear_errors
+    other_errors = intake_errors + fetch_linear_priorities(config)
+    if walle_errors or other_errors:
+        parts = (["WALL-E: " + "; ".join(walle_errors)] if walle_errors else []) + other_errors
         with locked_store() as store:
             store["meta"]["last_error"] = "; ".join(parts)[:500]
     return {
@@ -953,6 +1053,8 @@ def main() -> None:
     move = sub.add_parser("move", help="move an item to another tab")
     move.add_argument("item_id")
     move.add_argument("status", choices=STATUSES)
+    check_cmd = sub.add_parser("check-intake", help="mark unchecked alerts in intake_check_channel_ids as intake work or not")
+    check_cmd.add_argument("--limit", type=int, default=INTAKE_CHECK_MAX_ALERTS)
     args = parser.parse_args()
 
     if args.command == "daemon":
@@ -975,6 +1077,8 @@ def main() -> None:
         except KeyError:
             sys.exit(f"Unknown item {args.item_id}")
         print(f"{item['id']} -> {item['status']}")
+    elif args.command == "check-intake":
+        print(json.dumps({"errors": check_intake_alerts(load_config(), args.limit)}))
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 ---
 name: read-mr
-description: Use when someone wants to understand a GitLab MR or GitHub PR quickly — "what does this MR do", "summarize !21182", "explain this PR", "TL;DR this MR", or pastes an MR link and asks for the key points. Reads the description and the diff, then produces a short digest optimized for human understanding: a TL;DR, the 3–6 ideas that matter, what changes in behavior, the risks, where to look in the diff, and gaps or mismatches between the description and the code. Read-only; never comments on or edits the MR.
+description: >-
+  Use when someone wants to understand a GitLab MR, GitHub PR, Slack thread, ticket, branch, or any other context related to a change. Accept the complete request as context, find the relevant MR when there is one, and produce a short digest optimized for human understanding. Read-only; never comments on or edits the MR.
 ---
 
 # Reading an MR
@@ -13,18 +14,23 @@ Companion skill: `write-mr` writes descriptions. This skill reads them.
 
 ## Workflow
 
-1. **Fetch the MR.** Accept a URL, `!<iid>`, an iid plus project, or a branch name.
+1. **Accept the complete request.** Do not require an MR URL or `!<iid>`. Never reject an input with a "Could not infer an MR" warning.
+   - A direct MR or PR URL, `!<iid>`, project plus iid, or branch name is enough to fetch the MR.
+   - For a Slack permalink, ticket, pasted notes, code excerpt, or other link, read the supplied context first. Follow its references to find MR URLs, iids, project names, branch names, or commit hashes.
+   - For a plain-language request, use its clues and the current checkout when relevant. Search the linked system or project for the most likely MR.
+   - If several MRs fit, name the candidates and ask which one to use. If no MR exists or the context does not identify one, explain the supplied context directly and ask for the one missing reference that would let you continue. Do not discard the request.
+2. **Fetch the MR once identified.**
    - GitLab MCP: `get_merge_request` for metadata and description, then `include: ["diffs"]` (stats first; `detail: full_patch` for the files that matter), and `include: ["commits"]` when the description is thin.
    - Or `glab mr view <iid> -R <project>` and `glab mr diff <iid> -R <project>`.
    - Default project for Eve work: `butlerinc/butler`.
-2. **Read the diff, not only the description.** The description is a claim. The diff is the truth. Note what the diff changes that the description does not mention, and what the description claims that the diff does not show.
-3. **Find the few ideas that matter.** Ask, in order:
+3. **Read the diff, not only the description.** The description is a claim. The diff is the truth. Note what the diff changes that the description does not mention, and what the description claims that the diff does not show.
+4. **Find the few ideas that matter.** Ask, in order:
    - What behavior changes, and for whom?
    - Why does it change?
    - What can break, and what must happen in a specific order?
    - What should a reviewer look at hardest?
-4. **Write the digest** using the template below.
-5. **Stop.** Offer more detail on any section. Do not post anything to the MR.
+5. **Write the digest** using the template below.
+6. **Stop.** Offer more detail on any section. Do not post anything to the MR.
 
 ## Digest template
 

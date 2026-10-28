@@ -20,6 +20,31 @@
     },
     "sentry": {
       "url": "https://mcp.sentry.dev/mcp"
+    },
+    "mcp": {
+      "url": "https://mcp.usepylon.com/"
+    },
+    "granola": {
+      "url": "https://mcp.granola.ai/mcp",
+      "description": "Search and retrieve Granola meeting notes."
+    },
+    "github": {
+      "url": "https://api.githubcopilot.com/mcp/",
+      "auth": "bearer",
+      "bearerToken": "!security find-generic-password -s github-mcp-pat -w"
+    },
+    "fastmcp-docs": {
+      "url": "https://gofastmcp.com/mcp"
+    },
+    "vercel": {
+      "url": "https://mcp.vercel.com"
+    },
+    "next-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "next-devtools-mcp@latest"
+      ]
     }
   }
 }

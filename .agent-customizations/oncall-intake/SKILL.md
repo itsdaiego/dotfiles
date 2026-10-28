@@ -31,6 +31,14 @@ The same files work for Claude Code and Pi. Both skill directories link to
   Pings to the group before the shift belong to the previous on-call person and stay hidden.
 - A mention of Daiego (`U0C0Q7F8CFL`) only in #intake-comms (`my_mention_channel_ids`, default
   `C08NLEVC6AY`). Daiego's name comes up too often elsewhere.
+- Every message in #case-comms-alerts and #intake-alerts (`source_channel_ids`), during Daiego's
+  shift. The dashboard adds these possible intake sources to Pending.
+- A message in #prod-alerts (`intake_check_channel_ids`) only when it mentions the group, or when
+  the intake check marks it as intake work. Each poll checks up to 10 new #prod-alerts messages.
+  Sentry alerts have no Slack text, so the poller reads each message first and stores its text.
+  One headless `claude -p --model haiku` run then compares the batch against `intake_scope` in
+  `config.json`. The ping stores `intake` and `intake_reason`. An unchecked message stays hidden. A
+  #prod-alerts item that Daiego moved out of `pending` stays visible.
 - Never a direct message.
 
 ## Channels
@@ -54,9 +62,11 @@ show up at any time. The list leaves out #walle-dyego because the poller ignores
 | #spaulding-firm | `C0BJ4UH3X9D` |
 | #dubin-law-group-and-law-office-of-joshua-e--campbell-pllc | `C0B6PLC1TUL` |
 
-The dashboard has a channel filter next to the sort. It lists each channel that has an item in
-the window, with the item count, and filters every tab. For the full history, count the channels
-in `pings.json`:
+The dashboard has multi-select filters for severity and channel. Selecting one or more values
+shows cards that match any selected value. The Types menu can hide selected types or show only
+selected types. Types include handoff, source channel, @oncall, @you, multiple pings, pinged again,
+and you replied. The browser remembers the selections. For the full history, count the channels in
+`pings.json`:
 
 ```bash
 /usr/bin/python3 -c "import json,collections;s=json.load(open('$HOME/ai/eve/oncall-intake/pings.json'));print(collections.Counter(i['channel_name'] for i in s['items'].values()).most_common())"
@@ -131,6 +141,7 @@ ONCALL=~/.agent-customizations/oncall-intake/oncall.py
 /usr/bin/python3 $ONCALL poll                        # poll Slack now
 /usr/bin/python3 $ONCALL poll --since-days 7         # backfill; merge skips pings already tracked
 /usr/bin/python3 $ONCALL import-handoff <json>       # add unfinished items from a handoff doc
+/usr/bin/python3 $ONCALL check-intake --limit 100     # check unchecked #prod-alerts messages now
 /usr/bin/python3 $ONCALL install                     # write the launchd plist and start it
 /usr/bin/python3 $ONCALL uninstall                   # stop the agent, keep the data
 ```

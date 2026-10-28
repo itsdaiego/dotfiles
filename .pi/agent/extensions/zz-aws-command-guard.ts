@@ -1,3 +1,4 @@
+import { lstatSync } from "node:fs"
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent"
 
 const AWS_BLOCK_REASON =
@@ -104,14 +105,90 @@ function isReadOnlyAwsCommand(command: string): boolean {
   )
 }
 
-function containsRecursiveForcedDelete(command: string): boolean {
+type RecursiveForcedDelete = {
+  command: string
+  index: number
+}
+
+function recursiveForcedDeletes(command: string): RecursiveForcedDelete[] {
+  const deletes: RecursiveForcedDelete[] = []
   for (const match of command.matchAll(/\brm\b([^;&|\n]*)/gi)) {
     const args = match[1]
     const recursive = /(?:^|\s)(?:--recursive|-[a-z]*r[a-z]*)(?=\s|$)/i.test(args)
     const forced = /(?:^|\s)(?:--force|-[a-z]*f[a-z]*)(?=\s|$)/i.test(args)
-    if (recursive && forced) return true
+    if (recursive && forced) {
+      deletes.push({ command: match[0], index: match.index ?? 0 })
+    }
   }
-  return false
+  return deletes
+}
+
+function isTmpChildPath(value: string): boolean {
+  if (!value.startsWith("/tmp/")) return false
+
+  const child = value.slice("/tmp/".length)
+  const isDirectTmpChild =
+    child.length > 0 &&
+    !child.includes("/") &&
+    child !== "." &&
+    child !== ".." &&
+    !/[\\\0*?[\]{}]/.test(child)
+  if (!isDirectTmpChild) return false
+
+  try {
+    return !lstatSync(value).isSymbolicLink()
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code === "ENOENT"
+  }
+}
+
+function tmpChildVariableValue(command: string, before: number, variable: string): string | null {
+  const previousLine = command
+    .slice(0, before)
+    .replace(/\s+$/, "")
+    .split(/\r?\n/)
+    .at(-1)
+  const assignment = previousLine?.match(
+    /^\s*(?:readonly\s+)?([A-Za-z_][A-Za-z0-9_]*)=(?:"([^"$`\\]*)"|'([^'$`\\]*)'|([^\s"'$`\\]+))\s*$/,
+  )
+  if (!assignment || assignment[1] !== variable) return null
+
+  const value = assignment[2] ?? assignment[3] ?? assignment[4]
+  return value && isTmpChildPath(value) ? value : null
+}
+
+function isApprovedTmpDelete(command: string, deletion: RecursiveForcedDelete): boolean {
+  const tokens = deletion.command.trim().split(/\s+/)
+  if (tokens.shift()?.toLowerCase() !== "rm") return false
+
+  let recursive = false
+  let forced = false
+  while (tokens[0]?.startsWith("-")) {
+    const option = tokens.shift()
+    if (option === "--") break
+    if (option === "--recursive") recursive = true
+    else if (option === "--force") forced = true
+    else if (/^-[A-Za-z]+$/.test(option ?? "")) {
+      recursive ||= option?.includes("r") ?? false
+      forced ||= option?.includes("f") ?? false
+    } else {
+      return false
+    }
+  }
+  if (!recursive || !forced || tokens.length !== 1) return false
+
+  const target = tokens[0]
+  const variable = target.match(/^(?:"\$([A-Za-z_][A-Za-z0-9_]*)"|\$([A-Za-z_][A-Za-z0-9_]*))$/)
+  if (variable) {
+    return tmpChildVariableValue(command, deletion.index, variable[1] ?? variable[2]) !== null
+  }
+
+  const literal = target.match(/^(?:"([^"$`\\]+)"|'([^'$`\\]+)'|([^\s"'$`\\]+))$/)
+  return literal !== null && isTmpChildPath(literal[1] ?? literal[2] ?? literal[3])
+}
+
+function canAutoApproveTmpDeletes(command: string, deletions: RecursiveForcedDelete[]): boolean {
+  return deletions.length > 0 && deletions.every((deletion) => isApprovedTmpDelete(command, deletion))
 }
 
 function blockedUserBashResult(reason: string) {
@@ -135,7 +212,8 @@ export default function (pi: ExtensionAPI) {
       return { block: true, reason: AWS_BLOCK_REASON, terminate: true }
     }
 
-    if (!containsRecursiveForcedDelete(command)) return
+    const deletions = recursiveForcedDeletes(command)
+    if (deletions.length === 0 || canAutoApproveTmpDeletes(command, deletions)) return
     if (!ctx.hasUI) return { block: true, reason: DELETE_BLOCK_REASON, terminate: true }
 
     const allowed = await ctx.ui.confirm(
@@ -149,7 +227,8 @@ export default function (pi: ExtensionAPI) {
     if (containsAwsCommand(event.command) && !isReadOnlyAwsCommand(event.command)) {
       return blockedUserBashResult(AWS_BLOCK_REASON)
     }
-    if (!containsRecursiveForcedDelete(event.command)) return
+    const deletions = recursiveForcedDeletes(event.command)
+    if (deletions.length === 0 || canAutoApproveTmpDeletes(event.command, deletions)) return
     if (!ctx.hasUI) return blockedUserBashResult(DELETE_BLOCK_REASON)
 
     const allowed = await ctx.ui.confirm(

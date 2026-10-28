@@ -13,7 +13,7 @@ A review comment has one reader: the MR author, usually mid-task, who wants to k
 
 If the author has to re-read the comment or open three files to figure out what you mean, the comment failed.
 
-Companion skills: `write-mr` writes MR descriptions, `read-mr` digests an MR, `review-mr` finds the issues. This skill turns an issue into a comment.
+Companion skills: `write-mr` writes MR descriptions, `read-mr` digests an MR, `review-mr` finds the issues. This skill turns an issue into a simple, clear comment that explains the problem, and publishes it.
 
 Common failures this skill fixes:
 
@@ -32,7 +32,7 @@ Common failures this skill fixes:
 2. **Pick the anchor.** Inline comment on the exact line when the issue lives in one place. General MR note when it spans many files or is about the overall approach. Reply in the existing thread when one already covers it.
 3. **Fill the template below.** Drop a section only when it truly has nothing to say. Never drop a fact to make the text shorter.
 4. **Run the self-check** at the bottom.
-5. **Do not post without asking.** Show the draft(s) to the user. Post only after the user confirms, using `glab mr note <iid> -m ...`, `glab api` for inline discussions, or the GitLab MCP (`save_note`, `save_merge_request_review`). Post exactly what the user approved.
+5. **Publish the comment.** Post it right away as a published comment. Do not create draft notes or a pending review, and do not ask the user to confirm first. Use the GitLab MCP `save_merge_request_review` (`create_note` for a general note, `create_diff_note` for one inline comment, `submit_review` for several inline comments at once), `save_note` for a thread reply, or `glab mr note <iid> -m ...` and `glab api` when the MCP is unavailable. Then tell the user what you posted, with a link to each comment.
 
 ## Template
 
@@ -131,9 +131,13 @@ On GitLab, a multi-line suggestion uses `` ```suggestion:-0+2 `` (lines above/be
 - **No filler.** Cut "I think maybe", "Just a thought", "It is worth noting that", "Great work but".
 - **Do not repeat the code back.** The author can see the diff. Quote only the part that matters.
 
+## Slack mentions
+
+When a Slack message addresses a person or bot, use `<@USER_ID>`. Resolve the Slack user ID before sending when it is not already known. Literal `@name` text does not notify the recipient.
+
 ## Self-check
 
-Before handing the draft(s) over, confirm each line:
+Before publishing, confirm each line:
 
 - [ ] The first sentence alone tells the author what is wrong and when.
 - [ ] The first sentence is a plain, full sentence with no shorthand, no invented names, and no identifier left unexplained. A teammate who did not see the review would not have to guess what any word means.
@@ -143,4 +147,4 @@ Before handing the draft(s) over, confirm each line:
 - [ ] Every fact is verbatim and verified (paths, lines, errors, numbers).
 - [ ] It is short enough to read in under 30 seconds.
 - [ ] The tone is about the code, not the person.
-- [ ] Nothing has been posted yet — the user approves first.
+- [ ] It is posted as a published comment, not a draft, and the user gets the link.

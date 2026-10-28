@@ -1,0 +1,1 @@
+../../../.claude/commands/sqli-test.md

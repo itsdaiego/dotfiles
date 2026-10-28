@@ -1,0 +1,4 @@
+interface:
+  display_name: "To Do Backlog"
+  short_description: "Refresh the durable cross-service task backlog"
+  default_prompt: "Refresh my durable to-do backlog and continue its historical backfill."

@@ -1,12 +1,12 @@
 ---
 name: review-queue
 description: >-
-  Use when Daiego wants an overview of every GitLab MR where Daiego is a reviewer: "review my queue", "what MRs are assigned to me", "which MRs can I approve", "which MRs need review", "/review-queue". Opens a local page that lists each MR with its read-mr summary, CI state, team review state, review urgency, only the critical findings nobody flagged yet, and an approve / don't-approve verdict. A button on each MR starts an unattended review that follows the review-mr skill. Works in Claude Code and Pi. Read-only on GitLab unless Daiego explicitly asks to approve or comment.
+  Use when Daiego wants an overview of every GitLab MR where Daiego is a reviewer, every MR Daiego authored ("my MRs"), or teammates' MRs nobody started reviewing: "review my queue", "what MRs are assigned to me", "which MRs can I approve", "which MRs need review", "/review-queue". Opens a local page that lists each MR with its read-mr summary, CI state, team review state, review urgency, only the critical findings nobody flagged yet, and an approve / don't-approve verdict. A button on each MR starts an unattended review that follows the review-mr skill. Works in Claude Code and Pi. Read-only on GitLab unless Daiego explicitly asks to approve or comment.
 ---
 
 # Review queue
 
-A local page that covers every open MR where Daiego is a reviewer, so Daiego can decide where to spend review time before opening any MR. The same skill folder serves Claude Code (`~/.claude/skills/review-queue`) and Pi (`~/.pi/agent/skills/review-queue`). Both are symlinks to `~/.agent-customizations/review-queue`.
+A local page that covers every open MR where Daiego is a reviewer, every open MR Daiego authored, and every open teammate MR. Daiego can decide where to spend review time before opening any MR, and can see how Daiego's own MRs hold up before a teammate reviews them. The same skill folder serves Claude Code (`~/.claude/skills/review-queue`) and Pi (`~/.pi/agent/skills/review-queue`). Both are symlinks to `~/.agent-customizations/review-queue`.
 
 ## Safety
 
@@ -18,30 +18,39 @@ A local page that covers every open MR where Daiego is a reviewer, so Daiego can
 
 - The MR description on the page always comes from the **read-mr** skill.
 - A review always follows the **review-mr** skill. It writes `~/Code/.claude/code-reviews/MR-<iid>-review.md`.
+- After review-mr, every review runs **two independent adversarial reviews** in parallel against the exact head sha and merge base. This is the same step 4 as in `/create-mr`. One reviewer covers correctness, edge cases, error handling, security, data integrity, concurrency and backward compatibility. The other covers requirement gaps, conventions, reuse, API and schema contracts, migration and rollout safety, and regression coverage. Claude runs them as Agent subagents, and Pi uses the `adversarial-reviewer` agent. The run then checks every finding against the code and marks it confirmed, plausible or rejected. Confirmed critical findings count as new critical issues. The full outputs go to `queue/adversarial/MR-<iid>-correctness.md` and `MR-<iid>-contracts.md`.
+- Every review triages **every unresolved comment thread**: CodeRabbit, Wall-E and people. The run checks each thread against the head code, not against the thread's own claims. It gives each thread one verdict: `fix` (real and worth changing in this MR), `follow_up` (real, but pre-existing or out of scope), `already_fixed` (the head fixes it, so resolve it), `not_valid` (the code or a test disproves it, with a one-line reason to reply with), or `optional`. An unresolved critical `fix` blocks the verdict. The page shows only critical `fix` threads.
+- Every review checks **feature gating** (step 3a of review-mr). A fix or change for a gated feature (a feature toggle, an experimental directory, or a record type that exists only behind a toggle, such as lead triggers behind `LeadAutoAgents`) must not change behavior for users or organizations outside the gate. Each leak is a critical finding and makes `can_approve` false.
+- Every review runs the deterministic `walle-review-risk` skill against the exact MR head and target-branch policy. The result is private queue metadata. It does not change the approval verdict, the MR description, or anything on GitLab. When the classifier or target policy is unavailable, the page shows that result instead of guessing.
 - The page shows only critical issues with status New. Already flagged and fixed items are listed separately.
-- `scripts/review_one.py` enforces both rules through `review_prompt.md`. Do not review an MR another way for this page.
+- `scripts/review_one.py` enforces these rules through `review_prompt.md`. Do not review an MR another way for this page.
 
 ## Files
 
 | Path | What it is |
 | --- | --- |
-| `scripts/fetch_queue.py` | Lists the MRs where Daiego is a reviewer, with CI, readiness, approvals and team review activity. Writes `queue.json`. |
-| `scripts/review_one.py <iid>` | Runs one unattended review with `claude -p` (default) or `pi -p` (`--runner pi`), writes `results/<iid>.json`, re-renders the static page. |
+| `scripts/fetch_queue.py` | Lists the open MRs where Daiego is a reviewer (`reviewer`), that Daiego authored (`mine`), or that a teammate authored (`team`), with CI, readiness, approvals and team review activity. Writes `queue.json`. Each MR lists its sources. |
+| `scripts/review_one.py <iid>` | Runs one unattended review with `claude -p` (default) or `pi -p` (`--runner pi`), runs the private Wall-E risk classifier, writes `results/<iid>.json`, and re-renders the static page. |
 | `scripts/serve.py` | Serves the page at `http://127.0.0.1:8787` with working review and refresh buttons. Runs at most 3 reviews at once (`--parallel`). Every 20 minutes (`--interval-minutes`, 0 turns it off) it refreshes the queue and reviews what is missing or stale. |
 | `scripts/launchd.py install\|uninstall\|status` | Runs `serve.py` as the launchd agent `com.daiego.review-queue`. `KeepAlive` restarts it after a crash or a reboot. |
 | `scripts/render.py` | Writes the static page. Its review buttons only copy the `review_one.py` command. |
 | `scripts/queue_lib.py` | Shared paths and data loading. |
-| `review_prompt.md` | The prompt each review run gets: read-mr, then review-mr, then the result JSON. |
+| `review_prompt.md` | The prompt each review run gets: read-mr, then review-mr, then the two adversarial reviews, then the result JSON. |
 | `app.html` | The page template. |
 
-Data lives in `~/Code/.claude/code-reviews/queue/` (`queue.json`, `results/`, `logs/`, `daemon.log`). The static page is `~/Code/.claude/code-reviews/mr-review-queue.html`.
+Data lives in `~/Code/.claude/code-reviews/queue/` (`queue.json`, `results/`, `logs/`, `adversarial/`, `daemon.log`). The static page is `~/Code/.claude/code-reviews/mr-review-queue.html`.
 
 ## Schedule
 
 The launchd agent keeps the server up and runs one cycle every 20 minutes:
 
 1. Refresh the queue with `fetch_queue.py`.
-2. Start a review for each MR that has no result, or a result for an older head. The cycle skips MRs Daiego approved, drafts (`--review-drafts` includes them), and an MR whose last automatic review failed on the same head.
+2. Start a review for each MR that has no result, or a result for an older head, when the MR is one of these:
+   - Daiego's own MR. Every new head gets a review.
+   - An MR with Daiego as reviewer that Daiego has not approved.
+   - A teammate's MR that nobody started reviewing: no teammate left a note or approved, and Daiego did not either. Once someone starts, the cycle stops reviewing its new heads. A teammate MR that is not assigned to Daiego is in the queue only when it was updated in the last 14 days (`fetch_queue.py --team-max-age-days`), because teammates keep many abandoned MRs open.
+
+   The cycle skips drafts (`--review-drafts` includes them) and an MR whose last automatic review failed on the same head. Teammate MRs that someone already started stay on the page, but they get a review only from the button.
 
 ```bash
 RQ=~/.agent-customizations/review-queue/scripts
@@ -50,7 +59,7 @@ RQ=~/.agent-customizations/review-queue/scripts
 /opt/homebrew/bin/python3 -I $RQ/launchd.py uninstall   # stop the agent, keep the data
 ```
 
-Each cycle writes one line to `daemon.log`. Each automatic review is a `claude -p` run of 5 to 15 minutes, so a busy queue uses Claude usage on every cycle that finds new heads.
+Each cycle writes one line to `daemon.log`. Each automatic review is a `claude -p` run of about 10 to 30 minutes, because the two adversarial reviewers run after review-mr. A run times out after 75 minutes. A busy queue uses Claude usage on every cycle that finds new heads, and each push to one of Daiego's MRs costs one full review.
 
 ## Workflow
 
@@ -81,14 +90,15 @@ Each cycle writes one line to `daemon.log`. Each automatic review is a `claude -
 
 4. Check each new critical finding that is cheap to verify (for example a migration parent, or a claim about master) before you report it.
 
-5. Report. Lead with the MRs that need review. Then list the MRs Daiego can approve and the MRs Daiego cannot approve, each with a one-line reason. Give the page URL. Do not offer to post anything.
+5. Report. Lead with the MRs that need review. For Daiego's own MRs, report the Wall-E risk result, confirmed critical adversarial findings, and critical threads with verdict `fix`. Mention `already_fixed` threads that can be resolved, and `not_valid` threads with their one-line reply. Then list the MRs Daiego can approve and the MRs Daiego cannot approve, each with a one-line reason. Give the page URL. Do not offer to post anything.
 
 ## The page
 
-- Stats cards: need review, can approve, don't approve yet, not reviewed, new critical findings. A click on a card filters by it.
-- Filters: text search, sort (review urgency, oldest, recently updated, author, MR number), author, state, CI, and "hide MRs you approved". The page keeps the filters per browser.
-- Each row shows team review state, CI state with a link to the pipeline, draft and conflict flags, the new critical count, the verdict, the urgency score, and a Start review / Re-review button.
-- The side panel shows the verdict, CI with the failed job names, merge state, approvals, the stack, the urgency breakdown, the read-mr summary, the new critical findings with a copyable comment, the already-flagged items, the open threads, the full review-mr file, and the run log.
+- Two tabs. **To review** holds MRs assigned to Daiego and teammates' MRs. A teammate MR that is not assigned to Daiego shows a "Team MR, not assigned to you" pill. **My MRs** holds Daiego's own MRs. There the verdict reads "Ready for approval" or "Fix first", and the team pill says whether a teammate started reviewing. The page remembers the tab.
+- Stats cards (per tab): need review, can approve, don't approve yet, not reviewed, new critical findings. A click on a card filters by it. The counts follow the search, author, CI, and hide filters.
+- Filters: text search, sort (review urgency, oldest, recently updated, author, MR number), author, state, CI, "hide MRs you approved", and "hide drafts". The page keeps the filters per browser.
+- Each row shows team review state, CI state with a link to the pipeline, draft and conflict flags, the private Wall-E risk result, the new critical count, the verdict, whether the adversarial passes completed, the urgency score, and a Start review / Re-review button. The My MRs tab also has this button so Daiego can assess a new MR immediately. A review from before the adversarial step shows "No adversarial pass".
+- The side panel shows the verdict, CI with the failed job names, merge state, approvals, the stack, the urgency breakdown, the private Wall-E risk result, the read-mr summary, and new critical findings with a copyable comment. It also shows that the adversarial passes completed, but not their non-critical observations. The audit files retain their full output. The panel shows only open critical comment threads, already-flagged critical items, the full review-mr file, and the run log.
 
 Urgency score: +40 when no teammate started, +20 when the MR is not a draft and has green CI and no conflicts, +10 when it was never reviewed here, +10 when the review is stale, +10 when it has new critical findings, +1 per day open (at most 14), −30 for a draft, −10 when stacked on an open MR, −10 for failed CI. MRs Daiego approved sort last.
 
