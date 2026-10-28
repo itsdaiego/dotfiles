@@ -36,9 +36,11 @@ link_one() {
   link_target "$source_path" "$HOME/$relative_path"
 }
 
-for config_root in .agent-customizations .codex .codex-personal .claude .pi .local/bin; do
-  find "$repo_dir/$config_root" \( -type f -o -type l \) -print | while IFS= read -r source_path; do
-    link_one "$source_path"
+link_target "$repo_dir/.agent-customizations" "$HOME/.agent-customizations"
+
+for config_root in .codex .codex-personal .claude .pi .local/bin; do
+  git -C "$repo_dir" ls-files "$config_root" | while IFS= read -r relative_path; do
+    link_one "$repo_dir/$relative_path"
   done
 done
 
