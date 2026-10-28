@@ -41,8 +41,15 @@ h1 { font-size: 20px; margin: 0; }
 .tab[data-status="pending"] .count { background: var(--pending); }
 .tab[data-status="doing"] .count { background: var(--doing); }
 .tab[data-status="done"] .count { background: var(--done); }
-select, .btn { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
-.btn:hover, select:hover { border-color: var(--accent); }
+select, .btn, .filter-menu summary { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+.btn:hover, select:hover, .filter-menu summary:hover { border-color: var(--accent); }
+.filter-menu { position: relative; display: inline-block; text-align: left; }
+.filter-menu summary { list-style: none; }
+.filter-menu summary::-webkit-details-marker { display: none; }
+.filter-options { position: absolute; z-index: 1; right: 0; min-width: 180px; margin-top: 4px; padding: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14); }
+.filter-option { display: block; padding: 4px 6px; cursor: pointer; white-space: nowrap; }
+.filter-option input { margin: 0 6px 0 0; }
+.filter-options select { width: 100%; margin-bottom: 4px; }
 .error { background: var(--error-bg); border: 1px solid var(--pending); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; }
 .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
 .card-head { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; margin-bottom: 6px; }
@@ -82,15 +89,24 @@ select, .btn { font: inherit; color: var(--text); background: var(--panel); bord
       <button class="tab" role="tab" data-status="done">Done<span class="count">0</span></button>
     </div>
     <div>
-      <select id="severity" aria-label="Filter by severity">
-        <option value="all">All severities</option>
-        <option value="urgent">Urgent</option>
-        <option value="high">High</option>
-        <option value="medium">Medium</option>
-        <option value="low">Low</option>
-        <option value="none">No severity</option>
-      </select>
-      <select id="channel" aria-label="Filter by channel"></select>
+      <details class="filter-menu">
+        <summary id="severity-summary">Severities</summary>
+        <div class="filter-options" id="severity-options"></div>
+      </details>
+      <details class="filter-menu">
+        <summary id="channel-summary">Channels</summary>
+        <div class="filter-options" id="channel-options"></div>
+      </details>
+      <details class="filter-menu">
+        <summary id="tag-summary">Types</summary>
+        <div class="filter-options">
+          <select id="tag-mode" aria-label="Filter mode for types">
+            <option value="hide">Hide selected types</option>
+            <option value="show">Show only selected types</option>
+          </select>
+          <div id="tag-options"></div>
+        </div>
+      </details>
       <select id="sort" aria-label="Sort by date">
         <option value="newest">Most recent first</option>
         <option value="oldest">Oldest first</option>
@@ -104,17 +120,44 @@ select, .btn { font: inherit; color: var(--text); background: var(--panel); bord
 <script>
 const STATUSES = ["pending", "doing", "done"];
 const LABELS = { pending: "Pending", doing: "Doing", done: "Done" };
+const SEVERITIES = [
+  { id: "urgent", label: "Urgent" },
+  { id: "high", label: "High" },
+  { id: "medium", label: "Medium" },
+  { id: "low", label: "Low" },
+  { id: "none", label: "No severity" },
+];
+const TAGS = [
+  { id: "handoff", label: "Handoff", matches: item => Boolean(item.handoff) },
+  { id: "source", label: "Source channel", matches: item => item.pings.some(ping => ping.kind === "source") },
+  { id: "oncall", label: "@oncall", matches: item => lastPing(item).kind === "oncall" },
+  { id: "mention", label: "@you", matches: item => lastPing(item).kind === "me" },
+  { id: "multiple-pings", label: "Multiple pings", matches: item => item.pings.length > 1 },
+  { id: "reopened", label: "Pinged again", matches: item => Boolean(item.reopened) },
+  { id: "replied", label: "You replied", matches: item => Boolean(item.my_last_reply_ts) },
+];
 let state = { items: [], meta: {}, config: {} };
 let tab = readPref("tab", "pending");
 let sort = readPref("sort", "newest");
-let severity = readPref("severity", "all");
-let channel = readPref("channel", "all");
+let severities = readSetPref("severities", "severity");
+let channels = readSetPref("channels", "channel");
+let tags = readSetPref("tags", "hidden-tags");
+let tagMode = readPref("tag-mode", "hide");
 
 function readPref(key, fallback) {
   try { return localStorage.getItem("oncall-" + key) || fallback; } catch { return fallback; }
 }
 function writePref(key, value) {
   try { localStorage.setItem("oncall-" + key, value); } catch {}
+}
+function readSetPref(key, legacyKey) {
+  const value = readPref(key, "");
+  if (value) return new Set(value.split(",").filter(Boolean));
+  const legacy = readPref(legacyKey, "all");
+  return new Set(legacy === "all" ? [] : legacy.split(",").filter(Boolean));
+}
+function writeSetPref(key, values) {
+  writePref(key, [...values].join(","));
 }
 
 function slackToText(text, handle) {
@@ -138,10 +181,47 @@ function fmtIso(iso) {
 function lastPing(item) { return item.pings[item.pings.length - 1]; }
 function priority(item) { return item.handoff ? item.handoff.priority || 50 : 100; }
 function severityLevel(item) { return item.severity ? item.severity.level : "none"; }
-function matchesSeverity(item) { return severity === "all" || severityLevel(item) === severity; }
-function matchesChannel(item) { return channel === "all" || item.channel_id === channel; }
-function matchesFilters(item) { return matchesSeverity(item) && matchesChannel(item); }
+function matchesSeverity(item) { return !severities.size || severities.has(severityLevel(item)); }
+function matchesChannel(item) { return !channels.size || channels.has(item.channel_id); }
+function matchesTags(item) {
+  if (!tags.size) return true;
+  const matches = TAGS.some(tag => tags.has(tag.id) && tag.matches(item));
+  return tagMode === "show" ? matches : !matches;
+}
+function matchesFilters(item) { return matchesSeverity(item) && matchesChannel(item) && matchesTags(item); }
 function channelLabel(name) { return "#" + name.replace(/^#/, ""); }
+
+function renderCheckboxOptions(id, choices, selected, onChange) {
+  const options = document.getElementById(id);
+  options.replaceChildren(...choices.map(choice => {
+    const input = el("input", { type: "checkbox", value: choice.id });
+    input.checked = selected.has(choice.id);
+    input.addEventListener("change", () => {
+      input.checked ? selected.add(choice.id) : selected.delete(choice.id);
+      onChange();
+    });
+    const label = el("label", { class: "filter-option" });
+    label.append(input, document.createTextNode(choice.label));
+    return label;
+  }));
+}
+
+function renderSeverities() {
+  document.getElementById("severity-summary").textContent = severities.size ? `Severities (${severities.size})` : "All severities";
+  renderCheckboxOptions("severity-options", SEVERITIES, severities, () => {
+    writeSetPref("severities", severities);
+    render();
+  });
+}
+
+function renderTags() {
+  document.getElementById("tag-summary").textContent = tags.size ? `${tagMode === "show" ? "Show" : "Hide"} types (${tags.size})` : "All types";
+  document.getElementById("tag-mode").value = tagMode;
+  renderCheckboxOptions("tag-options", TAGS.map(tag => ({ ...tag, label: `${tag.label} (${state.items.filter(tag.matches).length})` })), tags, () => {
+    writeSetPref("tags", tags);
+    render();
+  });
+}
 
 function renderChannels() {
   const counts = new Map();
@@ -150,13 +230,14 @@ function renderChannels() {
     entry.count += 1;
     counts.set(i.channel_id, entry);
   });
-  if (channel !== "all" && !counts.has(channel)) channel = "all";
-  const channels = [...counts].sort((a, b) => b[1].count - a[1].count || a[1].name.localeCompare(b[1].name));
-  document.getElementById("channel").replaceChildren(
-    el("option", { value: "all", text: `All channels (${channels.length})` }),
-    ...channels.map(([id, c]) => el("option", { value: id, text: `${channelLabel(c.name)} (${c.count})` })),
-  );
-  document.getElementById("channel").value = channel;
+  const choices = [...counts]
+    .sort((a, b) => b[1].count - a[1].count || a[1].name.localeCompare(b[1].name))
+    .map(([id, entry]) => ({ id, label: `${channelLabel(entry.name)} (${entry.count})` }));
+  document.getElementById("channel-summary").textContent = channels.size ? `Channels (${channels.size})` : `All channels (${choices.length})`;
+  renderCheckboxOptions("channel-options", choices, channels, () => {
+    writeSetPref("channels", channels);
+    render();
+  });
 }
 
 function el(tag, attrs, children) {
@@ -172,9 +253,10 @@ function render() {
     btn.setAttribute("aria-selected", String(s === tab));
     btn.querySelector(".count").textContent = state.items.filter(i => i.status === s && matchesFilters(i)).length;
   });
+  renderSeverities();
   renderChannels();
+  renderTags();
   document.getElementById("sort").value = sort;
-  document.getElementById("severity").value = severity;
   const meta = state.meta;
   document.getElementById("meta").textContent =
     `Last poll ${fmtIso(meta.last_poll_at)} · last success ${fmtIso(meta.last_success_at)} · every ${Math.round((state.config.poll_seconds || 300) / 60)} min · last ${state.config.window_days || 7} days`;
@@ -188,8 +270,12 @@ function render() {
       : (parseFloat(lastPing(b).ts) - parseFloat(lastPing(a).ts)) * (sort === "newest" ? 1 : -1));
   const list = document.getElementById("list");
   if (!items.length) {
-    const where = channel === "all" ? "" : ` in ${channelLabel(state.items.find(i => i.channel_id === channel).channel_name)}`;
-    const filtered = where + (severity === "all" ? "" : ` with ${severity === "none" ? "no" : severity} severity`);
+    const filters = [
+      channels.size ? `${channels.size} selected channel${channels.size === 1 ? "" : "s"}` : "",
+      severities.size ? `${severities.size} selected severity level${severities.size === 1 ? "" : "s"}` : "",
+      tags.size ? `${tagMode === "show" ? "showing" : "hiding"} ${tags.size} type${tags.size === 1 ? "" : "s"}` : "",
+    ].filter(Boolean);
+    const filtered = filters.length ? ` with ${filters.join(", ")}` : "";
     list.replaceChildren(el("div", { class: "empty", text: `Nothing in ${LABELS[tab]}${filtered}.` }));
     return;
   }
@@ -200,7 +286,7 @@ function card(item) {
   const ping = lastPing(item);
   const handoff = item.handoff;
   const pingChip = ping.kind === "handoff" ? null
-    : el("span", { class: "chip" + (ping.kind === "me" ? " me" : ""), text: ping.kind === "me" ? "@you" : "@" + (state.config.usergroup_handle || "oncall") });
+    : el("span", { class: "chip" + (ping.kind === "me" ? " me" : ""), text: ping.kind === "me" ? "@you" : ping.kind === "source" ? "source" : "@" + (state.config.usergroup_handle || "oncall") });
   const sev = item.severity;
   const sevSource = sev && el("span", { class: "sev-source", title: "Where the severity comes from" }, [
     sev.url ? el("a", { href: sev.url, target: "_blank", rel: "noopener", text: sev.source }) : document.createTextNode(sev.source),
@@ -261,8 +347,21 @@ document.querySelectorAll(".tab").forEach(btn => btn.addEventListener("click", (
   tab = btn.dataset.status; writePref("tab", tab); render();
 }));
 document.getElementById("sort").addEventListener("change", e => { sort = e.target.value; writePref("sort", sort); render(); });
-document.getElementById("channel").addEventListener("change", e => { channel = e.target.value; writePref("channel", channel); render(); });
-document.getElementById("severity").addEventListener("change", e => { severity = e.target.value; writePref("severity", severity); render(); });
+document.getElementById("tag-mode").addEventListener("change", e => {
+  tagMode = e.target.value;
+  writePref("tag-mode", tagMode);
+  render();
+});
+document.querySelectorAll(".filter-menu").forEach(menu => menu.addEventListener("toggle", () => {
+  if (!menu.open) return;
+  document.querySelectorAll(".filter-menu[open]").forEach(other => {
+    if (other !== menu) other.removeAttribute("open");
+  });
+}));
+document.addEventListener("click", event => {
+  if (event.target.closest(".filter-menu")) return;
+  document.querySelectorAll(".filter-menu[open]").forEach(menu => menu.removeAttribute("open"));
+});
 document.getElementById("poll").addEventListener("click", async e => {
   e.target.disabled = true;
   await fetch("/api/poll", { method: "POST" });
