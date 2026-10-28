@@ -16,6 +16,11 @@
 - When adding or changing a Pi extension, prompt, skill, theme, setting, or other shared Pi customization, make it available in both profiles. Prefer a shared source (such as a symlink) so future edits stay in sync.
 - Verify both profile paths after making a shared Pi customization.
 
+## Herdr session names
+
+- In a Herdr-managed root session, the shared auto-name integration labels the current tab `pi`, `claude`, or `codex`. Herdr combines that with the workspace/project name on the bold top line, such as `chessan · pi`.
+- On the first user prompt, infer a short task description, convert it to a lowercase kebab-case slug with at most 32 characters, and run `herdr agent rename "$HERDR_PANE_ID" "<slug>"` before substantive work. That inferred task name belongs on the lower description line. Preserve an existing task name and never rename a subagent.
+
 ## Shared harness maintenance
 
 - When updating the shared Pi, Claude Code, or Codex setup, work in `~/Documents/code-stuff/dotfiles` and follow `docs/agent-config-maintenance.md`.

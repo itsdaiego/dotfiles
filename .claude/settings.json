@@ -15,6 +15,29 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/daiego/.claude/hooks/herdr-agent-state.sh' session",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$HOME/.agent-customizations/herdr-auto-name/user_prompt_hook.py\"",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   },
   "statusLine": {

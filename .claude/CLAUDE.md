@@ -12,6 +12,10 @@ When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` 
 - Do not write production code for a behavior change before its failing test exists. When a test is not practical, explain why and use the strongest relevant verification instead.
 - Documentation, configuration-only, and non-behavioral changes do not require a test; run any applicable validation instead.
 
+# Herdr session names
+- In a Herdr-managed root session, the shared auto-name integration labels the current tab `pi`, `claude`, or `codex`. Herdr combines that with the workspace/project name on the bold top line, such as `chessan · codex`.
+- On the first user prompt, infer a short task description, convert it to a lowercase kebab-case slug with at most 32 characters, and run `herdr agent rename "$HERDR_PANE_ID" "<slug>"` before substantive work. That inferred task name belongs on the lower description line. Preserve an existing task name and never rename a subagent.
+
 # Shared harness maintenance
 - When updating the shared Pi, Claude Code, or Codex setup, work in `~/Documents/code-stuff/dotfiles` and follow `docs/agent-config-maintenance.md`.
 - Keep authentication, OAuth state, sessions, caches, databases, downloaded plugins, generated system skills, and per-machine trust state out of Git.

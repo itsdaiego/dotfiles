@@ -1,0 +1,1 @@
+../../agent/extensions/herdr-auto-name.ts
