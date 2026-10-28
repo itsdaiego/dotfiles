@@ -1,4 +1,9 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "defaultMode": "auto"
+  },
+  "model": "opus[1m]",
   "hooks": {
     "PreToolUse": [
       {
@@ -12,14 +17,16 @@
       }
     ]
   },
+  "statusLine": {
+    "type": "command",
+    "command": "bash /Users/daiego/.claude/statusline-command.sh"
+  },
   "enabledPlugins": {
-    "vercel-plugin@vercel": true,
+    "pyright-lsp@claude-plugins-official": true,
     "caveman@caveman": true,
-    "github@claude-plugins-official": true,
-    "slack@claude-plugins-official": true,
-    "frontend-design@claude-plugins-official": true,
     "playwright-skill@playwright-skill": true,
-    "graphify@local": true,
+    "vercel-plugin@vercel": true,
+    "grafana-cloud-mcp@claude-plugins-official": true,
     "humanizer@humanizer": true
   },
   "extraKnownMarketplaces": {
@@ -31,8 +38,14 @@
     },
     "playwright-skill": {
       "source": {
-        "source": "github",
-        "repo": "lackeyjb/playwright-skill"
+        "source": "git",
+        "url": "https://github.com/lackeyjb/playwright-skill.git"
+      }
+    },
+    "vercel": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/vercel/vercel-plugin.git"
       }
     },
     "humanizer": {
@@ -43,6 +56,52 @@
     }
   },
   "alwaysThinkingEnabled": true,
-  "effortLevel": "medium",
-  "skipDangerousModePermissionPrompt": true
+  "effortLevel": "high",
+  "tui": "fullscreen",
+  "voice": {
+    "enabled": true,
+    "mode": "hold"
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "skipWorkflowUsageWarning": true,
+  "theme": "dark-ansi",
+  "skipAutoPermissionPrompt": true,
+  "autoMode": {
+    "soft_deny": [
+      "$defaults",
+      "Bash(aws:*) mutating/ambiguous subcommands beyond read-only operations in this repo — CLAUDE.md marks all non-read-only aws CLI usage as blocked-by-default; surface for manual review rather than auto-approve",
+      "rm -rf and other recursive forced deletions anywhere under this repo or the home directory — require explicit per-command confirmation per CLAUDE.md"
+    ],
+    "environment": [
+      "### Org-wide",
+      "**Organization**: None configured",
+      "**Cloud provider(s)**: AWS (seen via `aws` CLI usage; no other provider evidence)",
+      "**Repository visibility**: assume private unless the remote host and repo name indicate otherwise, or a visibility check in the transcript shows public — origin is gitlab.com:butlerinc/butler.git; visibility not queryable via gh (non-GitHub host), inferring private pending confirmation",
+      "**Internal sharing / snippet hosting**: None configured — treat public paste/gist services as outside the trust boundary",
+      "**Secrets management**: repo-local secret manager at `secret_manager/` (files under `**/secret_manager/files/*` are gitignored) plus `common/auth_secrets.py`, `common/cloud/aws/secrets_manager.py`, and `scripts/read_secret.py` — treat these paths and any files they reference as credential material, not task data",
+      "**Default / protected branches**: default branch is `master`; protection status not queryable here (origin is not github.com)",
+      "**CI/CD deploy targets**: None configured",
+      "**Network posture**: None configured",
+      "**Host containment**: None configured — assume Claude Code runs on an ordinary developer machine with open internet",
+      "**Source control**: The trusted repo (gitlab.com:butlerinc/butler.git) and its remote(s) only",
+      "**Trusted internal domains**: None configured",
+      "**Trusted cloud buckets**: `butler-app-secrets` (usage-corroborated, 1× in transcript-mined bucket usage); `app-a5b20a57f33eff2e` (config-derived — not a confirmed upload destination; uploads of local data still require confirmation)",
+      "**Key internal services**: None configured",
+      "**Internal package registry**: None configured",
+      "**Sensitive data locations & audiences**: `secret_manager/` (and its gitignored `files/*`), `common/auth_secrets.py`, `common/cloud/aws/secrets_manager.py`, `scripts/read_secret.py`, and files under `analysis/medical_chronologies/` and `analysis/tab_classification/` (medical/document classification data) — share only with audiences cleared at the [named+specifics] bar",
+      "**Data retention / declassification**: None configured",
+      "**Sensitive remote targets**: any namespace, host, or container whose name carries `prod` or `production` as a whole word or name segment",
+      "**Protected deployment namespaces / environments**: None configured — fall back to the Sensitive remote targets heuristic; note k8s namespaces seen in usage (`services`, `workers`, `common`, `devops`, `integrations`) carry no `prod`/`production` marker so are not treated as protected by name alone",
+      "**Protected IaC scopes**: IAM, RBAC, networking, quota, and node-pool resources; anything whose name or tag carries `prod` or `production` as a whole word or name segment",
+      "### User-specific",
+      "**Primary use of Claude Code**: software development",
+      "**Trusted repo**: /Users/daiego/Documents/code-stuff/eve/butler/src/document_extractor (remote gitlab.com:butlerinc/butler.git)",
+      "**Org-specific CLIs**: `rtk` (RPA/robotcorp toolchain per CLAUDE.md, 56× in-project), `pi`, `herdr`",
+      "routine under Daiego/ prefix: none identified beyond the trusted repo scope above"
+    ]
+  },
+  "voiceEnabled": true,
+  "feedbackSurveyState": {
+    "lastShownTime": 1754085509695
+  }
 }
