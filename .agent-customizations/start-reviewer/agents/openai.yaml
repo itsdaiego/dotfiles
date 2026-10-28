@@ -1,0 +1,4 @@
+interface:
+  display_name: "Start Reviewer"
+  short_description: "Run autonomous critical-only MR reviews"
+  default_prompt: "Use $start-reviewer to start or inspect the autonomous MR reviewer."

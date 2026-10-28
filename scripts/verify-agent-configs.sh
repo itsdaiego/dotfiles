@@ -27,6 +27,7 @@ CODEX_HOME=$codex_check_dir codex features list | awk '$1 == "hooks" && $3 == "t
 cp .codex-personal/Codex-Personal.config.toml "$codex_check_dir/config.toml"
 CODEX_HOME=$codex_check_dir codex features list >/dev/null
 python3 -m unittest discover -s .agent-customizations/herdr-auto-name/tests -v
+python3 -m unittest discover -s .agent-customizations/start-reviewer/scripts -p 'test_*.py' -v
 sh scripts/tests/test-install-agent-configs.sh
 
 find .agent-customizations .codex .codex-personal .claude .pi .local/bin -type l -print | while IFS= read -r link; do
