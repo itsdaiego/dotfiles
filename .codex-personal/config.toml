@@ -1,0 +1,5 @@
+# Isolated home for the personal ChatGPT subscription.
+personality = "pragmatic"
+
+[features]
+hooks = true

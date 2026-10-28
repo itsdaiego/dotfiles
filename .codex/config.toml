@@ -1,0 +1,83 @@
+personality = "pragmatic"
+model = "gpt-5.6-sol"
+model_reasoning_effort = "medium"
+
+[tui]
+theme = "gruvbox-dark"
+screen_reader_detection_done = true
+
+[tui.model_availability_nux]
+"gpt-5.5" = 4
+gpt-6-astra = 4
+"gpt-6.1-sol" = 4
+
+[mcp_servers.gitlab]
+url = "https://gitlab.com/api/v4/mcp"
+
+[mcp_servers.linear]
+url = "https://mcp.linear.app/mcp"
+
+[mcp_servers.notion]
+url = "https://mcp.notion.com/mcp"
+
+[mcp_servers.slack]
+url = "https://mcp.slack.com/mcp"
+
+[mcp_servers.slack.oauth]
+client_id = "11843774967.11905492103734"
+
+[mcp_servers.playwright]
+command = "npx"
+args = ["@playwright/mcp@latest"]
+
+[mcp_servers.retell]
+url = "https://mcp.retellai.com/mcp"
+
+[mcp_servers.sentry]
+url = "https://mcp.sentry.dev/mcp"
+
+[mcp_servers.fastmcp-docs]
+url = "https://gofastmcp.com/mcp"
+
+[mcp_servers.github]
+url = "https://api.githubcopilot.com/mcp/"
+bearer_token_env_var = "GITHUB_MCP_PAT"
+
+[mcp_servers.granola]
+url = "https://mcp.granola.ai/mcp"
+
+[mcp_servers.grafana]
+url = "https://mcp.grafana.com/mcp"
+
+[mcp_servers.vercel]
+url = "https://mcp.vercel.com"
+
+[mcp_servers.clerk]
+url = "https://mcp.clerk.com/mcp"
+
+[mcp_servers.google-calendar]
+command = "gws-mcp-server"
+args = ["--services", "calendar"]
+
+[mcp_servers.pylon]
+url = "https://mcp.usepylon.com/"
+
+[mcp_servers.next-devtools]
+command = "npx"
+args = ["-y", "next-devtools-mcp@latest"]
+
+[mcp_servers.atlassian]
+url = "https://mcp.atlassian.com/v1/sse"
+
+[mcp_servers.fireflies]
+url = "https://api.fireflies.ai/mcp"
+
+[mcp_servers.render]
+url = "https://mcp.render.com/mcp"
+bearer_token_env_var = "RENDER_MCP_TOKEN"
+
+[mcp_servers.aida]
+url = "https://app.getaida.com/mcp"
+
+[features]
+hooks = true
