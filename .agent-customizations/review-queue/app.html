@@ -29,6 +29,8 @@ h1 { font-size:24px; margin:0; }
 .list { display:flex; flex-direction:column; gap:8px; }
 .row { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 12px; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; cursor:pointer; }
 .row.sel { background:var(--sel); border-color:var(--info); }
+.row.team-approved { background:var(--ok-bg); border-color:var(--ok); }
+.row.team-changes { background:var(--bad-bg); border-color:var(--bad); }
 .row .t { font-weight:600; }
 .row .sub { font-size:12.5px; color:var(--muted); margin-top:2px; }
 .badges { display:flex; gap:5px; flex-wrap:wrap; margin-top:6px; }
@@ -55,6 +57,9 @@ ul, ol { padding-left:20px; margin:4px 0; } li { margin:2px 0; }
 .toast.show { opacity:1; }
 .banner { background:var(--warn-bg); color:var(--warn); padding:8px 12px; border-radius:8px; font-size:13px; margin-top:12px; }
 details summary { cursor:pointer; font-weight:600; margin-top:12px; }
+.tabs { display:flex; gap:4px; margin-top:16px; border-bottom:1px solid var(--line); }
+.tab { border:none; border-bottom:2px solid transparent; border-radius:0; background:none; padding:7px 14px; color:var(--muted); font-weight:600; }
+.tab.on { color:var(--fg); border-bottom-color:var(--info); }
 @media (max-width:980px) { .layout { grid-template-columns:1fr; } .panel { position:static; max-height:none; } }
 </style></head><body>
 <div class="wrap">
@@ -66,9 +71,10 @@ details summary { cursor:pointer; font-weight:600; margin-top:12px; }
     <div class="actions" id="topActions"></div>
   </div>
   <div id="modeBanner"></div>
+  <div class="tabs" id="tabs"></div>
   <div class="stats" id="stats"></div>
   <div class="filters">
-    <input type="search" id="q" placeholder="Search title, branch, !iid" style="min-width:220px">
+    <input type="search" id="q" placeholder="Search title, MR number or link" style="min-width:220px">
     <label>Sort <select id="sort">
       <option value="urgency">Review urgency</option>
       <option value="oldest">Oldest first</option>
@@ -77,15 +83,7 @@ details summary { cursor:pointer; font-weight:600; margin-top:12px; }
       <option value="iid">MR number</option>
     </select></label>
     <label>Author <select id="author"><option value="">All</option></select></label>
-    <label>State <select id="state">
-      <option value="">All</option>
-      <option value="needs">Needs review (no teammate yet)</option>
-      <option value="approvable">Can approve</option>
-      <option value="blocked">Don't approve yet</option>
-      <option value="unreviewed">Not reviewed by this tool</option>
-      <option value="stale">Review is stale</option>
-      <option value="mine">Approved by you</option>
-    </select></label>
+    <label id="stateFilter">State <select id="state"></select></label>
     <label>CI <select id="ci">
       <option value="">All</option>
       <option value="success">Passed</option>
@@ -94,6 +92,7 @@ details summary { cursor:pointer; font-weight:600; margin-top:12px; }
       <option value="none">No pipeline</option>
     </select></label>
     <label><input type="checkbox" id="hideMine" checked> Hide MRs you approved</label>
+    <label><input type="checkbox" id="hideDrafts"> Hide drafts</label>
   </div>
   <div class="layout">
     <div class="list" id="list"></div>
@@ -119,6 +118,11 @@ const ago = iso => { const d = days(iso); return d < 1 ? Math.max(1, Math.round(
 
 function store(k, v) { try { if (v === undefined) return localStorage.getItem("rq." + k); localStorage.setItem("rq." + k, v); } catch (e) { return null; } }
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2600); }
+
+let tab = store("tab") === "mine" ? "mine" : "review";
+const inTab = x => (tab === "mine") === Boolean(x.live.is_mine);
+const tabRows = () => DATA.mrs.filter(inTab);
+const isTeamOnly = l => l.sources && !l.sources.includes("reviewer") && !l.is_mine;
 
 function byIid() { const m = {}; DATA.mrs.forEach(x => m[x.live.iid] = x); return m; }
 function parentOf(x) { return DATA.mrs.find(y => y.live.source_branch === x.live.target_branch) || null; }
@@ -160,17 +164,52 @@ function bucket(x) {
   return "blocked";
 }
 
+function count(values) { return Object.values(values || {}).reduce((n, value) => n + value, 0); }
+function people(values) { return Object.keys(values || {}).join(", "); }
+function teamReview(l) {
+  const openThreads = l.team_open_threads || {}, comments = l.team_comments || {};
+  const hasOpenThreadData = Object.hasOwn(l, "team_open_threads");
+  if ((l.team_approved || []).length) return { state: "approved", people: l.team_approved.join(", "), count: count(comments) };
+  if (count(openThreads) || (!hasOpenThreadData && count(comments))) return { state: "changes", people: people(count(openThreads) ? openThreads : comments), count: count(openThreads) || count(comments) };
+  if (count(comments)) return { state: "commented", people: people(comments), count: count(comments) };
+  return { state: "none", people: "", count: 0 };
+}
+function commentLabel(n) { return `${n} comment${n === 1 ? "" : "s"}`; }
+
 function teamPill(l) {
+  if (l.is_mine) {
+    const status = teamReview(l);
+    if (status.state === "changes") return `<span class="pill bad">Changes requested by ${esc(status.people)} · ${commentLabel(status.count)}</span>`;
+    if (status.state === "approved") return `<span class="pill ok">Approved by ${esc(status.people)}</span>`;
+    if (status.state === "commented") return `<span class="pill grey">${esc(status.people)} left ${commentLabel(status.count)}</span>`;
+    return '<span class="pill grey">No teammate review</span>';
+  }
   if (l.approved_by_me) return '<span class="pill ok">You approved</span>';
   if (l.needs_review) return '<span class="pill warn">Needs review</span>';
   return `<span class="pill grey">Started by ${esc(l.team_started_by.join(", "))}</span>`;
 }
 
 function verdictPill(x) {
-  if (x.live.approved_by_me) return "";
+  if (x.live.is_mine || x.live.approved_by_me) return "";
   if (!x.review) return '<span class="pill grey">Not reviewed</span>';
   if (x.stale) return '<span class="pill warn">Review stale</span>';
   return x.review.can_approve ? '<span class="pill ok">Can approve</span>' : `<span class="pill bad">Don't approve yet</span>`;
+}
+
+function adversarialPill(r) {
+  if (!r) return "";
+  if (!r.adversarial) return '<span class="pill grey">No adversarial pass</span>';
+  return '<span class="pill ok">Adversarial pass complete</span>';
+}
+
+function walleRisk(r) { return r && r.walle_risk; }
+function walleRiskPill(r) {
+  const risk = walleRisk(r);
+  if (!risk) return "";
+  if (!risk.available) return '<span class="pill grey">Wall-E risk unavailable</span>';
+  const level = risk.report && risk.report.risk;
+  if (!level) return '<span class="pill grey">Wall-E risk unavailable</span>';
+  return `<span class="pill ${level === "high" ? "bad" : level === "medium" ? "warn" : "ok"}">Wall-E risk: ${esc(level)}</span>`;
 }
 
 function jobState(iid) { return JOBS[String(iid)] || null; }
@@ -182,20 +221,38 @@ function reviewButton(x, small) {
   return `<button class="${x.review && !x.stale ? "" : "primary"}" data-review="${x.live.iid}" ${busy ? "disabled" : ""}${small ? ' style="font-size:12.5px;padding:3px 9px"' : ""}>${label}</button>`;
 }
 
-function filtered() {
-  const q = $("q").value.trim().toLowerCase(), a = $("author").value, st = $("state").value, ci = $("ci").value, hide = $("hideMine").checked;
-  let rows = DATA.mrs.filter(x => {
+function matchesQuery(l, q) {
+  const linked = q.match(/merge_requests\/(\d+)|#mr-(\d+)/);
+  if (linked) return String(l.iid) === (linked[1] || linked[2]);
+  return `!${l.iid} ${l.title} ${l.source_branch} ${l.author} ${l.url}`.toLowerCase().includes(q);
+}
+
+function baseRows() {
+  const q = $("q").value.trim().toLowerCase(), a = $("author").value, st = $("state").value, ci = $("ci").value, hide = $("hideMine").checked, noDrafts = $("hideDrafts").checked;
+  return tabRows().filter(x => {
     const l = x.live;
     if (hide && l.approved_by_me && st !== "mine") return false;
+    if (noDrafts && l.draft) return false;
     if (a && l.author !== a) return false;
     if (ci && ciInfo(l.ci).key !== ci) return false;
+    if (q && !matchesQuery(l, q)) return false;
+    return true;
+  });
+}
+
+function filtered() {
+  const st = $("state").value;
+  let rows = baseRows().filter(x => {
+    const l = x.live;
     if (st === "needs" && !l.needs_review) return false;
     if (st === "approvable" && bucket(x) !== "approvable") return false;
     if (st === "blocked" && bucket(x) !== "blocked") return false;
     if (st === "unreviewed" && x.review) return false;
     if (st === "stale" && !x.stale) return false;
     if (st === "mine" && !l.approved_by_me) return false;
-    if (q && !(`!${l.iid} ${l.title} ${l.source_branch} ${l.author}`.toLowerCase().includes(q))) return false;
+    if (st === "team_approved" && teamReview(l).state !== "approved") return false;
+    if (st === "team_changes" && teamReview(l).state !== "changes") return false;
+    if (st === "team_commented" && teamReview(l).state !== "commented") return false;
     return true;
   });
   const sort = $("sort").value;
@@ -209,10 +266,32 @@ function filtered() {
   return rows.sort(cmp);
 }
 
+function stateOptions() {
+  if (tab === "mine") return [["", "All"], ["needs", "No teammate review"], ["team_approved", "Approved"], ["team_changes", "Changes requested"], ["team_commented", "Comments"]];
+  return [["", "All"], ["needs", "Needs review (no teammate yet)"], ["approvable", "Can approve"], ["blocked", "Don't approve yet"], ["unreviewed", "Not reviewed by this tool"], ["stale", "Review is stale"], ["mine", "Approved by you"]];
+}
+function renderStateFilter() {
+  const state = $("state"), current = state.value;
+  state.innerHTML = stateOptions().map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
+  state.value = stateOptions().some(([value]) => value === current) ? current : "";
+}
+function renderTabs() {
+  const mine = DATA.mrs.filter(x => x.live.is_mine).length;
+  $("tabs").innerHTML = `<button class="tab ${tab === "review" ? "on" : ""}" data-tab="review">To review (${DATA.mrs.length - mine})</button>
+    <button class="tab ${tab === "mine" ? "on" : ""}" data-tab="mine">My MRs (${mine})</button>`;
+  $("hideMine").closest("label").hidden = tab === "mine";
+  renderStateFilter();
+}
+
 function renderStats() {
-  const open = DATA.mrs.filter(x => !x.live.approved_by_me);
-  const cards = [
-    ["needs", "var(--warn)", DATA.mrs.filter(x => x.live.needs_review).length, "need review (no teammate yet)"],
+  const rows = baseRows(), open = rows.filter(x => !x.live.approved_by_me);
+  const cards = tab === "mine" ? [
+    ["needs", "var(--muted)", rows.filter(x => teamReview(x.live).state === "none").length, "no teammate review"],
+    ["team_approved", "var(--ok)", rows.filter(x => teamReview(x.live).state === "approved").length, "approved"],
+    ["team_changes", "var(--bad)", rows.filter(x => teamReview(x.live).state === "changes").length, "changes requested"],
+    ["team_commented", "var(--fg)", rows.filter(x => teamReview(x.live).state === "commented").length, "comments"],
+  ] : [
+    ["needs", "var(--warn)", rows.filter(x => x.live.needs_review).length, "need review (no teammate yet)"],
     ["approvable", "var(--ok)", open.filter(x => bucket(x) === "approvable").length, "can approve"],
     ["blocked", "var(--bad)", open.filter(x => bucket(x) === "blocked").length, "don't approve yet"],
     ["unreviewed", "var(--info)", open.filter(x => !x.review).length, "not reviewed by this tool"],
@@ -227,20 +306,21 @@ function renderList() {
   $("list").innerHTML = rows.map(x => {
     const l = x.live, u = urgency(x), ci = ciInfo(l.ci), p = parentOf(x);
     const nc = x.review && x.review.new_critical ? x.review.new_critical.length : 0;
-    return `<div class="row ${selected === l.iid ? "sel" : ""}" data-iid="${l.iid}">
+    const teamStatus = teamReview(l);
+    return `<div class="row ${selected === l.iid ? "sel" : ""} ${l.is_mine ? `team-${teamStatus.state}` : ""}" data-iid="${l.iid}">
       <div>
         <div class="t"><a href="${esc(l.url)}" target="_blank" onclick="event.stopPropagation()">!${l.iid}</a> ${esc(l.title)}</div>
         <div class="sub">${esc(l.author)} · opened ${ago(l.created_at)} ago · updated ${ago(l.updated_at)} ago${p ? ` · stacked on !${p.live.iid}` : ""}</div>
         <div class="badges">${teamPill(l)}
+          ${isTeamOnly(l) ? '<span class="pill info">Team MR, not assigned to you</span>' : ""}
           ${ci.key !== "none" && l.ci.url ? `<a href="${esc(l.ci.url)}" target="_blank" onclick="event.stopPropagation()"><span class="pill ${ci.cls}">${esc(ci.label)}</span></a>` : `<span class="pill ${ci.cls}">${esc(ci.label)}</span>`}
           ${l.draft ? '<span class="pill grey">Draft</span>' : ""}
           ${l.has_conflicts ? '<span class="pill bad">Conflicts</span>' : ""}
-          ${nc ? `<span class="pill bad">${nc} new critical</span>` : ""}
-          ${verdictPill(x)}
+          ${nc ? `<span class="pill bad">${nc} new critical</span>` : ""}${l.is_mine ? "" : verdictPill(x)}${walleRiskPill(x.review)}${adversarialPill(x.review)}
         </div>
       </div>
       <div class="side">
-        <div class="urg" title="${esc(u.parts.join("\n"))}">urgency <b>${u.score > -100 ? u.score : "–"}</b></div>
+        ${l.is_mine ? "" : `<div class="urg" title="${esc(u.parts.join("\n"))}">urgency <b>${u.score > -100 ? u.score : "–"}</b></div>`}
         ${reviewButton(x, true)}
       </div>
     </div>`;
@@ -262,16 +342,21 @@ function renderPanel() {
     html += `<div class="box ${cls} small">${esc(txt)} ${SERVER ? `<a href="#" data-log="${l.iid}">Show log</a>` : ""}</div><pre class="full" id="log" hidden></pre>`;
   }
   if (x.stale) html += `<div class="banner">The head moved to <code>${esc(l.sha.slice(0, 10))}</code> after this review (reviewed <code>${esc(r.head_sha.slice(0, 10))}</code>). Re-review before you approve.</div>`;
-  if (r) html += `<div class="box ${r.can_approve && !x.stale ? "ok" : "bad"}"><strong>${l.approved_by_me ? "You approved this." : r.can_approve ? "Can approve." : "Don't approve yet."}</strong> ${md(r.verdict_reason)}</div>`;
-  else html += `<div class="box info">No review yet. Start one to get the read-mr summary and the review-mr findings.</div>`;
+  if (r) html += `<div class="box ${r.can_approve && !x.stale ? "ok" : "bad"}"><strong>${l.is_mine ? (r.can_approve && !x.stale ? "Automated review found no blockers." : "Automated review found issues.") : l.approved_by_me ? "You approved this." : r.can_approve ? "Can approve." : "Don't approve yet."}</strong> ${md(r.verdict_reason)}</div>`;
+  else html += `<div class="box info">${l.is_mine ? "No automated review results yet." : "No review yet. Start one to get the read-mr summary and the review-mr findings."}</div>`;
+  const teamStatus = teamReview(l);
+  const teamReviewDetail = l.is_mine ? teamStatus.state === "changes" ? `changes requested by ${esc(teamStatus.people)} (${commentLabel(teamStatus.count)})` : teamStatus.state === "approved" ? `approved by ${esc(teamStatus.people)}` : teamStatus.state === "commented" ? `${esc(teamStatus.people)} left ${commentLabel(teamStatus.count)}` : "no teammate review" : l.approved_by_me ? "you approved" : l.needs_review ? "nobody on the team (" + esc(DATA.team.join(", ")) + ") started" : "started by " + esc(l.team_started_by.map(n => n + (l.team_comments[n] ? ` (${l.team_comments[n]} notes)` : "") + (l.team_approved.includes(n) ? " (approved)" : "")).join(", "));
+  const risk = walleRisk(r), riskReport = risk && risk.report;
+  const riskDetail = !risk ? "not assessed" : !risk.available ? `unavailable: ${esc(risk.reason || "Wall-E could not classify this MR.")}` : riskReport && riskReport.risk ? `${esc(riskReport.risk)} (policy ${esc(riskReport.policy_ref || "unknown")})` : "unavailable: Wall-E returned no risk level.";
   html += `<dl class="facts">
-    <dt>Team review</dt><dd>${l.approved_by_me ? "you approved" : l.needs_review ? "nobody on the team (" + esc(DATA.team.join(", ")) + ") started" : "started by " + esc(l.team_started_by.map(n => n + (l.team_comments[n] ? ` (${l.team_comments[n]} notes)` : "") + (l.team_approved.includes(n) ? " (approved)" : "")).join(", "))}</dd>
+    <dt>Team review</dt><dd>${teamReviewDetail}</dd>
+    <dt>Wall-E risk</dt><dd>${riskDetail} <span class="muted small">Private metadata. It does not change the approval verdict.</span></dd>
     <dt>CI</dt><dd>${l.ci.url ? `<a href="${esc(l.ci.url)}" target="_blank"><span class="pill ${ci.cls}">${esc(ci.label)}</span></a>` : `<span class="pill ${ci.cls}">${esc(ci.label)}</span>`}${l.ci.failed_jobs.length ? `<div class="small">Failed jobs: ${l.ci.failed_jobs.map(esc).join(", ")}</div>` : ""}</dd>
     <dt>Merge</dt><dd>${esc(l.merge_status)}${l.has_conflicts ? ' <span class="pill bad">Conflicts</span>' : ""}${l.draft ? ' <span class="pill grey">Draft</span>' : ""}</dd>
     <dt>Approvals</dt><dd>${l.approved_by.length ? esc(l.approved_by.join(", ")) : "none"}${l.approvals_left ? ` · ${l.approvals_left} left` : ""}</dd>
     ${p || kids.length ? `<dt>Stack</dt><dd>${p ? `stacked on !${p.live.iid}` : ""}${p && kids.length ? " · " : ""}${kids.map(k => `!${k.live.iid}`).join(", ")}${kids.length ? " sits on top" : ""}</dd>` : ""}
-    <dt>Urgency</dt><dd title="${esc(u.parts.join("\n"))}">${u.score > -100 ? u.score : "–"} <span class="muted small">(${esc(u.parts.join(", "))})</span></dd>
-    ${r ? `<dt>Ready</dt><dd>${r.ready ? "yes" : "no"}. ${md(r.ready_reason)}</dd>` : ""}
+    ${l.is_mine ? "" : `<dt>Urgency</dt><dd title="${esc(u.parts.join("\n"))}">${u.score > -100 ? u.score : "–"} <span class="muted small">(${esc(u.parts.join(", "))})</span></dd>`}
+    ${r && !l.is_mine ? `<dt>Ready</dt><dd>${r.ready ? "yes" : "no"}. ${md(r.ready_reason)}</dd>` : ""}
   </dl>`.replace(/!(\d{4,6})(?![^<]*<\/a>)/g, (m, n) => `<a href="${MR_BASE}${n}" target="_blank">!${n}</a>`);
   if (r) {
     html += "<h4>Summary (read-mr)</h4>";
@@ -285,15 +370,23 @@ function renderPanel() {
         <div class="small"><code>${esc(c.file)}${c.line ? ":" + c.line : ""}</code></div><p>${md(c.detail)}</p>
         <div class="small muted">Suggested comment <button data-copy="${i}" style="font-size:11.5px;padding:1px 7px">Copy</button></div>
         <pre class="comment" id="cm${i}">${esc(c.suggested_comment)}</pre></div>`).join("") : '<p class="muted small">None.</p>';
+    html += "<h4>Adversarial review</h4>";
+    html += r.adversarial ? '<p class="muted small">Two independent adversarial passes completed. Any verified new critical finding appears above.</p>'
+      : '<p class="muted small">This review ran before the adversarial step existed. Re-review to add it.</p>';
     if ((r.already_flagged_critical || []).length) html += "<h4>Already flagged critical</h4><ul>" + r.already_flagged_critical.map(a => `<li><a href="${esc(a.link)}" target="_blank">${md(a.title)}</a> <span class="muted small">(${esc(a.author)}, ${esc(a.state)})</span></li>`).join("") + "</ul>";
-    if ((r.open_threads_needing_fix || []).length) html += `<details><summary>Open threads (${r.open_threads_needing_fix.length})</summary><ul>` + r.open_threads_needing_fix.map(t => `<li><a href="${esc(t.link)}" target="_blank">${esc(t.author)}</a>: ${md(t.problem)} <span class="pill warn">${esc(t.status)}</span></li>`).join("") + "</ul></details>";
+    if (r.thread_triage) {
+      const criticalThreads = r.thread_triage.filter(t => t.verdict === "fix" && t.critical);
+      if (criticalThreads.length) {
+        html += "<h4>Open critical comment threads</h4><ul>" + criticalThreads.map(t => `<li><a href="${esc(t.link)}" target="_blank">${esc(t.author)}</a>${t.file ? ` <code>${esc(t.file)}${t.line ? ":" + t.line : ""}</code>` : ""}: ${md(t.problem)}<div class="small muted">${md(t.reason)}</div></li>`).join("") + "</ul>";
+      }
+    }
     if (x.review_file) html += SERVER ? `<details id="fullReview"><summary>Full review-mr file</summary><pre class="full">Loading…</pre></details>` : `<p class="muted small">Full review: <code>${esc(x.review_file)}</code></p>`;
   }
   $("panel").innerHTML = html;
 }
 
 function renderTop() {
-  $("sub").textContent = `${DATA.mrs.length} open MRs with ${DATA.me || "you"} as reviewer · butlerinc/butler` + (DATA.fetched_at ? ` · fetched ${ago(DATA.fetched_at)} ago` : "");
+  $("sub").textContent = `${DATA.mrs.length} open MRs: assigned to ${DATA.me || "you"}, by ${DATA.me || "you"}, or by the team (${DATA.team.join(", ")}) · butlerinc/butler` + (DATA.fetched_at ? ` · fetched ${ago(DATA.fetched_at)} ago` : "");
   if (SERVER) {
     const rj = JOBS.refresh, busy = rj && rj.state === "running";
     $("topActions").innerHTML = `<label class="small muted">Runner <select id="runner"><option value="claude">Claude Code</option><option value="pi">Pi</option></select></label>
@@ -307,7 +400,7 @@ function renderTop() {
   }
 }
 
-function renderAll() { renderTop(); renderStats(); renderList(); renderPanel(); }
+function renderAll() { renderTop(); renderTabs(); renderStats(); renderList(); renderPanel(); }
 
 async function startReview(iid) {
   if (!SERVER) {
@@ -349,9 +442,14 @@ async function poll() {
 }
 
 document.addEventListener("click", async e => {
-  const t = e.target.closest("[data-review],[data-iid],[data-stat],[data-copy],[data-log],#refresh");
+  const t = e.target.closest("[data-review],[data-iid],[data-stat],[data-copy],[data-log],[data-tab],#refresh");
   if (!t) return;
   if (t.id === "refresh") return refresh();
+  if (t.dataset.tab) {
+    tab = t.dataset.tab; store("tab", tab); renderStateFilter(); fillAuthors();
+    if (!tabRows().some(x => x.live.iid === selected)) { const f = filtered()[0]; selected = f ? f.live.iid : null; }
+    return renderAll();
+  }
   if (t.dataset.review) { e.stopPropagation(); return startReview(Number(t.dataset.review)); }
   if (t.dataset.copy !== undefined) { navigator.clipboard.writeText($("cm" + t.dataset.copy).innerText).then(() => { t.textContent = "Copied"; setTimeout(() => t.textContent = "Copy", 1200); }); return; }
   if (t.dataset.log) { e.preventDefault(); const pre = $("log"); pre.hidden = !pre.hidden; if (!pre.hidden) pre.textContent = await (await fetch("/api/log/" + t.dataset.log)).text(); return; }
@@ -367,13 +465,18 @@ async function loadFullReview() {
 }
 
 const FILTERS = ["q", "sort", "author", "state", "ci"];
-function saveFilters() { FILTERS.forEach(k => store("f." + k, $(k).value)); store("f.hideMine", $("hideMine").checked ? "1" : "0"); }
-function initFilters() {
-  const authors = [...new Set(DATA.mrs.map(x => x.live.author))].sort();
+function saveFilters() { FILTERS.forEach(k => store("f." + k, $(k).value)); store("f.hideMine", $("hideMine").checked ? "1" : "0"); store("f.hideDrafts", $("hideDrafts").checked ? "1" : "0"); }
+function fillAuthors() {
+  const authors = [...new Set(tabRows().map(x => x.live.author))].sort(), cur = $("author").value;
   $("author").innerHTML = '<option value="">All</option>' + authors.map(a => `<option>${esc(a)}</option>`).join("");
+  $("author").value = authors.includes(cur) ? cur : "";
+}
+function initFilters() {
+  fillAuthors();
   FILTERS.forEach(k => { const v = store("f." + k); if (v !== null && v !== undefined) $(k).value = v; });
   const h = store("f.hideMine"); if (h !== null && h !== undefined) $("hideMine").checked = h === "1";
-  FILTERS.concat(["hideMine"]).forEach(k => $(k).addEventListener(k === "q" ? "input" : "change", () => { saveFilters(); renderStats(); renderList(); }));
+  const d = store("f.hideDrafts"); if (d !== null && d !== undefined) $("hideDrafts").checked = d === "1";
+  FILTERS.concat(["hideMine", "hideDrafts"]).forEach(k => $(k).addEventListener(k === "q" ? "input" : "change", () => { saveFilters(); renderStats(); renderList(); }));
   const s = Number(store("selected"));
   const first = filtered()[0];
   selected = DATA.mrs.some(x => x.live.iid === s) ? s : first ? first.live.iid : null;

@@ -20,6 +20,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from queue_lib import (  # noqa: E402
+    ADVERSARIAL_DIR,
     BUTLER_REPO,
     LOGS_DIR,
     PAGE_FILE,
@@ -32,14 +33,18 @@ from queue_lib import (  # noqa: E402
 
 READ_MR_SKILL = os.path.expanduser("~/.claude/skills/read-mr/SKILL.md")
 REVIEW_MR_SKILL = os.path.expanduser("~/.claude/skills/review-mr/SKILL.md")
-TIMEOUT_S = 40 * 60
+WALLE_RISK_SKILL = os.path.expanduser("~/.pi/pi-work/skills/walle-review-risk")
+WALLE_RISK_REPORT = os.path.join(WALLE_RISK_SKILL, "scripts", "report.py")
+# The two adversarial reviewers run after review-mr, so a run takes longer than a single pass.
+TIMEOUT_S = 75 * 60
 
 CLAUDE_TOOLS = [
-    "Skill", "Read", "Grep", "Glob", "Write",
+    "Skill", "Agent", "Task", "Read", "Grep", "Glob", "Write",
     "Bash(glab mr view:*)", "Bash(glab mr diff:*)", "Bash(glab api:*)",
     "Bash(git fetch:*)", "Bash(git show:*)", "Bash(git log:*)", "Bash(git diff:*)",
     "Bash(git rev-parse:*)", "Bash(git grep:*)", "Bash(git ls-tree:*)",
-    "Bash(python3 -c:*)", "Bash(rg:*)", "Bash(grep:*)", "Bash(ls:*)", "Bash(cat:*)",
+    "Bash(python3 -c:*)", "Bash(PYTHONPATH=src/document_extractor python3:*)",
+    "Bash(rg:*)", "Bash(grep:*)", "Bash(ls:*)", "Bash(cat:*)",
 ]
 
 CLAUDE_DENIED = [
@@ -69,13 +74,16 @@ def build_prompt(iid, me, result_path):
     return tpl.format(
         iid=iid, me=me, result_path=result_path, stack_note=stack_note(iid),
         read_mr_skill=READ_MR_SKILL, review_mr_skill=REVIEW_MR_SKILL,
+        walle_risk_skill=os.path.join(WALLE_RISK_SKILL, "SKILL.md"),
+        repo=BUTLER_REPO, adversarial_dir=ADVERSARIAL_DIR,
     )
 
 
 def command(runner, prompt):
     if runner == "pi":
         return ["pi", "-p", "--no-session", "--skill", os.path.dirname(READ_MR_SKILL),
-                "--skill", os.path.dirname(REVIEW_MR_SKILL), prompt]
+                "--skill", os.path.dirname(REVIEW_MR_SKILL),
+                "--skill", WALLE_RISK_SKILL, prompt]
     return ["claude", "-p", "--allowedTools", ",".join(CLAUDE_TOOLS),
             "--disallowedTools", ",".join(CLAUDE_DENIED),
             "--add-dir", os.path.expanduser("~/Code/.claude/code-reviews"), "--", prompt]
@@ -94,9 +102,49 @@ def runner_env(runner):
     return env
 
 
+def attach_walle_risk(iid, result_path):
+    """Add the deterministic, private Wall-E risk result to a review result."""
+    result = json.load(open(result_path))
+    review = result[0] if isinstance(result, list) and len(result) == 1 else result
+    if not isinstance(review, dict):
+        raise RuntimeError("review result must hold one object")
+
+    source = review.get("source_branch")
+    target = review.get("target_branch")
+    if not source or not target:
+        review["walle_risk"] = {"available": False, "reason": "Review result has no source or target branch."}
+    elif not os.path.isfile(WALLE_RISK_REPORT):
+        review["walle_risk"] = {"available": False, "reason": "The walle-review-risk skill is unavailable."}
+    else:
+        source_ref = f"refs/walle-review-risk/queue-{iid}-source"
+        target_ref = f"refs/walle-review-risk/queue-{iid}-target"
+        fetch = subprocess.run(
+            ["git", "fetch", "origin", f"refs/heads/{source}:{source_ref}", f"refs/heads/{target}:{target_ref}"],
+            cwd=BUTLER_REPO, capture_output=True, text=True,
+        )
+        if fetch.returncode:
+            review["walle_risk"] = {"available": False, "reason": fetch.stderr.strip() or "Could not fetch the MR refs."}
+        else:
+            env = {**os.environ, "PYTHONPATH": "src/document_extractor"}
+            command = [sys.executable, WALLE_RISK_REPORT, "--target", target_ref, "--head", source_ref, "--json"]
+            report = subprocess.run(command, cwd=BUTLER_REPO, env=env, capture_output=True, text=True)
+            if report.returncode:
+                review["walle_risk"] = {"available": False, "reason": report.stderr.strip() or "Wall-E could not classify this MR."}
+            else:
+                try:
+                    review["walle_risk"] = {"available": True, "report": json.loads(report.stdout)}
+                except json.JSONDecodeError:
+                    review["walle_risk"] = {"available": False, "reason": "Wall-E returned invalid risk data."}
+
+    with open(result_path, "w") as output:
+        json.dump(result, output, indent=2)
+        output.write("\n")
+
+
 def run(iid, runner):
     os.makedirs(RESULTS_DIR, exist_ok=True)
     os.makedirs(LOGS_DIR, exist_ok=True)
+    os.makedirs(ADVERSARIAL_DIR, exist_ok=True)
     result_path = os.path.join(RESULTS_DIR, f"{iid}.json")
     log_path = os.path.join(LOGS_DIR, f"{iid}.log")
     me = json.load(open(QUEUE_FILE)).get("me", "") if os.path.exists(QUEUE_FILE) else ""
@@ -109,6 +157,7 @@ def run(iid, runner):
     if not os.path.exists(result_path) or os.path.getmtime(result_path) == before:
         raise RuntimeError(f"no new result file (exit {proc.returncode}); see {log_path}")
     json.load(open(result_path))
+    attach_walle_risk(iid, result_path)
     return result_path
 
 

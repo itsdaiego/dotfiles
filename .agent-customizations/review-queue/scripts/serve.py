@@ -4,8 +4,11 @@ Usage: python3 -I serve.py [--port 8787] [--runner claude|pi] [--parallel 3] [--
                             [--no-auto-review] [--review-drafts]
 
 Every --interval-minutes (0 turns it off), the server refreshes the queue and starts a review for
-each MR that has no result or a stale one. It skips MRs Daiego approved, drafts unless
---review-drafts, and an MR whose last automatic review failed on the same head.
+each MR that has no result or a stale one, when it is one of these:
+- Daiego's own MR.
+- An MR with Daiego as reviewer that Daiego has not approved.
+- A teammate's MR that nobody (no teammate, not Daiego) started reviewing.
+It skips drafts unless --review-drafts, and an MR whose last automatic review failed on the same head.
 
 Binds to 127.0.0.1 only. Every POST needs the per-run token that the served page carries,
 so another site open in the browser cannot start reviews.
@@ -62,9 +65,19 @@ def submit_review(pool, iid, runner, sha=None):
     return True
 
 
+def wants_auto_review(live):
+    """Daiego's own MRs always, assigned MRs until Daiego approves, team MRs only while nobody started."""
+    sources = live.get("sources", ["reviewer"])
+    if "mine" in sources:
+        return True
+    if live["approved_by_me"]:
+        return False
+    return "reviewer" in sources or live.get("nobody_started", False)
+
+
 def needs_auto_review(mr, review_drafts):
     live = mr["live"]
-    if live["approved_by_me"] or (live["draft"] and not review_drafts):
+    if not wants_auto_review(live) or (live["draft"] and not review_drafts):
         return False
     if mr["review"] and not mr["stale"]:
         return False
