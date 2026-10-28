@@ -37,11 +37,18 @@ glab api projects/:id/merge_requests/<MR_NUMBER> | python3 -c "import sys,json; 
 
 Extract: title, description, source branch, target branch, author, changed files list, and **diff_refs** (base_sha, head_sha, start_sha).
 
+### 1a. Classify the private Wall-E risk
+
+For every MR, invoke the `walle-review-risk` skill after you fetch its metadata and refs. Follow its MR workflow so it classifies the exact source head against the policy from the target branch.
+
+This result is private review metadata for Daiego. Do not add it to the MR description, post it to GitLab, or let it change the approval verdict. Record the low, medium, high, or unavailable result, matched rules and paths, content signals, policy ref, and any classifier uncertainty in the local review file. If the skill cannot classify the MR, report it as unavailable. Do not guess or substitute an LLM judgment.
+
 ### 2. Understand the change
 
 - Read the MR description and any linked issues for context.
 - Identify the category: feature, bugfix, refactor, migration, config change, etc.
 - If the intent is unclear from the description and diff, **ask clarifying questions** before proceeding with the review.
+- **Check the description against the final diff.** Flag it as a Critical Issue (must fix before merge) when it describes an abandoned plan, lists commits, routes, DTOs, files or behavior the diff does not contain, or omits a significant change the diff does contain. Also compare it to the commit messages, which usually reflect the latest approach. The description often doubles as the rollout doc, so a stale one misleads reviewers and deployers. Name the specific stale claims and state what the code actually does.
 
 ### 3. Review the diff — file by file
 
@@ -94,6 +101,10 @@ Use this structure:
 ## Summary
 
 <1-2 sentence summary of what the MR does and your overall assessment>
+
+## Wall-E risk (private)
+
+<Low / medium / high / unavailable, with the policy ref, matched rules and paths, content signals, and uncertainty. This does not affect the verdict.>
 
 ## Verdict
 
@@ -227,3 +238,4 @@ When the MR touches multiple independent areas (e.g. backend + frontend, or mult
 - Unscoped DB sessions (should use RLS)
 - Secrets or credentials in code
 - Missing codegen after DTO changes
+- Stale MR description that no longer matches the final diff
