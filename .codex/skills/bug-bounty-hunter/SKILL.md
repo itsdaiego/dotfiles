@@ -1,0 +1,1 @@
+../../../.claude/commands/bug-bounty-hunter.md

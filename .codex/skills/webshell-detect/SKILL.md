@@ -1,0 +1,1 @@
+../../../.claude/commands/webshell-detect.md
