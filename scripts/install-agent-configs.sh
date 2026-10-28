@@ -17,6 +17,10 @@ link_target() {
     return
   fi
 
+  if [ -e "$target_path" ] && [ "$source_path" -ef "$target_path" ]; then
+    return
+  fi
+
   if [ -e "$target_path" ] || [ -L "$target_path" ]; then
     backup_path=$backup_root/$relative_path
     mkdir -p -- "$(dirname -- "$backup_path")"
