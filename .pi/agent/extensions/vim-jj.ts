@@ -1,4 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { matchesKey } from "@earendil-works/pi-tui";
 
 type VimMode = "insert" | "normal" | "visual" | "visual-line";
 
@@ -54,6 +55,20 @@ export default function (pi: ExtensionAPI) {
         };
 
         editor.handleInput = (data: string) => {
+          if (matchesKey(data, "ctrl+c")) {
+            if (pendingJTimer) {
+              clearTimeout(pendingJTimer);
+              pendingJTimer = undefined;
+            }
+            const wasInNormalMode = editor.getMode() === "normal";
+            originalHandleInput(data);
+            // Pi clears the prompt but preserves modal state, which otherwise leaves it unable to accept text.
+            if (wasInNormalMode && editor.getMode() === "normal") {
+              originalHandleInput("i");
+            }
+            return;
+          }
+
           if (pendingJTimer) {
             if (data === "j" && editor.getMode() === "insert") {
               clearTimeout(pendingJTimer);
