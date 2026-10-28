@@ -46,6 +46,7 @@ done
 
 link_target "$HOME/.pi/pi-personal/AGENTS.md" "$HOME/.codex-personal/AGENTS.md"
 link_target "$HOME/.codex/skills" "$HOME/.codex-personal/skills"
+link_target "$HOME/.codex/rules/default.rules" "$HOME/.codex-personal/rules/default.rules"
 
 if [ -d "$backup_root" ]; then
   printf 'Existing files were backed up under %s\n' "$backup_root"
