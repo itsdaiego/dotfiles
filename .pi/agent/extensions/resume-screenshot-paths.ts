@@ -44,7 +44,6 @@ class CleanResumePicker {
   private filtered: SessionInfo[] = [];
   private selected = 0;
   private readonly search = new Input();
-  private showOriginalPaths = false;
   private scope: Scope = "current";
   private allSessions?: SessionInfo[];
   private loadingAll = false;
@@ -72,7 +71,6 @@ class CleanResumePicker {
 
   private displayText(session: SessionInfo): string {
     const raw = (session.name ?? session.firstMessage).replace(/[\x00-\x1f\x7f]/g, " ").trim();
-    if (this.showOriginalPaths) return raw;
     return summarizeReferences(raw) || "(image-only prompt)";
   }
 
@@ -137,13 +135,6 @@ class CleanResumePicker {
       void this.toggleScope();
       return;
     }
-    // R deliberately takes precedence over search input: it restores the full original row.
-    if (data === "r" || data === "R") {
-      this.showOriginalPaths = !this.showOriginalPaths;
-      this.invalidate();
-      this.requestRender();
-      return;
-    }
     if (matchesKey(data, Key.up)) {
       this.selected = Math.max(0, this.selected - 1);
     } else if (matchesKey(data, Key.down)) {
@@ -168,10 +159,9 @@ class CleanResumePicker {
 
     this.search.focused = this.focused;
     const scope = this.scope === "current" ? "Current folder" : "All folders";
-    const pathMode = this.showOriginalPaths ? "full references" : "compact references";
     const lines = [
       this.theme.bold("Resume Session"),
-      this.theme.fg("muted", `Tab ${scope.toLowerCase()} · R ${pathMode} · ↑↓ select · Enter resume · Esc cancel`),
+      this.theme.fg("muted", `Tab ${scope.toLowerCase()} · ↑↓ select · Enter resume · Esc cancel`),
       "",
       ...this.search.render(width),
       "",
@@ -247,7 +237,7 @@ export default function resumeScreenshotPaths(pi: ExtensionAPI): void {
   );
 
   pi.registerCommand("resume-clean", {
-    description: "Resume with [Image N] and [Skill name] references; press R to reveal originals",
+    description: "Resume with compact [Image N] and [Skill name] references",
     handler: async (_args, ctx) => showCleanResume(ctx),
   });
 
