@@ -4,11 +4,22 @@
 
 - At the start of every session, load the `humanizer` skill. Before every user-visible response, apply it in embedded mode to all natural-language prose, while preserving code, commands, paths, identifiers, data, and other exact technical content. Follow this rule even when the skill's automatic routing description does not match. Do not mention this step unless the user asks.
 
+## Test-driven development
+
+- For every behavior change or bug fix, use red → green → refactor: write or update a focused automated test first, run it and confirm it fails for the expected reason, implement the smallest production change that makes it pass, then refactor only while the test suite remains green.
+- Do not write production code for a behavior change before its failing test exists. When a test is not practical, explain why and use the strongest relevant verification instead.
+- Documentation, configuration-only, and non-behavioral changes do not require a test; run any applicable validation instead.
+
 ## Pi profile parity
 
 - `pi-personal` and `pi-work` use separate config roots: `~/.pi/pi-personal` and `~/.pi/pi-work`.
 - When adding or changing a Pi extension, prompt, skill, theme, setting, or other shared Pi customization, make it available in both profiles. Prefer a shared source (such as a symlink) so future edits stay in sync.
 - Verify both profile paths after making a shared Pi customization.
+
+## Shared harness maintenance
+
+- When updating the shared Pi, Claude Code, or Codex setup, work in `~/Documents/code-stuff/dotfiles` and follow `docs/agent-config-maintenance.md`.
+- Keep authentication, OAuth state, sessions, caches, databases, downloaded plugins, generated system skills, and per-machine trust state out of Git.
 
 ## Communication style
 
