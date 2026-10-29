@@ -4,6 +4,16 @@
 
 - At the start of every session, load the `humanizer` skill. Before every user-visible response, apply it in embedded mode to all natural-language prose, while preserving code, commands, paths, identifiers, data, and other exact technical content. Follow this rule even when the skill's automatic routing description does not match. Do not mention this step unless the user asks.
 
+## Automatic skill routing
+
+- Treat every installed skill's `Use when` or trigger wording as an automatic routing rule. Load and use the matching skill before starting the task, without requiring a slash command or an exact skill name from the user.
+- When more than one skill applies, use the smallest useful set in order, beginning with the most specific skill. Do not use a skill when its documented exclusions apply.
+- Use `read-issue` for a concise explanation of a work discussion, ticket, incident, or support thread. Use `read-mr` when the user wants to understand an MR, PR, branch, or related change.
+- Use `review-mr` to review an MR or PR. Use `write-mr-comment` to draft or improve a review comment, and `write-mr` to draft, rewrite, or review an MR or PR description.
+- Use `create-mr` to prepare and publish an MR, `review-queue` for the user's MR-review queue, and `start-reviewer` to operate the autonomous reviewer.
+- Use `oncall-intake` for intake on-call pings or the intake dashboard. Use `walle-review-risk` when the user asks how critical or risky a Butler MR, branch, or working tree is.
+- Use `butler-sentry-session-metrics` for Eve session-length or engagement metrics, `to-do` for unresolved requests and pending reviews, and `local-branch-cleanup` to clean up local branches or worktrees.
+
 ## Test-driven development
 
 - For every behavior change or bug fix, use red → green → refactor: write or update a focused automated test first, run it and confirm it fails for the expected reason, implement the smallest production change that makes it pass, then refactor only while the test suite remains green.
