@@ -12,6 +12,16 @@
 - Use `oncall-intake` for intake on-call pings or the intake dashboard. Use `walle-review-risk` when the user asks how critical or risky a Butler MR, branch, or working tree is.
 - Use `butler-sentry-session-metrics` for Eve session-length or engagement metrics, `to-do` for unresolved requests and pending reviews, and `local-branch-cleanup` to clean up local branches or worktrees.
 
+# Atomic commits
+- Make and stage one logical change at a time. Do not mix a feature or bug fix with cleanup, refactors, formatting, dependency updates, generated output for unrelated work, or another task.
+- Before staging, inspect the working diff. Stage only the files or hunks that implement the current logical change.
+- Each commit must stand alone: its message states the outcome, its diff contains everything required for that outcome, and it leaves the repository in a valid, testable state.
+- Run the relevant checks before each commit. Do not include unrelated pre-existing changes just because they are present.
+- Prefer small, reviewable commits. Split independent behavior changes into separate commits. Keep required generated files with the source change that generated them.
+- Before every git commit, inspect the staged diff and explain its one outcome and verification. In Pi, call `assess_atomic_commit` immediately before the commit.
+- A staged change over 25 files or 1,200 changed lines needs explicit user approval before the agent commits it. Explain why it cannot be split first.
+- Follow the repository's commit and authorization rules. Never create a commit unless the user has authorized it.
+
 # graphify
 - **graphify** (`~/.claude/skills/graphify/SKILL.md`) - any input to knowledge graph. Trigger: `/graphify`
 When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` before doing anything else.

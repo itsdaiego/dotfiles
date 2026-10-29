@@ -14,6 +14,9 @@ for instruction_file in .codex/AGENTS.md .pi/agent/AGENTS.md .claude/CLAUDE.md; 
   grep -F '`oncall-intake`' "$instruction_file" >/dev/null
   grep -F '`review-queue`' "$instruction_file" >/dev/null
   grep -F '`walle-review-risk`' "$instruction_file" >/dev/null
+  grep -F 'Atomic commits' "$instruction_file" >/dev/null
+  grep -F 'Make and stage one logical change at a time.' "$instruction_file" >/dev/null
+  grep -F 'Before every git commit, inspect the staged diff' "$instruction_file" >/dev/null
 done
 
 test -f .claude/skills/walle-review-risk/SKILL.md
