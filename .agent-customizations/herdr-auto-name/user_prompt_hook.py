@@ -10,11 +10,11 @@ RENAME_CONTEXT = (
     "The current root agent is running inside Herdr and has no task name. "
     "Before substantive work, infer a concise task description from the user's prompt. "
     "Convert it to a lowercase ASCII kebab-case slug with two to five useful words and "
-    "at most 32 characters. Run `herdr agent rename \"$HERDR_PANE_ID\" \"<slug>\"` "
-    "once. Herdr's bold top line combines the workspace/project name with the harness "
-    "tab label (for example, `chessan · codex`). The inferred task name belongs on the "
-    "lower description line. Do not rename an agent that already has a task name, and "
-    "do not rename subagents."
+    "at most 32 characters. Run `herdr agent rename \"{pane_id}\" \"<slug>\"` once. "
+    "Use this exact pane ID even if `HERDR_PANE_ID` differs. Herdr's bold top line "
+    "combines the workspace/project name with the harness tab label (for example, "
+    "`chessan · codex`). The inferred task name belongs on the lower description line. "
+    "Do not rename an agent that already has a task name, and do not rename subagents."
 )
 
 
@@ -31,6 +31,29 @@ def current_agent(pane_id):
             return None
         payload = json.loads(result.stdout)
         return payload.get("result", {}).get("agent")
+    except (FileNotFoundError, json.JSONDecodeError, subprocess.TimeoutExpired):
+        return None
+
+
+def focused_agent(workspace_id):
+    try:
+        result = subprocess.run(
+            ["herdr", "agent", "list"],
+            capture_output=True,
+            check=False,
+            text=True,
+            timeout=1,
+        )
+        if result.returncode != 0:
+            return None
+        payload = json.loads(result.stdout)
+        agents = payload.get("result", {}).get("agents", [])
+        matches = [
+            agent
+            for agent in agents
+            if agent.get("focused") and agent.get("workspace_id") == workspace_id
+        ]
+        return matches[0] if len(matches) == 1 else None
     except (FileNotFoundError, json.JSONDecodeError, subprocess.TimeoutExpired):
         return None
 
@@ -63,9 +86,13 @@ def main():
 
     agent = current_agent(pane_id)
     if not agent:
+        agent = focused_agent(os.environ.get("HERDR_WORKSPACE_ID"))
+    if not agent:
         return
 
-    set_harness_tab_label(os.environ.get("HERDR_TAB_ID"), agent.get("agent"))
+    live_pane_id = agent.get("pane_id") or pane_id
+    live_tab_id = agent.get("tab_id") or os.environ.get("HERDR_TAB_ID")
+    set_harness_tab_label(live_tab_id, agent.get("agent"))
 
     if agent.get("name"):
         return
@@ -74,7 +101,7 @@ def main():
         {
             "hookSpecificOutput": {
                 "hookEventName": "UserPromptSubmit",
-                "additionalContext": RENAME_CONTEXT,
+                "additionalContext": RENAME_CONTEXT.format(pane_id=live_pane_id),
             }
         },
         sys.stdout,

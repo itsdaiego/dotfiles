@@ -19,7 +19,7 @@
 ## Herdr session names
 
 - In a Herdr-managed root session, the shared auto-name integration labels the current tab `pi`, `claude`, or `codex`. Herdr combines that with the workspace/project name on the bold top line, such as `chessan · pi`.
-- On the first user prompt, infer a short task description, convert it to a lowercase kebab-case slug with at most 32 characters, and run `herdr agent rename "$HERDR_PANE_ID" "<slug>"` before substantive work. That inferred task name belongs on the lower description line. Preserve an existing task name and never rename a subagent.
+- On the first user prompt, infer a short task description and convert it to a lowercase kebab-case slug with at most 32 characters. Run the exact `herdr agent rename` command that the shared auto-name integration supplies before substantive work. That inferred task name belongs on the lower description line. Preserve an existing task name and never rename a subagent.
 
 ## Shared harness maintenance
 
