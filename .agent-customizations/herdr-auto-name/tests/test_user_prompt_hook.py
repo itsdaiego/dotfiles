@@ -221,6 +221,66 @@ class UserPromptHookTest(unittest.TestCase):
             ["herdr", "tab", "rename", "w2:t2", "codex"],
         )
 
+    def test_does_not_guess_from_focus_when_multiple_agents_are_live(self):
+        stale_get = subprocess.CompletedProcess(
+            args=["herdr", "agent", "get", "w1:p1"],
+            returncode=1,
+            stdout="",
+            stderr="agent target w1:p1 not found",
+        )
+        agent_list = subprocess.CompletedProcess(
+            args=["herdr", "agent", "list"],
+            returncode=0,
+            stdout=json.dumps(
+                {
+                    "result": {
+                        "agents": [
+                            {
+                                "agent": "codex",
+                                "focused": False,
+                                "name": "current-task",
+                                "pane_id": "w2:p1",
+                                "tab_id": "w2:t1",
+                                "workspace_id": "w2",
+                            },
+                            {
+                                "agent": "codex",
+                                "focused": True,
+                                "name": None,
+                                "pane_id": "w2:p2",
+                                "tab_id": "w2:t2",
+                                "workspace_id": "w2",
+                            },
+                        ]
+                    }
+                }
+            ),
+            stderr="",
+        )
+        output = io.StringIO()
+
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "HERDR_ENV": "1",
+                    "HERDR_PANE_ID": "w1:p1",
+                    "HERDR_TAB_ID": "w1:t1",
+                    "HERDR_WORKSPACE_ID": "w1",
+                },
+                clear=True,
+            ),
+            patch("sys.stdin", io.StringIO("{}")),
+            patch("sys.stdout", output),
+            patch(
+                "subprocess.run",
+                side_effect=[stale_get, agent_list],
+            ),
+        ):
+            user_prompt_hook.main()
+
+        self.assertEqual(output.getvalue(), "")
+
 
 if __name__ == "__main__":
     unittest.main()
