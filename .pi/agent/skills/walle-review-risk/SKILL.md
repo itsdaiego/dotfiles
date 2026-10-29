@@ -11,17 +11,18 @@ The classifier is the source of truth. Do not replace its result with an LLM jud
 
 ## Run the classifier
 
-From the Butler repository root, classify committed branch changes against the target branch policy:
+From the Butler repository root, classify a committed head with the classifier from the target branch. Set `SKILL_DIR` to the directory containing this skill.
 
 ```bash
-PYTHONPATH=src/document_extractor python3 .claude/skills/walle-review-risk/scripts/report.py --target origin/master
+SKILL_DIR=/path/to/walle-review-risk
+python3 "$SKILL_DIR/scripts/report.py" --target origin/master
 ```
 
-Add `--working-tree` to include unstaged and untracked files. Use `--head <ref>` to classify a fetched MR source ref. Use `--policy-ref <ref>` only to preview an unmerged policy while keeping the real target branch for the diff. Use `--json` when a later command needs structured output.
+Use `--head <ref>` to classify a fetched MR source ref. Use `--json` when a later command needs structured output. The authoritative Wall-E CLI classifies committed refs only; do not present an uncommitted working-tree preview as a Wall-E result.
 
 When the request names a GitLab MR URL or IID, use read-only `glab mr view` to get its source and target branches. Fetch the source branch to `refs/walle-review-risk/mr-<iid>`, then classify that ref with `--head`. Do not create a worktree, edit the MR, add labels, or call a Slack endpoint.
 
-Wall-E reads the policy from the target branch so an MR cannot change the rules that classify itself. The local command follows the same rule. If the chosen target lacks `.gitlab/risk-tiers.toml`, report that Wall-E would leave the MR unlabelled. Do not silently classify against the feature branch. A local-only preview can use `--policy-ref HEAD`, but clearly state that it does not have Wall-E's target-branch trust boundary.
+Wall-E runs `python -m tools.risk_tier report` from a detached checkout of the target branch, so an MR cannot change the implementation or rules that classify itself. The wrapper follows the same trust boundary. If the target lacks `src/document_extractor/tools/risk_tier.py`, report that Wall-E would leave the MR unlabelled. Do not silently classify against the feature branch or substitute an LLM judgment.
 
 ## Report
 
@@ -30,7 +31,7 @@ State:
 - The low, medium, or high result. Do not use Tier A, B, or C in user-facing reports.
 - Every matched rule and changed path.
 - Every content signal that raised the tier.
-- The policy ref and whether the report includes the working tree.
+- The target implementation ref and that the report covers committed refs only.
 - Any uncertainty that means Wall-E would not set a label.
 
 Risk is the maximum of all matched paths and content signals. Treat an unknown or incomplete result as requiring human review. Do not recommend skipping review from a low tier alone.
