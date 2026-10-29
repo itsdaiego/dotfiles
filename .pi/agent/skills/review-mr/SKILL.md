@@ -43,6 +43,8 @@ For every MR, invoke the `walle-review-risk` skill after you fetch its metadata 
 
 This result is private review metadata for Daiego. Do not add it to the MR description, post it to GitLab, or let it change the approval verdict. Record the low, medium, high, or unavailable result, matched rules and paths, content signals, policy ref, and any classifier uncertainty in the local review file. If the skill cannot classify the MR, report it as unavailable. Do not guess or substitute an LLM judgment.
 
+Also add a user-facing review-attention label: `Needs review`, `Should review`, or `Don't need review`, with one short reason. Follow `walle-review-risk`'s mapping. This is a review queue aid and does not change the approval verdict.
+
 ### 2. Understand the change
 
 - Read the MR description and any linked issues for context.
@@ -106,6 +108,10 @@ Use this structure:
 
 <Low / medium / high / unavailable, with the policy ref, matched rules and paths, content signals, and uncertainty. This does not affect the verdict.>
 
+## Review attention
+
+<Needs review / Should review / Don't need review, with one short reason.>
+
 ## Verdict
 
 <ONE OF: Approve / Approve with nits / Request changes>
@@ -137,6 +143,7 @@ Use this structure:
 
 After writing the file, give a concise summary to the user:
 - Overall verdict
+- Review attention and its reason
 - Count of critical issues / suggestions / nits
 - The top 1-3 most important findings
 - Path to the full review file

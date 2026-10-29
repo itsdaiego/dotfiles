@@ -21,6 +21,11 @@
 - In a Herdr-managed root session, the shared auto-name integration labels the current tab `pi`, `claude`, or `codex`. Herdr combines that with the workspace/project name on the bold top line, such as `chessan · pi`.
 - On the first user prompt, infer a short task description and convert it to a lowercase kebab-case slug with at most 32 characters. Run the exact `herdr agent rename` command that the shared auto-name integration supplies before substantive work. That inferred task name belongs on the lower description line. Preserve an existing task name and never rename a subagent.
 
+## MR review attention
+
+- For every Butler GitLab MR review, audit, or review-priority request, load and run `walle-review-risk` against the exact head and target-branch policy. Do this even when the review does not use `review-mr`.
+- Tell the user the Wall-E risk, a `Needs review`, `Should review`, or `Don't need review` label, and one short reason. Unknown or incomplete Wall-E results are always `Needs review`. A low result alone does not justify `Don't need review`.
+
 ## Shared harness maintenance
 
 - When updating the shared Pi, Claude Code, or Codex setup, work in `~/Documents/code-stuff/dotfiles` and follow `docs/agent-config-maintenance.md`.
