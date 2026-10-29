@@ -7,6 +7,7 @@ cd "$repo_dir"
 
 sh -n scripts/install-agent-configs.sh
 sh -n scripts/tests/test-install-agent-configs.sh
+sh -n scripts/tests/test-agent-skill-routing.sh
 sh -n .local/bin/codex-company
 sh -n .local/bin/codex-personal
 sh -n .claude/hooks/herdr-agent-state.sh
@@ -29,6 +30,7 @@ CODEX_HOME=$codex_check_dir codex features list >/dev/null
 python3 -m unittest discover -s .config/herdr/scripts/auto-name/tests -v
 python3 -m unittest discover -s .agent-customizations/start-reviewer/scripts -p 'test_*.py' -v
 sh scripts/tests/test-install-agent-configs.sh
+sh scripts/tests/test-agent-skill-routing.sh
 
 find .config/herdr/scripts .agent-customizations .codex .codex-personal .claude .pi .local/bin -type l -print | while IFS= read -r link; do
   case "$link" in
