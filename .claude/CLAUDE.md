@@ -31,6 +31,10 @@ When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` 
 - Do not write production code for a behavior change before its failing test exists. When a test is not practical, explain why and use the strongest relevant verification instead.
 - Documentation, configuration-only, and non-behavioral changes do not require a test; run any applicable validation instead.
 
+# MR review attention
+- For every Butler GitLab MR review, audit, or review-priority request, load and run `walle-review-risk` against the exact head and target-branch policy. Do this even when the review does not use `review-mr`.
+- Tell the user the Wall-E risk, a `Needs review`, `Should review`, or `Don't need review` label, and one short reason. Unknown or incomplete Wall-E results are always `Needs review`. A low result alone does not justify `Don't need review`.
+
 # Herdr session names
 - In a Herdr-managed root session, the shared auto-name integration labels the current tab `pi`, `claude`, or `codex`. Herdr combines that with the workspace/project name on the bold top line, such as `chessan · codex`.
 - On the first user prompt, infer a short task description, convert it to a lowercase kebab-case slug with at most 32 characters, and run `herdr agent rename "$HERDR_PANE_ID" "<slug>"` before substantive work. That inferred task name belongs on the lower description line. Preserve an existing task name and never rename a subagent.
