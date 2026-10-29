@@ -6,10 +6,18 @@ repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 test_home=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-install-test.XXXXXX")
 trap 'rm -R "$test_home"' EXIT HUP INT TERM
 
-ln -s "$repo_dir/.agent-customizations" "$test_home/.agent-customizations"
+stale_root=$test_home/stale-checkout
+mkdir -p "$stale_root/.agent-customizations/herdr-auto-name"
+printf 'stale hook\n' >"$stale_root/.agent-customizations/herdr-auto-name/user_prompt_hook.py"
+ln -s "$stale_root/.agent-customizations" "$test_home/.agent-customizations"
 HOME=$test_home "$repo_dir/scripts/install-agent-configs.sh" >/dev/null
 
-test "$(readlink "$test_home/.agent-customizations")" = "$repo_dir/.agent-customizations"
+test ! -L "$test_home/.agent-customizations"
+test "$(readlink "$test_home/.agent-customizations/herdr-auto-name/user_prompt_hook.py")" = \
+  "$repo_dir/.agent-customizations/herdr-auto-name/user_prompt_hook.py"
+test ! -L "$stale_root/.agent-customizations/herdr-auto-name/user_prompt_hook.py"
+grep -Fx 'stale hook' \
+  "$stale_root/.agent-customizations/herdr-auto-name/user_prompt_hook.py" >/dev/null
 test "$(readlink "$test_home/.codex-personal/config.toml")" = "$repo_dir/.codex-personal/config.toml"
 test "$(readlink "$test_home/.local/bin/codex-personal")" = "$repo_dir/.local/bin/codex-personal"
 test "$(readlink "$test_home/.local/bin/codex-company")" = "$repo_dir/.local/bin/codex-company"

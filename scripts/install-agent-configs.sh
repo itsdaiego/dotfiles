@@ -36,7 +36,21 @@ link_one() {
   link_target "$source_path" "$HOME/$relative_path"
 }
 
+prepare_config_root() {
+  relative_root=$1
+  source_root=$repo_dir/$relative_root
+  target_root=$HOME/$relative_root
+
+  if [ -L "$target_root" ] && ! [ "$source_root" -ef "$target_root" ]; then
+    backup_path=$backup_root/$relative_root
+    mkdir -p -- "$(dirname -- "$backup_path")"
+    mv -- "$target_root" "$backup_path"
+    mkdir -p -- "$target_root"
+  fi
+}
+
 for config_root in .agent-customizations .codex .codex-personal .claude .pi .local/bin; do
+  prepare_config_root "$config_root"
   find "$repo_dir/$config_root" \( -type f -o -type l \) -print | while IFS= read -r source_path; do
     link_one "$source_path"
   done
