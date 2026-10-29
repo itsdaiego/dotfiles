@@ -33,7 +33,24 @@ link_target() {
 link_one() {
   source_path=$1
   relative_path=${source_path#"$repo_dir"/}
+  prepare_target_dir "$(dirname -- "$relative_path")"
   link_target "$source_path" "$HOME/$relative_path"
+}
+
+prepare_target_dir() {
+  [ "$1" = "." ] && return
+
+  parent_dir=$(dirname -- "$1")
+  prepare_target_dir "$parent_dir"
+
+  source_dir=$repo_dir/$1
+  target_dir=$HOME/$1
+  if [ -L "$target_dir" ] && [ -d "$source_dir" ] && ! [ "$source_dir" -ef "$target_dir" ]; then
+    backup_path=$backup_root/$1
+    mkdir -p -- "$(dirname -- "$backup_path")"
+    mv -- "$target_dir" "$backup_path"
+  fi
+  mkdir -p -- "$target_dir"
 }
 
 prepare_config_root() {
