@@ -156,6 +156,71 @@ class UserPromptHookTest(unittest.TestCase):
             ["herdr", "tab", "rename", "w1:t2", "codex"],
         )
 
+    def test_injects_focused_pane_when_inherited_workspace_is_stale(self):
+        stale_get = subprocess.CompletedProcess(
+            args=["herdr", "agent", "get", "w1:p1"],
+            returncode=1,
+            stdout="",
+            stderr="agent target w1:p1 not found",
+        )
+        agent_list = subprocess.CompletedProcess(
+            args=["herdr", "agent", "list"],
+            returncode=0,
+            stdout=json.dumps(
+                {
+                    "result": {
+                        "agents": [
+                            {
+                                "agent": "codex",
+                                "focused": True,
+                                "name": None,
+                                "pane_id": "w2:p2",
+                                "tab_id": "w2:t2",
+                                "workspace_id": "w2",
+                            }
+                        ]
+                    }
+                }
+            ),
+            stderr="",
+        )
+        tab_rename = subprocess.CompletedProcess(
+            args=["herdr", "tab", "rename", "w2:t2", "codex"],
+            returncode=0,
+            stdout="{}",
+            stderr="",
+        )
+        output = io.StringIO()
+
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "HERDR_ENV": "1",
+                    "HERDR_PANE_ID": "w1:p1",
+                    "HERDR_TAB_ID": "w1:t1",
+                    "HERDR_WORKSPACE_ID": "w1",
+                },
+                clear=True,
+            ),
+            patch("sys.stdin", io.StringIO("{}")),
+            patch("sys.stdout", output),
+            patch(
+                "subprocess.run",
+                side_effect=[stale_get, agent_list, tab_rename],
+            ) as run,
+        ):
+            user_prompt_hook.main()
+
+        context = json.loads(output.getvalue())["hookSpecificOutput"][
+            "additionalContext"
+        ]
+        self.assertIn('herdr agent rename "w2:p2"', context)
+        self.assertEqual(
+            run.call_args_list[2].args[0],
+            ["herdr", "tab", "rename", "w2:t2", "codex"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

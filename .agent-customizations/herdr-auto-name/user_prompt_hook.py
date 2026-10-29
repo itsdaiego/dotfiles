@@ -53,7 +53,11 @@ def focused_agent(workspace_id):
             for agent in agents
             if agent.get("focused") and agent.get("workspace_id") == workspace_id
         ]
-        return matches[0] if len(matches) == 1 else None
+        if len(matches) == 1:
+            return matches[0]
+
+        focused = [agent for agent in agents if agent.get("focused")]
+        return focused[0] if len(focused) == 1 else None
     except (FileNotFoundError, json.JSONDecodeError, subprocess.TimeoutExpired):
         return None
 
