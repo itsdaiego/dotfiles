@@ -33,7 +33,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$HOME/.agent-customizations/herdr-auto-name/user_prompt_hook.py\"",
+            "command": "python3 \"$HOME/.config/herdr/scripts/auto-name/user_prompt_hook.py\"",
             "timeout": 5
           }
         ]

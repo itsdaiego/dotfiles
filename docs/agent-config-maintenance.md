@@ -36,9 +36,9 @@ herdr integration install codex
 herdr integration status
 ```
 
-The managed files identify themselves with `HERDR_INTEGRATION_ID` and `HERDR_INTEGRATION_VERSION`. Do not add custom behavior to those files because the next Herdr update overwrites them. The task-name behavior lives beside them in `.agent-customizations/herdr-auto-name/user_prompt_hook.py` and `.pi/agent/extensions/herdr-auto-name.ts`.
+The managed files identify themselves with `HERDR_INTEGRATION_ID` and `HERDR_INTEGRATION_VERSION`. Do not add custom behavior to those files because the next Herdr update overwrites them. Custom Herdr behavior lives under `.config/herdr/scripts/`. The task-name sources are `.config/herdr/scripts/auto-name/user_prompt_hook.py` and `.config/herdr/scripts/auto-name/pi-extension.ts`; `.agent-customizations/herdr-auto-name/user_prompt_hook.py` and `.pi/agent/extensions/herdr-auto-name.ts` are compatibility entrypoints.
 
-After a refresh, inspect the Git diff. Keep the `UserPromptSubmit` entries in `.claude/settings.json`, `.codex/hooks.json`, and `.codex-personal/hooks.json`. Keep `[features].hooks = true` in both Codex `config.toml` files, and keep the `herdr-auto-name.ts` link in both Pi profiles. Run the verification script before committing.
+After a refresh, inspect the Git diff. Keep the `UserPromptSubmit` entries in `.claude/settings.json`, `.codex/hooks.json`, and `.codex-personal/hooks.json`. Keep `[features].hooks = true` in both Codex `config.toml` files, and keep the `herdr-auto-name.ts` link in both Pi profiles. The installer manages only `.config/herdr/scripts`, so it does not replace machine-local Herdr configuration or state. Run the verification script before committing.
 
 ## Files that never belong in Git
 

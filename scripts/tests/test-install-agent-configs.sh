@@ -18,21 +18,21 @@ mkdir -p "$(dirname -- "$generated_source")"
 printf 'generated session\n' >"$generated_source"
 
 stale_root=$test_home/stale-checkout
-mkdir -p "$stale_root/.agent-customizations/herdr-auto-name"
-printf 'stale hook\n' >"$stale_root/.agent-customizations/herdr-auto-name/user_prompt_hook.py"
-ln -s "$stale_root/.agent-customizations" "$test_home/.agent-customizations"
+mkdir -p "$stale_root/.config/herdr/scripts/auto-name" "$test_home/.config/herdr"
+printf 'stale hook\n' >"$stale_root/.config/herdr/scripts/auto-name/user_prompt_hook.py"
+ln -s "$stale_root/.config/herdr/scripts" "$test_home/.config/herdr/scripts"
 mkdir -p "$stale_root/walle-review-risk" "$test_home/.pi/agent/skills"
 printf 'stale skill\n' >"$stale_root/walle-review-risk/SKILL.md"
 ln -s "$stale_root/walle-review-risk" \
   "$test_home/.pi/agent/skills/walle-review-risk"
 HOME=$test_home "$repo_dir/scripts/install-agent-configs.sh" >/dev/null
 
-test ! -L "$test_home/.agent-customizations"
-test "$(readlink "$test_home/.agent-customizations/herdr-auto-name/user_prompt_hook.py")" = \
-  "$repo_dir/.agent-customizations/herdr-auto-name/user_prompt_hook.py"
-test ! -L "$stale_root/.agent-customizations/herdr-auto-name/user_prompt_hook.py"
+test ! -L "$test_home/.config/herdr/scripts"
+test "$(readlink "$test_home/.config/herdr/scripts/auto-name/user_prompt_hook.py")" = \
+  "$repo_dir/.config/herdr/scripts/auto-name/user_prompt_hook.py"
+test ! -L "$stale_root/.config/herdr/scripts/auto-name/user_prompt_hook.py"
 grep -Fx 'stale hook' \
-  "$stale_root/.agent-customizations/herdr-auto-name/user_prompt_hook.py" >/dev/null
+  "$stale_root/.config/herdr/scripts/auto-name/user_prompt_hook.py" >/dev/null
 test ! -L "$test_home/.pi/agent/skills/walle-review-risk"
 test "$(readlink "$test_home/.pi/agent/skills/walle-review-risk/SKILL.md")" = \
   "$repo_dir/.pi/agent/skills/walle-review-risk/SKILL.md"

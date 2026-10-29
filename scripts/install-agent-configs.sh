@@ -66,7 +66,7 @@ prepare_config_root() {
   fi
 }
 
-for config_root in .agent-customizations .codex .codex-personal .claude .pi .local/bin; do
+for config_root in .config/herdr/scripts .agent-customizations .codex .codex-personal .claude .pi .local/bin; do
   prepare_config_root "$config_root"
   git -C "$repo_dir" ls-files -- "$config_root" | while IFS= read -r relative_path; do
     link_one "$repo_dir/$relative_path"
