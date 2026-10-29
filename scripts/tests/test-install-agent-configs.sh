@@ -4,7 +4,18 @@ set -eu
 
 repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 test_home=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-install-test.XXXXXX")
-trap 'rm -R "$test_home"' EXIT HUP INT TERM
+generated_source=$repo_dir/.pi/agent/sessions/install-test-generated-$$.jsonl
+
+cleanup() {
+  rm -f "$generated_source"
+  rmdir "$(dirname -- "$generated_source")" 2>/dev/null || true
+  rm -R "$test_home"
+}
+
+trap cleanup EXIT HUP INT TERM
+
+mkdir -p "$(dirname -- "$generated_source")"
+printf 'generated session\n' >"$generated_source"
 
 stale_root=$test_home/stale-checkout
 mkdir -p "$stale_root/.agent-customizations/herdr-auto-name"
@@ -18,6 +29,7 @@ test "$(readlink "$test_home/.agent-customizations/herdr-auto-name/user_prompt_h
 test ! -L "$stale_root/.agent-customizations/herdr-auto-name/user_prompt_hook.py"
 grep -Fx 'stale hook' \
   "$stale_root/.agent-customizations/herdr-auto-name/user_prompt_hook.py" >/dev/null
+test ! -e "$test_home/.pi/agent/sessions/$(basename -- "$generated_source")"
 test "$(readlink "$test_home/.codex-personal/config.toml")" = "$repo_dir/.codex-personal/config.toml"
 test "$(readlink "$test_home/.local/bin/codex-personal")" = "$repo_dir/.local/bin/codex-personal"
 test "$(readlink "$test_home/.local/bin/codex-company")" = "$repo_dir/.local/bin/codex-company"

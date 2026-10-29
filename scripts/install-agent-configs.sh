@@ -51,8 +51,8 @@ prepare_config_root() {
 
 for config_root in .agent-customizations .codex .codex-personal .claude .pi .local/bin; do
   prepare_config_root "$config_root"
-  find "$repo_dir/$config_root" \( -type f -o -type l \) -print | while IFS= read -r source_path; do
-    link_one "$source_path"
+  git -C "$repo_dir" ls-files -- "$config_root" | while IFS= read -r relative_path; do
+    link_one "$repo_dir/$relative_path"
   done
 done
 
