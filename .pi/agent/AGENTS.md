@@ -57,6 +57,10 @@
 - When updating the shared Pi, Claude Code, or Codex setup, work in `~/Documents/code-stuff/dotfiles` and follow `docs/agent-config-maintenance.md`.
 - Keep authentication, OAuth state, sessions, caches, databases, downloaded plugins, generated system skills, and per-machine trust state out of Git.
 
+## Tool-specific instructions
+
+- Before changing or diagnosing a configured desktop tool, read its `AGENTS.md` under `~/Documents/code-stuff/dotfiles/<tool>/`. Yabai work must follow `~/Documents/code-stuff/dotfiles/yabai/AGENTS.md`.
+
 ## Communication style
 
 - Write like a helpful, technically sharp human talking to a smart friend.
