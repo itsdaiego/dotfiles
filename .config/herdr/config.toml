@@ -150,13 +150,14 @@ key = "prefix+9"
 command = "herdr-workspace-focus-index 9"
 
 [ui]
+# Keep projects and agents on the right; Ctrl-b then b still collapses/expands it.
+sidebar_position = "right"
+
 # Keep spaces/agents compact; one-character pane/workspace numbers cannot be
 # rendered smaller independently in a terminal UI.
-# The sidebar opens on the right when toggled with Ctrl-b then b.
-sidebar_position = "right"
-sidebar_width = 20
-sidebar_min_width = 20
-sidebar_max_width = 20
+sidebar_width = 25
+sidebar_min_width = 25
+sidebar_max_width = 25
 
 # Hidden by default, full width for panes. Ctrl-b then b brings it back.
 sidebar_start_collapsed = true
@@ -165,8 +166,18 @@ sidebar_collapsed_mode = "hidden"
 # tmux: `set -g mouse on`
 mouse_capture = true
 
-# Keep tmux-style one-cell dividers between panes, without spacing or an outer frame.
-pane_borders = true
+# Use terminal ANSI yellow (Kitty Melange color3: #E49B5D) as Herdr's accent.
+# This keeps focused-pane borders aligned with the active Kitty theme rather
+# than hard-coding the current orange value.
+accent = "yellow"
+
+# Draw a clear accent border around the focused pane; inactive pane borders
+# use the subdued terminal palette color. Keep dividers shared to save space.
+# 2-pane dividers split at the midpoint so each half tracks its own pane's
+# focus (see src/ui/panes.rs::divider_owners in the herdr repo patch).
+pane_borders = "auto"
+# Keep borders only between adjacent panes; do not waste terminal cells framing
+# the outer pane-area edges.
 pane_outer_borders = false
 pane_gaps = false
 # Keep pane scrollbars visible for navigation.
@@ -176,18 +187,26 @@ hide_tab_bar_when_single_tab = true
 
 # Move the tab row below the panes instead of above.
 tab_bar_position = "bottom"
-# Use compact dot tabs whenever a workspace has more than one tab.
+
+# Dots already label tabs, so a name prompt adds nothing. Create tabs at once.
+prompt_new_tab_name = false
+
+# Local patch: minimal single-glyph dots instead of numbered tabs.
+# See ~/Documents/code-stuff/rust/herdr.
 tab_bar_style = "dots"
+
+# Render Herdr notifications inside the Herdr client window on LG (display 2).
+# Clicking a notification focuses the agent pane that produced it.
+[ui.toast]
+delivery = "herdr"
+delay_seconds = 1
+
+[ui.toast.herdr]
+position = "bottom-right"
 
 [ui.sound]
 # no per-event (done vs needs-attention) toggle exists, only global on/off
 enabled = false
-
-[ui.toast]
-# defaults to "off" — popups never fired even before muting sound.
-# "system" asks the OS notification service directly (dunst/mako/etc),
-# independent of outer-terminal focus quirks under Hyprland.
-delivery = "system"
 
 # Use the host terminal's ANSI palette. Omarchy updates that palette whenever
 # its theme changes, so Herdr's borders, highlights, and status colors follow.

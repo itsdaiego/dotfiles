@@ -1,9 +1,12 @@
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
 personality = "pragmatic"
-model = "gpt-5.6-sol"
-model_reasoning_effort = "medium"
+model = "gpt-5.6-terra"
+model_reasoning_effort = "high"
+service_tier = "default"
 
 [tui]
-theme = "gruvbox-dark"
+theme = "ansi"
 screen_reader_detection_done = true
 
 [tui.model_availability_nux]
