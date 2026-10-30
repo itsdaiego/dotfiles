@@ -22,6 +22,10 @@
 - A staged change over 25 files or 1,200 changed lines needs explicit user approval before the agent commits it. Explain why it cannot be split first.
 - Follow the repository's commit and authorization rules. Never create a commit unless the user has authorized it.
 
+# Intake worktrees
+- For Butler Intake work, create a dedicated worktree whose branch and directory name start with the actual Linear ticket ID, such as `intake-452-leaddocket-catalog`. Do not use an MR number or a generic task name in place of the ticket ID.
+- Resolve the ticket from the user's request, linked Linear issue, merge request, or source branch before creating the worktree. Do not invent a ticket ID. If no Intake ticket can be resolved safely, ask before creating the worktree.
+
 # graphify
 - **graphify** (`~/.claude/skills/graphify/SKILL.md`) - any input to knowledge graph. Trigger: `/graphify`
 When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` before doing anything else.
