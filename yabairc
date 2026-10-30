@@ -41,6 +41,11 @@ yabai -m rule --add app="^Calculator$" manage=off
 yabai -m rule --add app="^Karabiner-Elements$" manage=off
 yabai -m rule --add app="^QuickTime Player$" manage=off
 
+# ChatGPT's companion overlay is an AXDialog that requests membership in every
+# Space. Keep it local to the Space where it was opened so it cannot reclaim
+# focus while navigating other workspaces.
+yabai -m rule --add label="chatgpt-companion-local" app="^ChatGPT$" title="^ChatGPT$" role="^AXWindow$" subrole="^AXDialog$" sticky=off
+
 # Assign Spaces 1-2 to the first display and Spaces 3-4 to the second display.
 # The helper is a no-op while only the MacBook display is connected.
 yabai -m signal --remove label=assign-monitor-spaces-display-added 2>/dev/null

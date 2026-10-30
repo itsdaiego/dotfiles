@@ -43,6 +43,9 @@ When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` 
 - When updating the shared Pi, Claude Code, or Codex setup, work in `~/Documents/code-stuff/dotfiles` and follow `docs/agent-config-maintenance.md`.
 - Keep authentication, OAuth state, sessions, caches, databases, downloaded plugins, generated system skills, and per-machine trust state out of Git.
 
+# Tool-specific instructions
+- Before changing or diagnosing a configured desktop tool, read its `AGENTS.md` under `~/Documents/code-stuff/dotfiles/<tool>/`. Yabai work must follow `~/Documents/code-stuff/dotfiles/yabai/AGENTS.md`.
+
 # Safety rules
 - Run an AWS CLI (`aws`) command only when the operation is demonstrably read-only. Never run mutating or ambiguous AWS commands. Do not bypass this restriction through a script, wrapper, alias, subshell, SDK, or another command. Provide blocked commands for the user to review and run manually.
 - Always ask the user for confirmation immediately before a recursive forced deletion, such as `rm -rf <folder>`. Execute only the exact command that the user confirms. Block the command when confirmation is unavailable or denied.
