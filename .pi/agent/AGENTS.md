@@ -52,6 +52,11 @@
 - For every Butler GitLab MR review, audit, or review-priority request, load and run `walle-review-risk` against the exact head and target-branch policy. Do this even when the review does not use `review-mr`.
 - Tell the user the Wall-E risk, a `Needs review`, `Should review`, or `Don't need review` label, and one short reason. Unknown or incomplete Wall-E results are always `Needs review`. A low result alone does not justify `Don't need review`.
 
+## MR review comments
+
+- During an MR review, publish only confirmed critical or blocking findings. Keep suggestions and nits in the local review report.
+- Do not publish a suggestion or nit unless the user explicitly asks to post that specific finding after reviewing it.
+
 ## Shared harness maintenance
 
 - When updating the shared Pi, Claude Code, or Codex setup, work in `~/Documents/code-stuff/dotfiles` and follow `docs/agent-config-maintenance.md`.

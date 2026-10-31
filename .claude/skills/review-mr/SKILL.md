@@ -11,6 +11,10 @@ Review a GitLab merge request for correctness, bugs, code quality, and adherence
 
 **NEVER post comments, approvals, or reviews directly to the MR on GitLab without explicit user approval.** All review output goes to files in `~/Code/.claude/code-reviews/`.
 
+## Publishing review comments
+
+When the user authorizes comments as part of an MR review, publish only verified critical or blocking findings. Keep suggestions and nits in the local review file. Post a suggestion or nit only when the user explicitly asks to publish that specific finding after seeing it.
+
 ## Inputs
 
 The user provides one of:
