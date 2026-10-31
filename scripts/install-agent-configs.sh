@@ -34,7 +34,27 @@ link_one() {
   source_path=$1
   relative_path=${source_path#"$repo_dir"/}
   prepare_target_dir "$(dirname -- "$relative_path")"
-  link_target "$source_path" "$HOME/$relative_path"
+  link_target "$(resolve_source_path "$source_path")" "$HOME/$relative_path"
+}
+
+resolve_source_path() {
+  source_path=$1
+  original_source_path=$source_path
+
+  while [ -L "$source_path" ]; do
+    link_path=$(readlink "$source_path")
+    case "$link_path" in
+      /*) source_path=$link_path ;;
+      *) source_path=$(dirname -- "$source_path")/$link_path ;;
+    esac
+    source_dir=$(CDPATH= cd -P -- "$(dirname -- "$source_path")" 2>/dev/null && pwd) || {
+      printf '%s\n' "$original_source_path"
+      return
+    }
+    source_path=$source_dir/$(basename -- "$source_path")
+  done
+
+  printf '%s\n' "$source_path"
 }
 
 prepare_target_dir() {
