@@ -1,4 +1,4 @@
-import { copyFile, readFile, writeFile } from "node:fs/promises";
+import { copyFile, readdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 async function patch(path, apply) {
@@ -8,6 +8,54 @@ async function patch(path, apply) {
 }
 
 const modules = resolve(import.meta.dirname, "node_modules");
+
+// Pi's overlay close path can leave the panel focused in fullscreen mode. When
+// the last overlay closes, explicitly restore the normal editor and its focus.
+async function patchOverlayFocus() {
+  const codingAgent = resolve(modules, "@earendil-works/pi-coding-agent");
+  const interactiveMode = resolve(codingAgent, "dist/modes/interactive/interactive-mode.js");
+  const sourceNeedle = "if (isOverlay)\n                    this.ui.hideOverlay();\n                else\n                    restoreEditor();";
+  const sourceReplacement = "if (isOverlay) {\n                    this.ui.hideOverlay();\n                    if (!this.ui.hasOverlay())\n                        restoreEditor();\n                }\n                else\n                    restoreEditor();";
+  await patch(interactiveMode, (source) => {
+    if (source.includes(sourceReplacement)) return source;
+    if (!source.includes(sourceNeedle)) {
+      throw new Error("Unsupported pi coding-agent interactive-mode.js: overlay close path not found");
+    }
+    return source.replace(sourceNeedle, sourceReplacement);
+  });
+
+  const chunks = resolve(codingAgent, "dist/bundle/chunks");
+  for (const file of await readdir(chunks)) {
+    if (!file.endsWith(".js")) continue;
+    await patch(resolve(chunks, file), (source) =>
+      source.replace(
+        "isOverlay?this.ui.hideOverlay():restoreEditor3()",
+        "isOverlay?(this.ui.hideOverlay(),this.ui.hasOverlay()||restoreEditor3()):restoreEditor3()",
+      ),
+    );
+  }
+}
+
+await patchOverlayFocus();
+
+// The MCP panel must release its overlay focus before closing. Without this,
+// fullscreen Pi can render the editor yet drop every subsequent keypress.
+await patch(resolve(modules, "pi-mcp-adapter/commands.ts"), (source) => {
+  if (source.includes("overlayHandle?.unfocus();")) return source;
+  return source
+    .replace(
+      "            done(undefined);\n            resolve();\n          })().catch((error) => {",
+      "            overlayHandle?.unfocus();\n            done(undefined);\n            resolve();\n          })().catch((error) => {",
+    )
+    .replace(
+      "            done(undefined);\n            resolve();\n          });\n        }, { noticeLines, keybindings, theme });",
+      "            overlayHandle?.unfocus();\n            done(undefined);\n            resolve();\n          });\n        }, { noticeLines, keybindings, theme });",
+    )
+    .replace(
+      "        return createMcpPanel(config, cache, provenanceMap, callbacks, tui, () => {\n          done(undefined);",
+      "        return createMcpPanel(config, cache, provenanceMap, callbacks, tui, () => {\n          overlayHandle?.unfocus();\n          done(undefined);",
+    );
+});
 
 await patch(
   resolve(modules, "@earendil-works/pi-tui/dist/layout.js"),
