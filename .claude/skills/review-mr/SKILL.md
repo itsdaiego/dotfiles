@@ -57,13 +57,13 @@ for d in json.load(sys.stdin):
 
 Paginate if there are more than 100. Save the output to the scratchpad, and pass it to any review subagent.
 
-### 1a. Classify the private Wall-E risk
+### 1a. Generate review attention
 
-For every MR, invoke the `walle-review-risk` skill after you fetch its metadata and refs. Follow its MR workflow so it classifies the exact source head against the policy from the target branch.
+For every MR, invoke the `walle-review-risk` skill after you fetch its metadata and refs. Use the MR diff, changed paths, checks, tests, and discussion to generate an on-the-fly `Needs review`, `Should review`, or `Don't need review` label with one short concrete reason.
 
-This result is private review metadata for Daiego. Do not add it to the MR description, post it to GitLab, or let it change the approval verdict. Record the low, medium, high, or unavailable result, matched rules and paths, content signals, policy ref, and any classifier uncertainty in the local review file. If the skill cannot classify the MR, report it as unavailable. Do not guess or substitute an LLM judgment.
+This result is private review metadata for Daiego. Do not add it to the MR description, post it to GitLab, or let it change the approval verdict. Record the evidence and uncertainty behind the label in the local review file. Missing evidence cannot justify `Don't need review`.
 
-Also add a user-facing review-attention label: `Needs review`, `Should review`, or `Don't need review`, with one short reason. Follow `walle-review-risk`'s mapping. This is a review queue aid and does not change the approval verdict.
+If the target repository provides Wall-E's policy and classifier, record its low, medium, high, or unavailable result separately as optional supplementary evidence. It never blocks the review-attention assessment.
 
 ### 2. Understand the change
 
@@ -147,9 +147,9 @@ Use this structure:
 
 <1-2 sentence summary of what the MR does and your overall assessment>
 
-## Wall-E risk (private)
+## Wall-E policy preview (optional, private)
 
-<Low / medium / high / unavailable, with the policy ref, matched rules and paths, content signals, and uncertainty. This does not affect the verdict.>
+<Low / medium / high / unavailable, with the policy ref, matched rules and paths, content signals, and uncertainty. This is supplementary evidence only.>
 
 ## Review attention
 
