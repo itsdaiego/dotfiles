@@ -1,2 +1,4 @@
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
 # Company Codex profile. Authentication remains in this CODEX_HOME.
 personality = "pragmatic"
