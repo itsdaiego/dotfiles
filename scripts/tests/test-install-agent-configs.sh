@@ -49,6 +49,12 @@ test "$(readlink "$test_home/.codex-personal/rules/default.rules")" = "$test_hom
 test "$(readlink "$test_home/.claude/skills/walle-review-risk")" = \
   "$repo_dir/.pi/agent/skills/walle-review-risk"
 test "$(readlink "$test_home/.claude/skills/to-do")" = "$repo_dir/.pi/agent/skills/to-do"
+test "$(readlink "$test_home/.claude/skills/copy-all")" = \
+  "$repo_dir/.agent-customizations/copy-all"
+test "$(readlink "$test_home/.codex/skills/copy-all")" = \
+  "$repo_dir/.agent-customizations/copy-all"
+test "$(readlink "$test_home/.codex-personal/skills/copy-all")" = \
+  "$repo_dir/.agent-customizations/copy-all"
 test "$(readlink "$test_home/.pi/agent/skills/local-branch-cleanup")" = \
   "$repo_dir/.agent-customizations/local-branch-cleanup"
 grep -F 'prefix_rule(pattern=["herdr", "agent", "rename"], decision="allow")' \
