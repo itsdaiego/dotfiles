@@ -8,6 +8,7 @@ import fcntl
 import hashlib
 import json
 import os
+import re
 import subprocess
 import tempfile
 from pathlib import Path
@@ -156,15 +157,16 @@ def action_key(kind: str, iid: int, head_sha: str, fingerprint: str = "") -> str
 
 
 def finding_fingerprint(iid: int, head_sha: str, finding: dict[str, object]) -> str:
+    title = str(finding.get("title") or "")
+    title = re.sub(r"^\[[^]]+\]\s*", "", title)
+    title = re.sub(r"[^a-z0-9]+", " ", title.lower()).strip()
     raw = json.dumps(
         {
             "iid": iid,
             "head_sha": head_sha,
             "file": finding.get("file"),
             "line": finding.get("line"),
-            "title": finding.get("title"),
-            "detail": finding.get("detail"),
-            "comment": finding.get("suggested_comment"),
+            "title": title,
         },
         sort_keys=True,
     )
@@ -188,6 +190,47 @@ def approval_usernames(iid: int) -> set[str]:
         and isinstance(item.get("user"), dict)
         and isinstance((username := item["user"].get("username")), str)
     }
+
+
+def discussion_notes(iid: int) -> list[dict[str, object]]:
+    notes: list[dict[str, object]] = []
+    page = 1
+    while True:
+        batch = glab_json(
+            f"projects/:id/merge_requests/{iid}/discussions?per_page=100&page={page}"
+        )
+        if not isinstance(batch, list):
+            return notes
+        for discussion in batch:
+            if not isinstance(discussion, dict):
+                continue
+            for note in discussion.get("notes", []):
+                if isinstance(note, dict):
+                    notes.append(note)
+        if len(batch) < 100:
+            return notes
+        page += 1
+
+
+def review_activity_exists(
+    iid: int,
+    *,
+    author: str,
+    me: str,
+    team: set[str],
+    allowed_my_note_bodies: set[str],
+) -> bool:
+    for note in discussion_notes(iid):
+        note_author = note.get("author", {})
+        username = note_author.get("username") if isinstance(note_author, dict) else None
+        if note.get("system") or username == author:
+            continue
+        body = str(note.get("body") or "").strip()
+        if username == me and body not in allowed_my_note_bodies:
+            return True
+        if username in team:
+            return True
+    return False
 
 
 def existing_note_bodies(iid: int) -> set[str]:
@@ -281,19 +324,35 @@ def publish_draft(iid: int, draft_id: int) -> None:
     )
 
 
-def still_untouched(entry: dict[str, object], live: dict[str, object], me: str) -> bool:
+def still_untouched(
+    entry: dict[str, object],
+    live: dict[str, object],
+    me: str,
+    *,
+    team: set[str] | None = None,
+    allowed_my_note_bodies: set[str] | None = None,
+) -> bool:
     reviewers = live.get("reviewers", [])
     assigned_usernames = {
         reviewer.get("username")
         for reviewer in reviewers
         if isinstance(reviewer, dict)
     }
-    return bool(
+    untouched = bool(
         is_candidate(entry)
         and live.get("state") == "opened"
         and not live.get("draft", False)
         and me in assigned_usernames
         and not approval_usernames(int(entry["iid"]))
+    )
+    if not untouched or team is None:
+        return untouched
+    return not review_activity_exists(
+        int(entry["iid"]),
+        author=str(entry.get("author") or ""),
+        me=me,
+        team=team,
+        allowed_my_note_bodies=allowed_my_note_bodies or set(),
     )
 
 
@@ -302,11 +361,13 @@ def act_on_result(
     result: dict[str, object],
     me: str,
     state: dict[str, object],
+    *,
+    team: set[str] | None = None,
 ) -> None:
     iid = int(entry["iid"])
     head_sha = str(result["head_sha"])
     live = live_mr(iid)
-    if live.get("sha") != head_sha or not still_untouched(entry, live, me):
+    if live.get("sha") != head_sha or not still_untouched(entry, live, me, team=team):
         emit("action_skipped_changed_state", iid=iid, reviewed_head=head_sha, live_head=live.get("sha"))
         return
 
@@ -337,6 +398,7 @@ def act_on_result(
         emit("comments_skipped_missing_diff_refs", iid=iid, head_sha=head_sha)
         return
 
+    published_this_run: set[str] = set()
     for finding in critical:
         if not isinstance(finding, dict):
             continue
@@ -350,17 +412,36 @@ def act_on_result(
         if key in actions or note in note_bodies:
             emit("comment_already_present", iid=iid, fingerprint=fingerprint)
             continue
+        current = live_mr(iid)
+        if current.get("sha") != head_sha or not still_untouched(
+            entry,
+            current,
+            me,
+            team=team,
+            allowed_my_note_bodies=published_this_run,
+        ):
+            emit("comment_cancelled_changed_state", iid=iid)
+            return
         draft_id = drafts_by_note.get(note)
+        created_this_run = draft_id is None
         if draft_id is None:
             draft_id = create_draft(iid, finding, refs, note)
         else:
             emit("existing_draft_reused", iid=iid, draft_id=draft_id)
         current = live_mr(iid)
-        if current.get("sha") != head_sha or approval_usernames(iid):
-            delete_draft(iid, draft_id)
+        if current.get("sha") != head_sha or not still_untouched(
+            entry,
+            current,
+            me,
+            team=team,
+            allowed_my_note_bodies=published_this_run,
+        ):
+            if created_this_run:
+                delete_draft(iid, draft_id)
             emit("comment_cancelled_changed_state", iid=iid, draft_id=draft_id)
-            continue
+            return
         publish_draft(iid, draft_id)
+        published_this_run.add(note)
         actions[key] = {
             "at": dt.datetime.now(dt.timezone.utc).isoformat(),
             "kind": "critical_comment",
@@ -387,24 +468,18 @@ def cycle() -> int:
             results = list(executor.map(review, candidates))
         failed = {iid for iid, error in results if error}
 
-        live_queue = refresh_queue()
-        live_by_iid = {
-            int(mr["iid"]): mr
-            for mr in live_queue.get("mrs", [])
-            if isinstance(mr, dict)
-        }
-        me = str(live_queue.get("me", ""))
+        me = str(queue.get("me", ""))
+        team = {str(username) for username in queue.get("team", [])}
         state = load_state()
         for original in candidates:
             iid = int(original["iid"])
             if iid in failed:
                 continue
-            entry = live_by_iid.get(iid)
             result = load_result(iid)
-            if not entry or not is_candidate(entry) or not result_is_current(result, entry):
+            if not result_is_current(result, original):
                 emit("action_skipped_not_current_candidate", iid=iid)
                 continue
-            act_on_result(entry, result, me, state)
+            act_on_result(original, result, me, state, team=team)
         emit("cycle_completed")
         return 0
 
