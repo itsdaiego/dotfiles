@@ -48,6 +48,8 @@ test "$(readlink "$test_home/.codex/rules/default.rules")" = "$repo_dir/.codex/r
 test "$(readlink "$test_home/.codex-personal/rules/default.rules")" = "$test_home/.codex/rules/default.rules"
 test "$(readlink "$test_home/.claude/skills/walle-review-risk")" = \
   "$repo_dir/.pi/agent/skills/walle-review-risk"
+test "$(readlink "$test_home/.claude/skills/adversarial-review-stop")" = \
+  "$repo_dir/.pi/agent/skills/adversarial-review-stop"
 test "$(readlink "$test_home/.claude/skills/to-do")" = "$repo_dir/.pi/agent/skills/to-do"
 test "$(readlink "$test_home/.claude/skills/copy-all")" = \
   "$repo_dir/.agent-customizations/copy-all"
