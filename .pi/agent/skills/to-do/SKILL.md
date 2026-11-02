@@ -1,21 +1,21 @@
 ---
 name: to-do
-description: Build a read-only personal to-do list from Slack, Notion, Linear, and GitLab, including retained unresolved requests older than 30 days. Use when Daiego asks for "/todo", "to do", what needs attention, recent pings, explicit mentions, or pending code reviews. Report only actionable requests from other people, not ordinary assignments or general notifications.
+description: Build a read-only personal to-do list from Slack, Notion, Linear, GitLab, and Granola. Find unresolved requests from other people and the user's own outstanding commitments, including promises made in messages, comments, pages, and meeting notes.
 ---
 
 # To do
 
-Build one short, actionable list across the requested services. This skill is read-only. Do not reply, react, change notification state, assign work, or mark anything complete.
+Build one short, actionable list across the requested services. Include both unresolved requests from other people and the user's own unresolved commitments. This skill is read-only. Do not reply, react, change notification state, assign work, or mark anything complete.
 
 ## Input and scope
 
-- `/todo` searches Slack, Notion, Linear, and GitLab.
-- `/todo slack, linear` searches only the named sources. Accept `all` as all four sources.
-- Treat a direct request to run this skill as consent to search the user's accessible Slack channels, including private channels. Do not search DMs unless the user asks for them.
+- `/todo` searches Slack, Notion, Linear, GitLab, and Granola.
+- `/todo slack, linear` searches only the named sources. Accept `all` as all five sources. `commitments` narrows results to the user's own promises; `requests` narrows results to requests from other people.
+- Treat a direct request to run this skill as consent to search the user's accessible Slack channels, private channels, and DMs when looking for the user's own commitments. For ordinary incoming-request searches, exclude DMs unless the user asks for them.
 - Search live sources for items created or updated in the last 30 days by default. Also read open items from `/Users/daiego/.local/state/to-do-backlog/backlog.json` when it exists; this durable backlog may contain older requests discovered by the `to-do-backlog` refresh. Honor a shorter user-supplied date range for the live search, but keep older cached items unless the user explicitly asks to exclude them. State the live time range and whether the retained backlog was included before the table.
 - Resolve the authenticated identity for every service at the beginning. Never guess an ID, username, or display name from an earlier run.
 
-An item belongs in the list only when all of these are true:
+An incoming request belongs in the list only when all of these are true:
 
 1. Someone other than the authenticated user explicitly mentioned or tagged them, or formally requested their review on a GitLab merge request.
 2. The message, comment, or page asks for a reply, decision, investigation, change, review of content, or another concrete next action.
@@ -23,9 +23,19 @@ An item belongs in the list only when all of these are true:
 
 Exclude FYIs, automated notices, status updates, ordinary assignments without a mention, reactions, and messages that merely include the user's name. A formal GitLab review request is the only assignment-style exception. When the request is unclear, include it with `Check context` as the action instead of inventing work.
 
+A self-authored commitment belongs in the list only when all of these are true:
+
+1. The authenticated user clearly took ownership of a concrete future action, such as "I’ll investigate", "I can send the draft tomorrow", or "I’m going to fix this".
+2. The action is specific enough to act on, or surrounding context makes it specific.
+3. No later evidence in the same thread, issue, page, or meeting clearly shows the commitment was completed, cancelled, delegated, superseded, or no longer needed.
+
+Do not turn brainstorming, estimates, conditional possibilities, acknowledgements, vague intent, or completed-work statements into tasks. A phrase such as "I could look into it" is a commitment only when the surrounding conversation shows the user accepted that work. Preserve the promised deadline when present. When attribution, scope, or resolution is unclear, include `Check context` instead of guessing.
+
 ## Gather items
 
-Run independent source searches in parallel where the MCP tools allow it. Read the surrounding thread, comment, or page before deciding whether an item needs action. Keep the original link for every result.
+Run independent source searches in parallel where the MCP tools allow it. Resolve the authenticated identity for every source, then search both incoming requests and self-authored commitments. Read the surrounding thread, comment, page, issue, or meeting before deciding whether an item needs action. Keep the original link for every result.
+
+For a commitment search, exhaust pagination for every search query and report when a source cannot enumerate all author-owned content. Use several narrowly targeted commitment queries rather than assuming one phrase catches every promise. Search natural variations of future ownership: `I'll`, `I will`, `I'll take`, `I can`, `I can own`, `I'll handle`, `I'll send`, `I'll check`, `I'll look`, `I'll follow up`, `I'm going to`, `I plan to`, `I'll get back`, and the authenticated user's name where a source needs it. Inspect candidates in context. An explicit user request for all history overrides the default live window; otherwise the durable backlog provides the historical pass.
 
 Before live searches, read the durable backlog when available. Keep only records with `status: "open"`. Treat cached content as a candidate, not proof: recheck its source when tools are available, especially when `last_checked_at` is older than 7 days. If a source is unavailable, retain its cached open items and state the last verification time instead of silently dropping them. Deduplicate cached and live results by `id` or `source_key`, preferring freshly verified source data.
 
@@ -35,6 +45,8 @@ Before live searches, read the durable backlog when available. Keep only records
 2. Search with `slack_search_public_and_private` for the literal Slack mention token, such as `<@U123456>`, in the requested period. Use a date filter and exclude DMs unless requested.
 3. Exclude messages authored by the signed-in user. Read each matching thread with `slack_read_thread`.
 4. Keep only direct, unresolved requests from another person. Use the thread permalink as the link.
+
+For commitments, search messages authored by the signed-in user across accessible public and private channels and DMs, using the service's author filter or equivalent search syntax. Paginate each query within the period, read the full thread, and retain only unresolved commitments. If the Slack API cannot enumerate all author-owned messages, state that limitation rather than claiming complete coverage.
 
 A message that says "FYI <@U123456>" is not a task. A message that says "<@U123456>, can you check the deploy?" is one.
 
@@ -47,6 +59,8 @@ A message that says "FYI <@U123456>" is not a task. A message that says "<@U1234
 
 Do not use `linear_list_issues` with `assignee: "me"` as a substitute for mentions.
 
+For commitments, search comments and issue descriptions authored by the signed-in user. Read the issue and newest discussion before retaining a promise. Do not treat an assignee field as a promise.
+
 ### GitLab
 
 1. Identify the signed-in user with `gitlab_get_user` using `me: true`.
@@ -54,15 +68,27 @@ Do not use `linear_list_issues` with `assignee: "me"` as a substitute for mentio
 3. Exclude notes authored by the signed-in user. Read the parent merge request or work item when the note lacks enough context.
 4. Keep direct, unresolved action requests and formal review requests. Do not add an item merely because the user is an assignee. A merged or closed merge request resolves its review request unless a later note asks for another action.
 
+For commitments, search notes authored by the signed-in user in merge requests and work items, then read the parent and later notes. A later commit, merge, closure, or explicit follow-up can resolve the promise when it addresses the promised work.
+
 ### Notion
 
 1. Discover the available Notion search and page-retrieval tools. If Notion is not authenticated, say so in the table and give the one authentication action needed. Do not silently omit it.
 2. Resolve the signed-in user's Notion identity, then search page content and comments for that user's actual Notion mention object. Fall back to their display name only to find candidates, and inspect each candidate to verify the structured user mention.
 3. Read the page or comment around each mention. Keep direct, unresolved requests made by someone else. Link to the page or comment.
 
+For commitments, search pages, databases, and comments created or edited by the signed-in user for concrete future ownership. Search both the user's display name and commitment terms to find candidates, then verify authorship and read later page activity or comments for resolution. Never count a task merely assigned to the user as a self-authored promise.
+
+### Granola
+
+1. Use `get_account_info` to identify the connected Granola account and its searchable scopes. State any scope limitation.
+2. Search accessible meeting notes for the user's commitments, follow-ups, and action items with `query_granola_meetings`; use several queries that ask specifically what the user committed to do. Also use `search_meetings` for commitment terms within the requested period and paginate every result set.
+3. Read each candidate with `get_meetings`. When the result turns on what the user said, who owns an action, a deadline, or whether it was completed, verify it with `search_transcripts` and read surrounding transcript context when available.
+4. Keep only commitments clearly attributable to the authenticated user or explicitly assigned to them in a note that records their acceptance. Do not infer ownership from the note creator, attendee list, or first-person wording alone.
+5. Use the meeting note URL as the link. If transcript or ownership evidence is unavailable, retain only a `Check context` item when the notes make an unresolved commitment plausible.
+
 ## Combine and present
 
-Deduplicate results that refer to the same Slack thread, Linear issue or comment, GitLab note, or Notion page/comment. Prefer the newest explicit request when a thread has several. Sort by urgency when stated, then by newest activity.
+Deduplicate results that refer to the same Slack thread, Linear issue or comment, GitLab note, Notion page/comment, or Granola meeting. Prefer the newest unresolved request or commitment when a thread has several. Sort by urgency when stated, then by newest activity. In the `Source` cell, append ` (promise)` for a self-authored commitment and set `From` to `You`.
 
 Open with one sentence that says the services searched, time range, and any unavailable service. Then present every result in this exact ASCII-table shape. Keep cell text short, wrap long text onto following table rows, and use a short stable link label when a full URL would make the table unreadable.
 
@@ -76,4 +102,4 @@ Open with one sentence that says the services searched, time range, and any unav
 
 Make `What needs attention` an imperative or a clear `Check context` prompt. Do not repeat long message text. Put the actual link behind the link label when the client supports Markdown links; otherwise print the URL on a continuation row below its item.
 
-If no items qualify, still return the table with one row that says `No unresolved explicit requests found`. If a service cannot be searched, include one row for it with the cause and the next safe step. End with one short line that names any excluded categories only when that matters to the result.
+If no items qualify, still return the table with one row that says `No unresolved explicit requests found`. If a service cannot be searched, include one row for it with the cause and the next safe step. End with one short line that names excluded categories or any source-coverage limitation only when that matters to the result.
