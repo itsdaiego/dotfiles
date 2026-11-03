@@ -37,8 +37,9 @@ When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` 
 
 # MR review attention
 - For every Butler MR, PR, branch, working-tree, or diff review, audit, or review-priority request, load and run `walle-review-risk`. Do this even when the review does not use `review-mr` or the change is not hosted by GitLab.
-- Tell the user a `Needs review`, `Should review`, or `Don't need review` label and one short, concrete reason based on the change and available evidence. Missing or incomplete evidence cannot justify `Don't need review`.
+- Tell the user the Wall-E risk, a `Needs review`, `Should review`, or `Don't need review` label, and one short, concrete reason based on the change and available evidence. Unknown or incomplete results are always `Needs review`. A low result alone does not justify `Don't need review`.
 - A Wall-E policy preview is optional supplementary evidence. Its absence must not block the review-attention assessment.
+- Approve an MR unless the review confirms a high-severity issue: a bug that breaks behavior or data, a security or tenant-isolation hole, a gate leak, an unsafe migration or rollout, failed CI, or conflicts. Never hold an approval for a title or description fix, or for medium or low findings. Leave those as non-blocking comments.
 
 # Herdr session names
 - In a Herdr-managed root session, the shared auto-name integration labels the current tab `pi`, `claude`, or `codex`. Herdr combines that with the workspace/project name on the bold top line, such as `chessan · codex`.

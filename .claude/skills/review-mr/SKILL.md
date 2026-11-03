@@ -70,7 +70,24 @@ If the target repository provides Wall-E's policy and classifier, record its low
 - Read the MR description and any linked issues for context.
 - Identify the category: feature, bugfix, refactor, migration, config change, etc.
 - If the intent is unclear from the description and diff, **ask clarifying questions** before proceeding with the review.
-- **Check the description against the final diff.** Flag it as a Critical Issue (must fix before merge) when it describes an abandoned plan, lists commits, routes, DTOs, files or behavior the diff does not contain, or omits a significant change the diff does contain. Also compare it to the commit messages, which usually reflect the latest approach. The description often doubles as the rollout doc, so a stale one misleads reviewers and deployers. Name the specific stale claims and state what the code actually does.
+- **Check the description against the final diff.** Flag it as a non-blocking finding when it describes an abandoned plan, lists commits, routes, DTOs, files or behavior the diff does not contain, or omits a significant change the diff does contain. Also compare it to the commit messages, which usually reflect the latest approach. The description often doubles as the rollout doc, so a stale one misleads reviewers and deployers. Name the specific stale claims and state what the code actually does. A title or description fix never blocks approval: approve the code and ask for the edit in a `suggestion` comment.
+
+### Approval rule
+
+Approve unless the review found a confirmed **high-severity** problem. Only these block approval:
+
+- A bug that breaks behavior, loses or corrupts data, or opens a security, authorization, or tenant-isolation hole.
+- A gate leak (step 3a).
+- An unsafe migration or rollout: a broken migration chain, an irreversible destructive change, or a deploy-order trap.
+- A failed required CI check, merge conflicts, or a review that could not inspect the exact head.
+
+These never block approval. Approve, and leave them as non-blocking comments only when they are worth raising:
+
+- A title or description that needs a fix, including stale claims, a wrong commit list, or outdated eval or CI notes.
+- Findings of medium or low severity: suggestions, coverage gaps, nits, cleanups, and open bot threads about them.
+- A medium or high Wall-E risk tier, or a `Needs review` or `Should review` attention label, on its own.
+
+Use `Approve with nits` when such non-blocking items exist.
 
 ### 3. Review the diff — file by file
 
@@ -157,11 +174,11 @@ Use this structure:
 
 ## Verdict
 
-<ONE OF: Approve / Approve with nits / Request changes>
+<ONE OF: Approve / Approve with nits / Request changes. Request changes only for a high-severity issue (see Approval rule).>
 
 ## Critical Issues
 
-<Issues that must be fixed before merge. Empty section = none found.>
+<High-severity issues that must be fixed before merge (see Approval rule). A description fix or a medium/low finding goes under Suggestions. Empty section = none found.>
 
 ### <filename>:<line range> — <short title>
 **Status:** New | Partly flagged (<author>, <thread link>, open/resolved) | Already flagged (<author>, <thread link>, open/resolved) | Fixed in <sha>
@@ -295,5 +312,5 @@ When the MR touches multiple independent areas (e.g. backend + frontend, or mult
 - Unscoped DB sessions (should use RLS)
 - Secrets or credentials in code
 - Missing codegen after DTO changes
-- Stale MR description that no longer matches the final diff
+- Stale MR description that no longer matches the final diff (non-blocking: ask for the edit, still approve)
 - A fix or change for a gated feature that also changes behavior for users outside the gate (see step 3a)

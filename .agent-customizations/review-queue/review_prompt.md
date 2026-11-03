@@ -50,7 +50,7 @@ Check each thread against the code at the head sha, not against the thread's own
 - **not_valid**: the code, a test, or a repository rule disproves it. Say why in one line, so Daiego can reply.
 - **optional**: style or preference with no behavior impact.
 
-Never mark a thread `fix` only because a bot was confident, and never mark it `not_valid` only to make the MR look ready. An unresolved thread with verdict `fix` that is critical makes `can_approve` false.
+Never mark a thread `fix` only because a bot was confident, and never mark it `not_valid` only to make the MR look ready. An unresolved thread with verdict `fix` that is critical makes `can_approve` false. A thread that only asks for a title or description edit, or raises a medium or low issue, has `critical: false`.
 
 ## Step 5: write the result file
 
@@ -82,7 +82,7 @@ Write `{result_path}` as a JSON array with exactly one object, built from steps 
 - `new_critical` holds only the review's Critical Issues with status **New**, including confirmed critical adversarial findings. Start the `title` of an adversarial one with `[adversarial: <lens>]`. Write `suggested_comment` the way the review-mr Comment Style section asks: simple and direct.
 - `already_flagged_critical` holds Critical Issues with status Already flagged, Partly flagged, or Fixed.
 - `open_threads_needing_fix` comes from the review's Existing threads section.
-- "Ready" means: not a draft, pipeline success, no merge conflicts, no unresolved blocking threads, and no unmerged parent MR.
-- `can_approve` is true only when no New or still-open critical issue exists and the MR is ready.
+- "Ready" means: not a draft, pipeline success, no merge conflicts, no unresolved threads with a critical `fix` verdict, and no unmerged parent MR.
+- `can_approve` is true only when no New or still-open critical issue exists and the MR is ready. A critical issue is high severity only: a bug that breaks behavior or data, a security or tenant-isolation hole, a gate leak, or an unsafe migration or rollout. A title or description fix and any medium or low finding are never critical, so they never make `can_approve` false. Report them in `verdict_reason` instead.
 
 Check that the file parses with `python3 -c "import json,sys; json.load(open(sys.argv[1]))" {result_path}` before you finish.

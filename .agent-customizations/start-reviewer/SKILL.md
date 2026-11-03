@@ -21,7 +21,7 @@ Use the `review-queue` workflow to refresh candidates and the `review-mr` workfl
 
 After review:
 
-- Approve with `glab mr approve <iid> --sha <reviewed-head-sha>` only when `can_approve` is true.
+- Approve with `glab mr approve <iid> --sha <reviewed-head-sha>` only when `can_approve` is true. Do not hold an approval for a title or description fix, or for medium or low findings. Only a high-severity issue blocks (see the review-mr Approval rule).
 - When changes are required, publish only findings in `new_critical`. Do not publish suggestions, nits, questions, non-critical threads, or findings already raised on the MR.
 - Create each inline comment as a draft with complete position data, then publish that draft individually. Never bulk-publish, because that could publish unrelated user drafts.
 - Re-check the live head and reviewer activity immediately before every approval or published comment. If either changed, take no action and let a later cycle review the new state.
