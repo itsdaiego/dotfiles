@@ -38,6 +38,7 @@ When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` 
 # MR review attention
 - For every Butler GitLab MR review, audit, or review-priority request, load and run `walle-review-risk` against the exact head and target-branch policy. Do this even when the review does not use `review-mr`.
 - Tell the user the Wall-E risk, a `Needs review`, `Should review`, or `Don't need review` label, and one short reason. Unknown or incomplete Wall-E results are always `Needs review`. A low result alone does not justify `Don't need review`.
+- Approve an MR unless the review confirms a high-severity issue: a bug that breaks behavior or data, a security or tenant-isolation hole, a gate leak, an unsafe migration or rollout, failed CI, or conflicts. Never hold an approval for a title or description fix, or for medium or low findings. Leave those as non-blocking comments.
 
 # Herdr session names
 - In a Herdr-managed root session, the shared auto-name integration labels the current tab `pi`, `claude`, or `codex`. Herdr combines that with the workspace/project name on the bold top line, such as `chessan · codex`.

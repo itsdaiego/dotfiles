@@ -33,6 +33,8 @@ Raise the result when the diff combines several medium-impact areas, touches a b
 
 After the risk assessment, give the user a review-attention label and one short reason. This label is a review queue aid, not a GitLab label or an approval verdict.
 
+The attention label and the risk tier never block approval on their own. Only a confirmed high-severity issue does, as the review-mr Approval rule says.
+
 - **Needs review:** Wall-E finds high risk, cannot inspect the exact head, a required check failed, or the review found a confirmed critical issue.
 - **Should review:** Wall-E finds medium risk, or the review found a credible non-critical concern, shared behavior change, or meaningful coverage gap.
 - **Don't need review:** Wall-E reports low risk, CI and merge state are not concerning, and the review found no confirmed issue. Do not assign this label from a low policy tier alone.
