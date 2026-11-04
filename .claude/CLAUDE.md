@@ -41,6 +41,12 @@ When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` 
 - A Wall-E policy preview is optional supplementary evidence. Its absence must not block the review-attention assessment.
 - Approve an MR unless the review confirms a high-severity issue: a bug that breaks behavior or data, a security or tenant-isolation hole, a gate leak, an unsafe migration or rollout, failed CI, or conflicts. Never hold an approval for a title or description fix, or for medium or low findings. Leave those as non-blocking comments.
 
+# Butler code graph
+- A graphify code graph of Butler intake code (leads, lead chase, voice AI, phone systems, MCP plugins, and the shared types, models, and tasks they use) lives outside the repository. The "Known graphs" table in the `walle-review-risk` skill lists each graph, its path prefix, its coverage, and how to rebuild it. That table is the only list; do not copy graph paths elsewhere.
+- In every Butler MR review or risk assessment, run the `walle-review-risk` blast-radius script and report its result. A `high` reach, which the script gives only to a logic change in widely used code, raises the risk by one step.
+- When answering a question about Butler code with the `explainer` skill, or any time you trace callers, callees, or a path between two symbols in covered code, use `graphify explain`, `graphify path`, or `graphify query --seed` with `--graph` set to that graph. Treat the graph as a map: confirm every step with a fresh read and cite the file's real line, never a graph line number.
+- Do not build or rebuild a graph during a review or an explanation. When the graph is missing, stale, or does not cover the code, say so and continue without it.
+
 # Herdr session names
 - In a Herdr-managed root session, the shared auto-name integration labels the current tab `pi`, `claude`, or `codex`. Herdr combines that with the workspace/project name on the bold top line, such as `chessan · codex`.
 - On the first user prompt, infer a short task description, convert it to a lowercase kebab-case slug with at most 32 characters, and run `herdr agent rename "$HERDR_PANE_ID" "<slug>"` before substantive work. That inferred task name belongs on the lower description line. Preserve an existing task name and never rename a subagent.

@@ -21,10 +21,24 @@ Answer a question about code so the user learns two things: the answer itself, a
 
 1. Search for the identifiers in the question: `git grep -n -e <name> -e <CONSTANT> -e <header-name>`. Try the different spellings: snake_case, CONSTANT_CASE, kebab-case, and the HTTP header form.
 2. For each hit, read about 20 lines around it to learn its role: definition, caller, guard, or test.
-3. Walk up the callers until you reach a real entry point. Walk down until the value is used.
+3. Walk up the callers until you reach a real entry point. Walk down until the value is used. For Butler code that a code graph covers, use the graph to find the callers and the path between two symbols quickly (see "Use the code graph" below). Then confirm each step with a fresh read.
 4. Find the tests that lock the behavior in: `git grep -n <name> -- '*test*'`.
 5. Find where the code came from: `git log -S '<identifier>' --format='%h %ad %an %s' --date=short | tail -1` gives the commit that introduced it, and `git log -L start,end:path` shows how a range changed.
 6. When it is safe and read-only, verify at runtime: a local request, a log line, or a check that a config value is set. Do not run anything that writes, deletes, or spends money.
+
+## Use the code graph
+
+A graphify code graph maps which functions, classes, and modules call, import, or reference each other. The list of graphs, with their path prefixes and the folders they cover, is the "Known graphs" table in the `walle-review-risk` skill. Use a graph when the question is about Butler code inside that coverage, such as leads, lead chase, voice AI, phone systems, or MCP plugins.
+
+Graph paths are relative to the graph's prefix. Add the prefix to get a repository path. Set `G` to the graph's `graph.json`:
+
+- `graphify explain "<symbol>" --graph "$G"` lists a node's callers (`<--`) and callees (`-->`), with their files.
+- `graphify path "<from>" "<to>" --graph "$G"` gives the shortest chain between two symbols, such as an entry point and the place a value is used.
+- `graphify query "<question>" --seed "<symbol>" --graph "$G" --budget 1500` walks outward from a known symbol. Pass `--seed`, because keyword-only queries match unrelated nodes.
+- When a name is ambiguous, the command exits with code 3 and lists the matches. Retry with `path::symbol` or the full node ID.
+- To show how far a change to the code would reach, run the `walle-review-risk` blast-radius script and report its production and test dependent counts.
+
+The graph is a map, not proof. Its line numbers come from the commit in its `BUILT_FROM` file, and the AST extractor misses dynamic dispatch, such as a method called through a registry or `getattr`. So a node with no callers in the graph may still have callers. Never cite a line number from the graph. Read the file and cite that line. When the graph and the code disagree, trust the code and say the graph is stale.
 
 ## Answer format
 

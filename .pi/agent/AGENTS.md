@@ -59,6 +59,13 @@
 - During an MR review, publish only confirmed critical or blocking findings. Keep suggestions and nits in the local review report.
 - Do not publish a suggestion or nit unless the user explicitly asks to post that specific finding after reviewing it.
 
+## Butler code graph
+
+- A graphify code graph of Butler intake code (leads, lead chase, voice AI, phone systems, MCP plugins, and the shared types, models, and tasks they use) lives outside the repository. The "Known graphs" table in the `walle-review-risk` skill lists each graph, its path prefix, its coverage, and how to rebuild it. That table is the only list; do not copy graph paths elsewhere.
+- In every Butler MR review or risk assessment, run the `walle-review-risk` blast-radius script and report its result. A `high` reach, which the script gives only to a logic change in widely used code, raises the risk by one step.
+- When answering a question about Butler code with the `explainer` skill, or any time you trace callers, callees, or a path between two symbols in covered code, use `graphify explain`, `graphify path`, or `graphify query --seed` with `--graph` set to that graph. Treat the graph as a map: confirm every step with a fresh read and cite the file's real line, never a graph line number.
+- Do not build or rebuild a graph during a review or an explanation. When the graph is missing, stale, or does not cover the code, say so and continue without it.
+
 ## Shared harness maintenance
 
 - When updating the shared Pi, Claude Code, or Codex setup, work in `~/Documents/code-stuff/dotfiles` and follow `docs/agent-config-maintenance.md`.
