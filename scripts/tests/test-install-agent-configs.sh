@@ -57,8 +57,6 @@ test "$(readlink "$test_home/.codex/skills/copy-all")" = \
   "$repo_dir/.agent-customizations/copy-all"
 test "$(readlink "$test_home/.codex-personal/skills/copy-all")" = \
   "$repo_dir/.agent-customizations/copy-all"
-test "$(readlink "$test_home/.pi/agent/skills/local-branch-cleanup")" = \
-  "$repo_dir/.agent-customizations/local-branch-cleanup"
 grep -F 'prefix_rule(pattern=["herdr", "agent", "rename"], decision="allow")' \
   "$test_home/.codex/rules/default.rules" >/dev/null
 grep -F 'prefix_rule(pattern=["herdr", "agent", "rename"], decision="allow")' \

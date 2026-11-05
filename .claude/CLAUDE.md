@@ -10,7 +10,7 @@
 - Use `review-mr` to review an MR or PR. Use `write-mr-comment` to draft or improve a review comment, and `write-mr` to draft, rewrite, or review an MR or PR description.
 - Use `create-mr` to prepare and publish an MR, `review-queue` for the user's MR-review queue, and `start-reviewer` to operate the autonomous reviewer.
 - Use `oncall-intake` for intake on-call pings or the intake dashboard. Use `walle-review-risk` when the user asks how critical or risky a Butler MR, branch, or working tree is.
-- Use `butler-sentry-session-metrics` for Eve session-length or engagement metrics, `to-do` for unresolved requests and pending reviews, and `local-branch-cleanup` to clean up local branches or worktrees.
+- Use `butler-sentry-session-metrics` for Eve session-length or engagement metrics, and `to-do` for unresolved requests and pending reviews.
 
 # Atomic commits
 - Make and stage one logical change at a time. Do not mix a feature or bug fix with cleanup, refactors, formatting, dependency updates, generated output for unrelated work, or another task.

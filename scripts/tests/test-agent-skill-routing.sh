@@ -24,6 +24,5 @@ test -f .claude/skills/adversarial-review-stop/SKILL.md
 test -f .claude/skills/to-do/SKILL.md
 test -f .claude/skills/copy-all/SKILL.md
 test -f .codex/skills/copy-all/SKILL.md
-test -f .pi/agent/skills/local-branch-cleanup/SKILL.md
 
 printf 'Automatic skill routing checks passed.\n'

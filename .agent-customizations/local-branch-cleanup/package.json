@@ -1,8 +1,0 @@
-{
-  "name": "local-branch-cleanup",
-  "private": true,
-  "type": "module",
-  "pi": {
-    "extensions": ["./pi-extension.ts"]
-  }
-}
