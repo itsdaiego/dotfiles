@@ -21,18 +21,6 @@
           }
         ]
       }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "command": "/opt/homebrew/bin/rtk hook codex",
-            "timeout": 10,
-            "type": "command"
-          }
-        ]
-      }
     ]
   }
 }
