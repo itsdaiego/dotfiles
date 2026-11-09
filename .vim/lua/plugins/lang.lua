@@ -54,7 +54,6 @@ return {
   { "juliosueiras/vim-terraform-completion", ft = "terraform" },
 
   -- Other Languages
-  { "Glench/Vim-Jinja2-Syntax", ft = "jinja" },
   { "tomlion/vim-solidity", ft = "solidity" },
   { "elixir-editors/vim-elixir", ft = "elixir" },
 } 
