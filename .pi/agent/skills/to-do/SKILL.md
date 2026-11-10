@@ -1,17 +1,17 @@
 ---
 name: to-do
-description: Build a read-only personal to-do list from Slack, Notion, Linear, GitLab, and Granola. Find unresolved requests from other people and the user's own outstanding commitments, including promises made in messages, comments, pages, and meeting notes.
+description: Build a read-only personal to-do list from Slack, Gmail, Notion, Linear, GitLab, and Granola. Find unresolved requests from other people, the user's own outstanding commitments, and the user's own sent emails and Slack messages that are still awaiting a reply, including promises made in messages, comments, pages, and meeting notes.
 ---
 
 # To do
 
-Build one short, actionable list across the requested services. Include both unresolved requests from other people and the user's own unresolved commitments. This skill is read-only. Do not reply, react, change notification state, assign work, or mark anything complete.
+Build one short, actionable list across the requested services. Include unresolved requests from other people, the user's own unresolved commitments, and the user's own outgoing emails and Slack messages that have not been answered yet. This skill is read-only. Do not reply, react, change notification state, assign work, send a follow-up, or mark anything complete. Flag awaiting-reply items for the user's own awareness only; following up is the user's call, done by the user, not this skill.
 
 ## Input and scope
 
-- `/todo` searches Slack, Notion, Linear, GitLab, and Granola.
-- `/todo slack, linear` searches only the named sources. Accept `all` as all five sources. `commitments` narrows results to the user's own promises; `requests` narrows results to requests from other people.
-- Treat a direct request to run this skill as consent to search the user's accessible Slack channels, private channels, and DMs when looking for the user's own commitments. For ordinary incoming-request searches, exclude DMs unless the user asks for them.
+- `/todo` searches Slack, Gmail, Notion, Linear, GitLab, and Granola.
+- `/todo slack, linear` searches only the named sources. Accept `all` as all six sources. `commitments` narrows results to the user's own promises; `requests` narrows results to requests from other people; `awaiting` narrows results to the user's own sent messages still waiting on a reply.
+- Treat a direct request to run this skill as consent to search the user's accessible Slack channels, private channels, and DMs, and the user's own sent email, when looking for the user's own commitments and awaiting-reply items. For ordinary incoming-request searches, exclude DMs unless the user asks for them.
 - Search live sources for items created or updated in the last 30 days by default. Also read open items from `/Users/daiego/.local/state/to-do-backlog/backlog.json` when it exists; this durable backlog may contain older requests discovered by the `to-do-backlog` refresh. Honor a shorter user-supplied date range for the live search, but keep older cached items unless the user explicitly asks to exclude them. State the live time range and whether the retained backlog was included before the table.
 - Resolve the authenticated identity for every service at the beginning. Never guess an ID, username, or display name from an earlier run.
 
@@ -31,11 +31,22 @@ A self-authored commitment belongs in the list only when all of these are true:
 
 Do not turn brainstorming, estimates, conditional possibilities, acknowledgements, vague intent, or completed-work statements into tasks. A phrase such as "I could look into it" is a commitment only when the surrounding conversation shows the user accepted that work. Preserve the promised deadline when present. When attribution, scope, or resolution is unclear, include `Check context` instead of guessing.
 
+A sent-and-awaiting-reply item belongs in the list only when all of these are true:
+
+1. The authenticated user sent the email or Slack message (not a reply from someone else), and it asks a question, requests information or a decision, or otherwise clearly expects a response from one or more specific people.
+2. Enough time has passed that a reply is reasonably due: at minimum one full business day since the user's message, by default; use the user's time range when one is supplied.
+3. No one else has replied in that thread or email chain since the user's message. A reply from anyone other than the user, including an out-of-office auto-reply or a reply that answers only part of the ask, resolves it unless the remaining part was called out as still open.
+4. The user has not already sent a later follow-up on the same ask in the same thread; if they have, treat only the most recent outgoing message as the candidate.
+
+Do not include FYI notes, status broadcasts, messages that explicitly say no reply is needed, or threads where the user was the last to speak only to acknowledge something ("thanks", "sounds good"). This category exists purely to make the user aware they might want to follow up themselves later; never draft, send, or schedule a follow-up message as part of this skill.
+
 ## Gather items
 
-Run independent source searches in parallel where the MCP tools allow it. Resolve the authenticated identity for every source, then search both incoming requests and self-authored commitments. Read the surrounding thread, comment, page, issue, or meeting before deciding whether an item needs action. Keep the original link for every result.
+Run independent source searches in parallel where the MCP tools allow it. Resolve the authenticated identity for every source, then search incoming requests, self-authored commitments, and the user's own awaiting-reply sends where that source supports it (Slack and Gmail). Read the surrounding thread, comment, page, issue, or meeting before deciding whether an item needs action. Keep the original link for every result.
 
 For a commitment search, exhaust pagination for every search query and report when a source cannot enumerate all author-owned content. Use several narrowly targeted commitment queries rather than assuming one phrase catches every promise. Search natural variations of future ownership: `I'll`, `I will`, `I'll take`, `I can`, `I can own`, `I'll handle`, `I'll send`, `I'll check`, `I'll look`, `I'll follow up`, `I'm going to`, `I plan to`, `I'll get back`, and the authenticated user's name where a source needs it. Inspect candidates in context. An explicit user request for all history overrides the default live window; otherwise the durable backlog provides the historical pass.
+
+For an awaiting-reply search, pull the user's own sent messages (Gmail "from:me" / sent folder, Slack messages authored by the signed-in user) within the period, keep only ones that read as a question or a clear ask of someone else, then check each thread's most recent activity against the user's send time to decide whether it is still unanswered.
 
 Before live searches, read the durable backlog when available. Keep only records with `status: "open"`. Treat cached content as a candidate, not proof: recheck its source when tools are available, especially when `last_checked_at` is older than 7 days. If a source is unavailable, retain its cached open items and state the last verification time instead of silently dropping them. Deduplicate cached and live results by `id` or `source_key`, preferring freshly verified source data.
 
@@ -49,6 +60,16 @@ Before live searches, read the durable backlog when available. Keep only records
 For commitments, search messages authored by the signed-in user across accessible public and private channels and DMs, using the service's author filter or equivalent search syntax. Paginate each query within the period, read the full thread, and retain only unresolved commitments. If the Slack API cannot enumerate all author-owned messages, state that limitation rather than claiming complete coverage.
 
 A message that says "FYI <@U123456>" is not a task. A message that says "<@U123456>, can you check the deploy?" is one.
+
+For awaiting-reply items, reuse the author-filtered search for messages the signed-in user sent. Keep only messages that ask something of another specific person or that explicitly `@`-mention someone with a question or request. Read the thread with `slack_read_thread` and check the timestamp and author of the last message in it: if the last message is still the signed-in user's own (or no one else has posted since), and enough time has passed, keep it as awaiting reply; if someone else replied after it, drop it. Use the thread permalink as the link and the person addressed as `From`.
+
+### Gmail
+
+1. Identify the signed-in account with the Gmail tool's own account info, or from the account used to authenticate the connector.
+2. Search sent mail within the period (for example a `in:sent` or equivalent query) with `search_threads`. Exclude automated or bulk sends (calendar invites, notifications, receipts).
+3. Keep only messages that read as a clear ask: a question, a requested decision, approval, information, or document from a named recipient.
+4. Read the full thread with `get_thread`. If the user's sent message is the last one in the thread and enough time has passed with no reply, keep it as awaiting reply. If a recipient replied after it, even partially, drop it unless the reply explicitly leaves part of the ask open.
+5. Use the recipient's name for `From` and the thread/message link (or subject, if no stable link is available) for `Link`.
 
 ### Linear
 
@@ -88,7 +109,7 @@ For commitments, search pages, databases, and comments created or edited by the 
 
 ## Combine and present
 
-Deduplicate results that refer to the same Slack thread, Linear issue or comment, GitLab note, Notion page/comment, or Granola meeting. Prefer the newest unresolved request or commitment when a thread has several. Sort by urgency when stated, then by newest activity. In the `Source` cell, append ` (promise)` for a self-authored commitment and set `From` to `You`.
+Deduplicate results that refer to the same Slack thread, Gmail thread, Linear issue or comment, GitLab note, Notion page/comment, or Granola meeting. Prefer the newest unresolved request or commitment when a thread has several. Sort by urgency when stated, then by newest activity. In the `Source` cell, append ` (promise)` for a self-authored commitment and set `From` to `You`; append ` (awaiting reply)` for the user's own unanswered send and set `From` to the person or people it is waiting on, with `What needs attention` phrased as `No reply yet - <short gist of the ask>`.
 
 Open with one sentence that says the services searched, time range, and any unavailable service. Then present every result in this exact ASCII-table shape. Keep cell text short, wrap long text onto following table rows, and use a short stable link label when a full URL would make the table unreadable.
 
