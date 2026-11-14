@@ -125,7 +125,24 @@ Rewrite `~/.ai/eve/brain.md` with the `brain-update` format and sections. Keep i
 
 Deduplicate results that refer to the same Slack thread, Linear issue or comment, GitLab note, Notion page/comment, or Granola meeting. Prefer the newest unresolved request or commitment when a thread has several. Sort by urgency when stated, then by newest activity. In the `Source` cell, append ` (promise)` for a self-authored commitment and set `From` to `You`. Append ` (awaiting reply)` for the user's own unanswered message, set `From` to the people it waits on, and phrase `What needs attention` as `No reply yet - <short gist of the ask>`.
 
-Open with one sentence that says the services searched, time range, and any unavailable service. Then present every result in this exact ASCII-table shape. Keep cell text short, wrap long text onto following table rows, and use a short stable link label when a full URL would make the table unreadable.
+Open with one sentence that says the services searched, time range, and any unavailable service. Then present every result in one table. Keep cell text short and use a short stable link label when a full URL would make the table unreadable.
+
+Pick the table format from the interface that renders this reply:
+
+- **Rendered client (the default when unsure):** the Claude desktop app, claude.ai, an IDE panel, Pi Pocket, or any host that renders Markdown. Signals include a system note that names the app, an `Artifact` tool, or `mcp__ccd_*` tools. Use a GFM pipe table, with each link as a Markdown link.
+- **Plain terminal:** a bare CLI session with none of those signals. Use the ASCII box table, and print each URL on a continuation row below its item.
+
+The `table-view` skill holds the same rule when another skill needs it.
+
+Rendered client:
+
+```markdown
+| Source | What needs attention | From | When | Link |
+|---|---|---|---|---|
+| Slack | Check the deploy log | Alex Kim | 2026-10-21 09:14 | [Slack thread](https://...) |
+```
+
+Plain terminal (wrap long text onto following rows):
 
 ```text
 +--------+----------------------+------------------+------------------+------------------+
@@ -135,6 +152,6 @@ Open with one sentence that says the services searched, time range, and any unav
 +--------+----------------------+------------------+------------------+------------------+
 ```
 
-Make `What needs attention` an imperative or a clear `Check context` prompt. Do not repeat long message text. Put the actual link behind the link label when the client supports Markdown links; otherwise print the URL on a continuation row below its item.
+Make `What needs attention` an imperative or a clear `Check context` prompt. Do not repeat long message text.
 
 If no items qualify, still return the table with one row that says `No unresolved explicit requests found`. If a service cannot be searched, include one row for it with the cause and the next safe step. End with one short line that names excluded categories or any source-coverage limitation only when that matters to the result.

@@ -30,7 +30,24 @@ For each candidate, check the source with read-only tools. An MR that merged or 
 
 ## Output
 
-Lead with the count in one sentence, such as "3 overdue, 1 due today, 2 due tomorrow." Then one table:
+Lead with the count in one sentence, such as "3 overdue, 1 due today, 2 due tomorrow." Then one table.
+
+Pick the table format from the interface that renders this reply:
+
+- **Rendered client (the default when unsure):** the Claude desktop app, claude.ai, an IDE panel, Pi Pocket, or any host that renders Markdown. Signals include a system note that names the app, an `Artifact` tool, or `mcp__ccd_*` tools. Use a GFM pipe table, with each link as a Markdown link.
+- **Plain terminal:** a bare CLI session with none of those signals. Use the ASCII box table, and print each URL on a continuation row below its item.
+
+The `table-view` skill holds the same rule when another skill needs it.
+
+Rendered client:
+
+```markdown
+| Status | What to do | Due | Link |
+|---|---|---|---|
+| Overdue | Send the vendor test output | 2026-11-05 | [Gmail thread](https://...) |
+```
+
+Plain terminal:
 
 ```text
 +----------+------------------------------+------------+--------------+
