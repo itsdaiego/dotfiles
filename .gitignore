@@ -123,3 +123,7 @@
 .claude/shell-snapshots/
 .claude/state/
 .claude/telemetry/
+
+# Shared agent brain: only the rules are shared. Work notes stay on this machine.
+.ai/*
+!.ai/README.md
