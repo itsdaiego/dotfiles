@@ -224,19 +224,44 @@ def _assigned_names(statements) -> set[str]:
     return names
 
 
-def _is_additive(statement: ast.stmt, old_names: set[str], in_class: bool) -> bool:
+def _is_typed_dict_class(node: ast.ClassDef) -> bool:
+    """Return True when a class uses TypedDict's structural contract."""
+    for base in node.bases:
+        if isinstance(base, ast.Name) and base.id == "TypedDict":
+            return True
+        if isinstance(base, ast.Attribute) and base.attr == "TypedDict":
+            return True
+    return False
+
+
+def _is_not_required(annotation: ast.expr) -> bool:
+    """Return True when a TypedDict annotation explicitly makes its key optional."""
+    if not isinstance(annotation, ast.Subscript):
+        return False
+    value = annotation.value
+    return (isinstance(value, ast.Name) and value.id == "NotRequired") or (
+        isinstance(value, ast.Attribute) and value.attr == "NotRequired"
+    )
+
+
+def _is_additive(statement: ast.stmt, old_names: set[str], in_class: bool, typed_dict: bool) -> bool:
     """Return True when a new statement only defines a name that did not exist before.
 
     Existing code cannot depend on a brand-new enum member or constant. A new
     annotated class field counts only when it has a default, because a field
-    without one becomes required for every caller that builds the class.
+    without one becomes required for every caller that builds the class. A
+    NotRequired TypedDict key has the same compatibility property: existing
+    dictionaries can omit it.
     """
     if isinstance(statement, ast.Assign):
         return all(isinstance(t, ast.Name) and t.id not in old_names for t in statement.targets)
     if isinstance(statement, ast.AnnAssign):
         if not isinstance(statement.target, ast.Name) or statement.target.id in old_names:
             return False
-        return not in_class or (statement.value is not None and _has_default(statement.value))
+        return not in_class or (
+            (statement.value is not None and _has_default(statement.value))
+            or (typed_dict and _is_not_required(statement.annotation))
+        )
     return False
 
 
@@ -248,6 +273,7 @@ def _compare_container(old: Any, new: Any) -> str:
     """Classify the difference between two versions of a class or module, ignoring nested definitions' bodies."""
     old, new = _stripped(old), _stripped(new)
     in_class = isinstance(old, ast.ClassDef)
+    typed_dict = in_class and _is_typed_dict_class(old)
     if in_class:
         if not isinstance(new, ast.ClassDef):
             return "logic"
@@ -293,7 +319,7 @@ def _compare_container(old: Any, new: Any) -> str:
         if isinstance(statement, (ast.Import, ast.ImportFrom)):
             kinds.append("imports")
         else:
-            kinds.append("additive" if _is_additive(statement, old_names, in_class) else "logic")
+            kinds.append("additive" if _is_additive(statement, old_names, in_class, typed_dict) else "logic")
     return _worst(kinds)
 
 

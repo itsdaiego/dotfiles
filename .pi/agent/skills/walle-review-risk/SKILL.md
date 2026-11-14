@@ -23,16 +23,29 @@ Pass that context to the assessment. Do not rely on a path-only classifier: path
 
 The change sets the risk, not the author. Assess risk from the highest applicable impact. Each level says how many people should approve the MR:
 
-- **High (two people):** authentication, authorization, secrets, payments, destructive data operations, database migrations, tenant isolation, public API compatibility, production deployment controls, any always-human path below, or an unbounded change with no credible verification.
-- **Medium (one person):** ordinary product changes, shared business behavior, background jobs or alert delivery, integration/provider handling, data selection or persistence, infrastructure changes, generated client or DTO contracts, or a change whose tests do not cover its main failure mode. In Butler, these sensitive areas are also medium: LLM prompts and system prompts, caching, Celery tasks and schedules, and integration sync.
-- **Low (no person once CI and the automated review are green):** isolated tests, documentation, copy, local tooling, internal-only features, narrowly scoped presentation-only code, mechanical refactors that preserve behavior and have adequate verification, or additive changes behind a feature flag that is off by default.
+- **High (two people):** authentication, authorization, secrets, payments, destructive data operations, database migrations, tenant isolation, public API compatibility breaks, production deployment controls, any always-human path below, or an unbounded change with no credible verification.
+- **Medium (one person):** ordinary product changes, shared business behavior, background jobs or alert delivery, integration/provider handling, data selection or persistence, infrastructure changes, generated client or DTO contracts that change compatibility behavior, or a change whose tests do not cover its main failure mode. In Butler, these sensitive areas are also medium: LLM prompts and system prompts, caching, Celery tasks and schedules, and integration sync.
+- **Low (no person once CI and the automated review are green):** isolated tests, documentation, copy, local tooling, internal-only features, narrowly scoped presentation-only code, mechanical refactors that preserve behavior and have adequate verification, compatibility-preserving internal contract additions, or additive changes behind a feature flag that is off by default.
 
 Then adjust the result:
 
 - **Always-human paths.** The script lists changed files that match the always-human paths: the CI pipeline (`.gitlab-ci.yml`, `.gitlab/`, `CODEOWNERS`), infrastructure (`devops/`, `Dockerfile`), database migrations (`alembic/`), the auth packages, and the billing packages. The exact patterns are `SENSITIVE_PATHS` in `scripts/blast_radius.py`. Any match makes the result high. This is the one case where a path alone decides the result.
 - **Feature flag.** When every logic change runs only behind a feature flag that defaults to off, and the diff does not change the flag's default, the result may drop to low. Name the flag in the report.
-- **Size.** When the diff changes more than 1,000 lines, raise the result by one step, because most changes that large have findings. Generated files, lock files, and tests count toward the size; say so when they make up most of it.
+- **Size.** When the semantic diff changes more than 1,000 lines, raise the result by one step, because most changes that large have findings. Count authored source, configuration, migrations, and tests. Do not count deterministic generated output or lockfile churn when a small reviewed source change produces it, the generator recreates the exact output, and the relevant checks pass. Report both the raw and semantic line counts when they differ. A large authored change does not become small because it also updates generated output.
 - **Blast radius.** Apply the code-graph result as described below.
+
+### Contract and behavior assessment
+
+Treat dependency count as reach evidence, not a risk multiplier. Propagating one contract through types, serializers, generated clients, fixtures, and call sites is one change. Review every boundary, but do not raise risk once for each mechanical edit.
+
+Classify the contract before using graph reach:
+
+- **Compatibility-preserving additions** let existing producers and consumers continue to work. Examples include a field with a safe default, an optional wire field that readers tolerate when absent, a `TypedDict` `NotRequired` key, and a new enum value when every consumer has a safe fallback. These stay additive unless the diff also wires the new value into shared behavior.
+- **Compatibility breaks** include a required or non-null field without a deployment-compatible default, a removed or renamed field, a narrowed type, changed serialized value, changed signature, or an enum consumer that rejects an unknown value. Treat them as logic. Trace the producer and consumer boundaries and require focused compatibility evidence.
+- **Derived contracts** such as generated DTOs do not create extra risk by their file count. Assess the reviewed source contract, whether it is public or cross-service, and whether code generation, type checking, and serialization checks prove the generated output matches it.
+- **Iteration changes** are logic only when they change the set, order, count, pagination, retry behavior, or side effects of work. A type-only or behavior-preserving iterator rewrite is mechanical; verify it with the relevant compiler, type checker, or focused test.
+
+A database migration remains high because its risk is operational as well as contractual. Check existing rows, writes from old application versions, backfill and deployment order, lock behavior, and rollback. The absence of an index does not make a new required column compatible or safe.
 
 Raise the result when the diff combines several medium-impact areas or leaves a realistic regression path untested. Lower it only when the complete diff and verification show that the higher-risk concern does not apply. Outside the always-human paths, never treat a file path alone as proof of risk.
 
@@ -49,7 +62,7 @@ Terms used in this section:
 - **Change kind:** what the diff did to the node. The script compares the old and new Python code of the innermost function, class, or module that holds each change:
   - `text`: only docstrings, comments, formatting, `description=`, `title=`, `help=`, `message=`, and similar keyword text, or a string constant whose name ends in `DESC`, `HELP`, `MESSAGE`, `TITLE`, `LABEL`, `SUMMARY`, `DOC`, or `EXAMPLE`. Prompts do not count as text.
   - `imports`: only `import` statements changed.
-  - `additive`: only new names, such as a new enum member, constant, function, method, or class, a new class field with a default, or new entries in a dict, set, list, or tuple whose existing entries stay the same.
+  - `additive`: only new names, such as a new enum member, constant, function, method, or class, a new class field with a default, a `TypedDict` `NotRequired` key, or new entries in a dict, set, list, or tuple whose existing entries stay the same.
   - `logic`: anything else. This includes changed or removed enum values, a new required field, a changed signature, decorator, or base class, a removed definition, and any file that does not parse.
 - **Tier:** the reach tier when the change kind is `logic`, and `leaf` otherwise. Code that depends on a node cannot break when the node only gains text, imports, or new names, so only a logic change to a widely used node is a hub.
 - **Reach:** the blast radius in plain terms, from the highest tier in the diff. `high` is a logic change in a hub, `medium` is a logic change in shared code, and `low` is everything else. `unknown` means no changed file is in the graph. The script prints the reach with a one-sentence reason, for example: `Blast radius: high. Changes logic in begin_integration_job_no_commit(), which 137 functions depend on. 132 tests cover it.`
@@ -71,7 +84,7 @@ The file `BUILT_FROM`, next to `graphify-out/`, records the Butler commit the gr
 Run the estimate from a checkout that has both revisions. Use the MR's target branch as `--base` and the exact source head as `--head`. The script is `scripts/blast_radius.py` next to this file:
 
 ```sh
-python3 -I ~/Documents/code-stuff/dotfiles/.pi/agent/skills/walle-review-risk/scripts/blast_radius.py \
+python3 -I ~/.pi/agent/skills/walle-review-risk/scripts/blast_radius.py \
   --graph ~/Documents/code-stuff/eve/graphify-intake-full/graphify-out/graph.json \
   --repo <butler checkout> --base origin/master --head <source sha> \
   --prefix src/document_extractor
@@ -84,7 +97,7 @@ The first lines of the output give the reach and its reason, the exact head SHA 
 - A `high` reach raises the policy result by one step: low becomes medium, and medium becomes high.
 - A `medium` reach supports a medium result for shared behavior, but does not raise the result by itself.
 - A `low` reach never lowers the result. A one-line change to a leaf authorization check is still high.
-- A `low` reach that says the diff only adds names, text, or imports to widely used code does not raise the result. Mention it only when the new name is wired into shared behavior elsewhere in the same diff, because that wiring shows up as its own logic change.
+- A `low` reach that says the diff only adds names, text, or imports to widely used code does not raise the result. For an additive contract, confirm that old producers may omit it, old consumers tolerate it, and code generation and type checks cover every affected boundary. Mention broad reach only when the new name is wired into shared behavior elsewhere in the same diff, because that wiring shows up as its own logic change.
 - A high-reach change with few tests covering it is a coverage gap. Name it in the report.
 - When the reason says "Partial", the estimate covers only the files in the graph. Say so. When the reach is `unknown`, say the blast radius was not measured and leave the policy result unchanged.
 - When the report shows target commits in scope since the graph was built, the line numbers may have drifted. Say the graph is stale. Ask the user to rebuild it with graphify when the drift touches the changed files.
@@ -133,8 +146,8 @@ When the report covers more than one MR, put them in a table with these columns,
 
 Then state:
 
-- The policy version: `Wall-E agent policy v3`.
-- The changed areas and the diff evidence that raised or lowered the result: always-human paths, size, feature flag, and blast radius.
+- The policy version: `Wall-E agent policy v4`.
+- The changed areas and the diff evidence that raised or lowered the result: always-human paths, raw and semantic size when they differ, feature flag, blast radius, and compatibility evidence for a contract or iteration change.
 - The blast radius: the reach and its reason, any other high- or medium-reach nodes, and whether the graph was partial, stale, or missing. Do not use the words hub, shared, or leaf in the report.
 - The exact head SHA that was assessed, the target branch, and the merge base, or the working-tree scope.
 - Any uncertainty that affects the result.

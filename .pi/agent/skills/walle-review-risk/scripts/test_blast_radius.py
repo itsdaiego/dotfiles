@@ -195,6 +195,16 @@ class BlastRadiusTest(unittest.TestCase):
         self.assertEqual(changed["change"], "additive")
         self.assertEqual(changed["tier"], "leaf")
 
+    def test_new_not_required_typed_dict_field_is_additive(self):
+        old = "class Payload(TypedDict):\n    id: str\n"
+        new = "class Payload(TypedDict):\n    id: str\n    note: NotRequired[str]\n"
+        classifier = blast_radius.ChangeClassifier(old, new)
+
+        self.assertEqual(
+            classifier.hunk_scopes(blast_radius.Hunk(2, 0, 3, 1)),
+            {"Payload": "additive"},
+        )
+
     def test_reworded_description_constant_is_text(self):
         self.commit_lines({6: '_STATUS_DESC = "Status of the lead."'})
 
