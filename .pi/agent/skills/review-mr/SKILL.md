@@ -54,18 +54,20 @@ If the target repository provides Wall-E's policy and classifier, record its low
 - Read the MR description and any linked issues for context.
 - Identify the category: feature, bugfix, refactor, migration, config change, etc.
 - If the intent is unclear from the description and diff, **ask clarifying questions** before proceeding with the review.
-- **Check the description against the final diff.** Flag it as a non-blocking finding when it describes an abandoned plan, lists commits, routes, DTOs, files or behavior the diff does not contain, or omits a significant change the diff does contain. Also compare it to the commit messages, which usually reflect the latest approach. The description often doubles as the rollout doc, so a stale one misleads reviewers and deployers. Name the specific stale claims and state what the code actually does. A title or description fix never blocks approval: approve the code and ask for the edit in a `suggestion` comment.
+- **Check the description against the final diff.** Flag it as a non-blocking finding when it describes an abandoned plan, lists commits, routes, DTOs, files or behavior the diff does not contain, or omits a significant change the diff does contain. Also compare it to the commit messages, which usually reflect the latest approach. The description often doubles as the rollout doc, so a stale one misleads reviewers and deployers. Name the specific stale claims and state what the code actually does. A title or description fix never blocks approval: recommend approving the code and ask for the edit in a `suggestion` comment.
 
 ### Approval rule
 
-Approve unless the review found a confirmed **high-severity** problem. Only these block approval:
+This skill never approves an MR on GitLab. The verdict is a recommendation to Daiego, who gives every approval sign-off. Approve on GitLab only when Daiego explicitly asks to approve that specific MR in the current conversation.
+
+Recommend approval unless the review found a confirmed **high-severity** problem. Only these block approval:
 
 - A bug that breaks behavior, loses or corrupts data, or opens a security, authorization, or tenant-isolation hole.
 - A gate leak (step 3a).
 - An unsafe migration or rollout: a broken migration chain, an irreversible destructive change, or a deploy-order trap.
 - A failed required CI check, merge conflicts, or a review that could not inspect the exact head.
 
-These never block approval. Approve, and leave them as non-blocking comments only when they are worth raising:
+These never block approval. Recommend approval, and leave them as non-blocking comments only when they are worth raising:
 
 - A title or description that needs a fix, including stale claims, a wrong commit list, or outdated eval or CI notes.
 - Findings of medium or low severity: suggestions, coverage gaps, nits, cleanups, and open bot threads about them.
@@ -135,7 +137,7 @@ Use this structure:
 
 ## Verdict
 
-<ONE OF: Approve / Approve with nits / Request changes. Request changes only for a high-severity issue (see Approval rule).>
+<ONE OF: Approve / Approve with nits / Request changes. This is a recommendation to Daiego, not a GitLab approval. Request changes only for a high-severity issue (see Approval rule).>
 
 ## Critical Issues
 
