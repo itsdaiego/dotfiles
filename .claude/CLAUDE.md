@@ -70,6 +70,7 @@ When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` 
 # Safety rules
 - Run an AWS CLI (`aws`) command only when the operation is demonstrably read-only. Never run mutating or ambiguous AWS commands. Do not bypass this restriction through a script, wrapper, alias, subshell, SDK, or another command. Provide blocked commands for the user to review and run manually.
 - Always ask the user for confirmation immediately before a recursive forced deletion, such as `rm -rf <folder>`. Execute only the exact command that the user confirms. Block the command when confirmation is unavailable or denied.
+- Treat Gmail/email access as read-only, with no exception. Never send, reply to, or forward an email; never create, update, or delete a draft; never create, update, or delete a label; never apply or remove a label on a message or thread; never trash, untrash, mark spam, or unmark spam on a message or thread. Only use read and search operations (for example getting or listing messages, threads, drafts, or labels, and searching threads). If a task needs one of the blocked actions, tell the user what it would do and let them send or perform it themselves.
 
 # Writing docs and MR descriptions
 Applies to written artifacts only: docs, design docs, Notion and Linear pages, PR/MR descriptions, and commit bodies. It does not change how you write chat replies.
