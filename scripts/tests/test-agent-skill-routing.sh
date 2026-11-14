@@ -26,6 +26,10 @@ test -f .claude/skills/brain-update/SKILL.md
 test -f .claude/skills/brain-alerts/SKILL.md
 test -f .claude/skills/copy-all/SKILL.md
 test -f .codex/skills/copy-all/SKILL.md
+test -f .claude/skills/rename-session/SKILL.md
+test -f .codex/skills/rename-session/SKILL.md
+test -f .pi/agent/skills/rename-session/SKILL.md
+test -f .pi/pi-personal/skills/rename-session/SKILL.md
 test -f .claude/skills/worktree-sweep/SKILL.md
 test -f .codex/skills/worktree-sweep/SKILL.md
 test -f .pi/agent/skills/worktree-sweep/SKILL.md
