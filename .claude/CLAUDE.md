@@ -10,7 +10,7 @@
 - Use `review-mr` to review an MR or PR. Use `write-mr-comment` to draft or improve a review comment, and `write-mr` to draft, rewrite, or review an MR or PR description.
 - Use `create-mr` to prepare and publish an MR, `review-queue` for the user's MR-review queue, and `start-reviewer` to operate the autonomous reviewer.
 - Use `oncall-intake` for intake on-call pings or the intake dashboard. Use `walle-review-risk` when the user asks how critical or risky a Butler MR, branch, or working tree is.
-- Use `butler-sentry-session-metrics` for Eve session-length or engagement metrics, and `to-do` for unresolved requests and pending reviews.
+- Use `butler-sentry-session-metrics` for Eve session-length or engagement metrics, and `brain` for a full sweep of unresolved requests, promises, and pending reviews. Use `brain-update` to add, close, or recheck one item, and `brain-alerts` for overdue and due-tomorrow warnings.
 
 # Atomic commits
 - Make and stage one logical change at a time. Do not mix a feature or bug fix with cleanup, refactors, formatting, dependency updates, generated output for unrelated work, or another task.
@@ -54,6 +54,14 @@ When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` 
 # Shared harness maintenance
 - When updating the shared Pi, Claude Code, or Codex setup, work in `~/Documents/code-stuff/dotfiles` and follow `docs/agent-config-maintenance.md`.
 - Keep authentication, OAuth state, sessions, caches, databases, downloaded plugins, generated system skills, and per-machine trust state out of Git.
+
+# Shared agent brain
+- `~/.ai` is the shared memory for Claude Code, Codex, and Pi. Read `~/.ai/README.md` for its rules.
+- Eve work state lives in `~/.ai/eve/`. `brain.md` holds open promises, requests, and MR reviews. `weekly/YYYY-Www.md` holds the week plan. `log.md` holds closed items.
+- Before you plan Eve work, answer "what should I do", or run any `brain` skill, read `~/.ai/eve/brain.md`.
+- When Daiego makes a promise or receives a request in a session, add it to `~/.ai/eve/brain.md` with the `brain-update` rules. When an item is done, move it to `~/.ai/eve/log.md` with the date and evidence.
+- The `brain` skill rewrites `~/.ai/eve/brain.md` after each full sweep.
+- Never store secrets, tokens, customer data, or message bodies there. Store a one-line summary and a link.
 
 # Tool-specific instructions
 - Before changing or diagnosing a configured desktop tool, read its `AGENTS.md` under `~/Documents/code-stuff/dotfiles/<tool>/`. Yabai work must follow `~/Documents/code-stuff/dotfiles/yabai/AGENTS.md`.

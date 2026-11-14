@@ -1,16 +1,18 @@
 ---
-name: to-do
-description: Build a read-only personal to-do list from Slack, Notion, Linear, GitLab, and Granola. Find unresolved requests from other people and the user's own outstanding commitments, including promises made in messages, comments, pages, and meeting notes.
+name: brain
+description: Rebuild Daiego's shared Eve brain (`~/.ai/eve/brain.md`) from Slack, Gmail, Notion, Linear, GitLab, and Granola. Find unresolved requests from other people, the user's own outstanding commitments, and Intake MR reviews still owed. Use when the user runs /brain or /todo, asks "what should I do", "what do I owe", "what did I promise", or wants a full to-do sweep. Use `brain-update` for small edits and `brain-alerts` for overdue and due-soon warnings.
 ---
 
-# To do
+# Brain
 
-Build one short, actionable list across the requested services. Include both unresolved requests from other people and the user's own unresolved commitments. This skill is read-only. Do not reply, react, change notification state, assign work, or mark anything complete.
+Build one actionable list across the requested services, then write it to the shared brain at `~/.ai/eve/brain.md`. Include unresolved requests from other people, the user's own unresolved commitments, and MR reviews owed to the Intake team. Read `~/.ai/README.md` first for the brain's rules.
+
+The sweep is read-only toward every external service. Do not reply, react, send or draft mail, change notification state, assign work, approve, or mark anything complete. The only writes are to `~/.ai/eve/brain.md`, `~/.ai/eve/log.md`, and `~/.ai/eve/weekly/`, made with the `brain-update` rules.
 
 ## Input and scope
 
-- `/todo` searches Slack, Notion, Linear, GitLab, and Granola.
-- `/todo slack, linear` searches only the named sources. Accept `all` as all five sources. `commitments` narrows results to the user's own promises; `requests` narrows results to requests from other people.
+- `/brain` searches Slack, Gmail, Notion, Linear, GitLab, and Granola. `/todo` is an alias.
+- `/brain slack, linear` searches only the named sources. Accept `all` as all six sources. `commitments` narrows results to the user's own promises; `requests` narrows results to requests from other people.
 - Treat a direct request to run this skill as consent to search the user's accessible Slack channels, private channels, and DMs when looking for the user's own commitments. For ordinary incoming-request searches, exclude DMs unless the user asks for them.
 - Search live sources for items created or updated in the last 30 days by default. Also read open items from `/Users/daiego/.local/state/to-do-backlog/backlog.json` when it exists; this durable backlog may contain older requests discovered by the `to-do-backlog` refresh. Honor a shorter user-supplied date range for the live search, but keep older cached items unless the user explicitly asks to exclude them. State the live time range and whether the retained backlog was included before the table.
 - Resolve the authenticated identity for every service at the beginning. Never guess an ID, username, or display name from an earlier run.
@@ -70,6 +72,13 @@ For commitments, search comments and issue descriptions authored by the signed-i
 
 For commitments, search notes authored by the signed-in user in merge requests and work items, then read the parent and later notes. A later commit, merge, closure, or explicit follow-up can resolve the promise when it addresses the promised work.
 
+### Gmail
+
+1. Search sent mail in the period (`in:sent after:YYYY/MM/DD`) and read each thread. Keep concrete promises the user made with no later evidence of completion.
+2. Search the inbox for threads from real people that ask the user for a reply, decision, document, or action, and that the user has not answered. Exclude newsletters, calendar invites, and notification mail from GitLab, Linear, Slack, or Notion.
+3. Keep personal-admin and security items that need the user's action, such as an expense-tool activation or an unknown-device login alert.
+4. Never send, draft, label, archive, or trash mail. Link each item as `https://mail.google.com/mail/u/0/#all/<threadId>`.
+
 ### Notion
 
 1. Discover the available Notion search and page-retrieval tools. If Notion is not authenticated, say so in the table and give the one authentication action needed. Do not silently omit it.
@@ -85,6 +94,18 @@ For commitments, search pages, databases, and comments created or edited by the 
 3. Read each candidate with `get_meetings`. When the result turns on what the user said, who owns an action, a deadline, or whether it was completed, verify it with `search_transcripts` and read surrounding transcript context when available.
 4. Keep only commitments clearly attributable to the authenticated user or explicitly assigned to them in a note that records their acceptance. Do not infer ownership from the note creator, attendee list, or first-person wording alone.
 5. Use the meeting note URL as the link. If transcript or ownership evidence is unavailable, retain only a `Check context` item when the notes make an unresolved commitment plausible.
+
+### GitLab reviews for the Intake team
+
+List open MRs where the user is a requested reviewer. For each, classify the review state: `not-started` (no note or approval by the user), `in-progress` (the user started threads that are not finished), or `re-requested` (the author pushed or re-requested after the user's last review). A merged or closed MR is done. Mark Intake MRs by an `INTAKE-` scope or an Intake team author.
+
+## Verify before you keep an item
+
+Before you keep an item that is due or older than 3 days, check whether it is already done: the MR merged or closed, the mail thread has a later reply from the user, the Slack thread has a later answer, or the Linear issue moved to Done. Move verified items to `~/.ai/eve/log.md` with the evidence. When verification needs production access, keep the item and mark it `needs prod check`.
+
+## Write the brain
+
+Rewrite `~/.ai/eve/brain.md` with the `brain-update` format and sections. Keep items that the sweep could not recheck, and mark them `?`. Then write or refresh `~/.ai/eve/weekly/YYYY-Www.md` when the user asks what to do next week.
 
 ## Combine and present
 

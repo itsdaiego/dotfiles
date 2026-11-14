@@ -5,7 +5,7 @@ description: Maintain Daiego's durable personal to-do backlog from Slack, Notion
 
 # To-do backlog
 
-Maintain a local index of unresolved work so the ordinary `to-do` skill can report requests older than its live 30-day search window. Source access is read-only. The only write is the local state file at `/Users/daiego/.local/state/to-do-backlog/backlog.json`.
+Maintain a local index of unresolved work so the `brain` skill can report requests older than its live 30-day search window. Source access is read-only. The only write is the local state file at `/Users/daiego/.local/state/to-do-backlog/backlog.json`.
 
 Read [references/state-schema.md](references/state-schema.md) before changing the state file.
 

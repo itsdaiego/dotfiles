@@ -52,7 +52,7 @@ test "$(readlink "$test_home/.claude/skills/walle-review-risk")" = \
   "$repo_dir/.pi/agent/skills/walle-review-risk"
 test "$(readlink "$test_home/.claude/skills/adversarial-review-stop")" = \
   "$repo_dir/.pi/agent/skills/adversarial-review-stop"
-test "$(readlink "$test_home/.claude/skills/to-do")" = "$repo_dir/.pi/agent/skills/to-do"
+test "$(readlink "$test_home/.claude/skills/brain")" = "$repo_dir/.pi/agent/skills/brain"
 test "$(readlink "$test_home/.claude/skills/copy-all")" = \
   "$repo_dir/.agent-customizations/copy-all"
 test "$(readlink "$test_home/.codex/skills/copy-all")" = \

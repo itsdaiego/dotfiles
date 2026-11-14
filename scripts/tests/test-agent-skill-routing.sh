@@ -21,7 +21,9 @@ done
 
 test -f .claude/skills/walle-review-risk/SKILL.md
 test -f .claude/skills/adversarial-review-stop/SKILL.md
-test -f .claude/skills/to-do/SKILL.md
+test -f .claude/skills/brain/SKILL.md
+test -f .claude/skills/brain-update/SKILL.md
+test -f .claude/skills/brain-alerts/SKILL.md
 test -f .claude/skills/copy-all/SKILL.md
 test -f .codex/skills/copy-all/SKILL.md
 
