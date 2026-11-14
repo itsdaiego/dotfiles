@@ -1,6 +1,6 @@
 ---
 name: explainer
-description: Explain how a piece of code works and teach where the answer lives. Use when the user runs /explainer, or asks a code question such as "where does X get set", "how do we fetch Y", "what script does Z", "how does this flow work", or "why does this happen". The answer traces the real call chain, cites the file and line for every claim, shows the code that proves it, and shows how to find it again. Do not use it to summarize an MR or PR (use read-mr) or a ticket or thread (use read-issue).
+description: Explain how a piece of code works and teach where the answer lives. Use when the user runs /explainer, or asks a code question such as "where does X get set", "how do we fetch Y", "what script does Z", "how does this flow work", or "why does this happen". The answer traces the real call chain, cites the file and line for every claim, shows the code that proves it, shows how to find it again, and, when the code is on a branch or MR that is not checked out, opens a worktree so the user can read it. Do not use it to summarize an MR or PR (use read-mr) or a ticket or thread (use read-issue).
 ---
 
 # Explainer
@@ -16,6 +16,27 @@ Answer a code question with two things: the answer, and where it lives. Every cl
 5. Tag each claim: **Verified** (ran a command, read a test, hit an endpoint), **From code** (read-only), or **Inferred** (neither).
 6. Stay on the question. Cover nearby behavior — a guard, cache, retry, fallback — only when it changes the answer.
 7. Never print a secret's value. Name the variable, key, or path that holds it, not the contents.
+
+## Worktree for the code
+
+The user wants to open the code you explain. Read it from a checkout the user can open, not from `git show` output alone.
+
+Add a worktree when the code is on a ref that the current checkout does not have: an MR or PR branch, another branch, a tag, or a commit. Skip it when the current checkout already holds the code at the right state, or when the question is about the current working tree.
+
+1. Resolve the ref to an exact commit: `git fetch origin <branch>`, then `git rev-parse --short origin/<branch>`. For an MR, take the source branch and head SHA from the MR (`glab api projects/<project>/merge_requests/<iid>`).
+2. Reuse a worktree that is already at that commit: `git worktree list`. Otherwise create a detached one, so no branch is checked out twice and nothing can be pushed from it by accident:
+
+   ```bash
+   git worktree add --detach <repo-root>/.claude/worktrees/explain-<slug>-<shortsha> <sha>
+   ```
+
+   `<slug>` is the MR number (`mr-23059`) or a short branch name. Put it under the repository's `.claude/worktrees/` folder, which is inside the session, so the app can open its files.
+3. Read every file and take every line number from that worktree (`git -C <worktree> grep -n`, Read). Cite paths relative to the worktree root, which equals the repo root.
+4. Treat it as read-only. Do not edit, commit, or push in it. Do not run anything that writes.
+5. Put the worktree in the answer: its absolute path, the branch or MR, and the full head SHA. Link files as markdown links with the path and line so the user can click them.
+6. Never remove a worktree yourself. Say the one command that removes it (`git worktree remove <path>`) and leave the choice to the user. Removal that needs `--force` or `rm -rf` needs the user's confirmation first.
+
+If the fetch or the worktree command fails, say so, read the code with `git show <ref>:<path>` instead, and note that no worktree exists.
 
 ## Research
 
@@ -48,7 +69,9 @@ Use these sections, in order. Skip any that would be empty.
 2-4 sentences, with the 1-2 most important `path:line` citations inline.
 
 ### 2. Where the answer lives
-A numbered map of the chain, one line per step, execution order:
+When you opened a worktree, start with one line: `Worktree: <absolute path> — <branch or MR> at <full head SHA>`.
+
+Then a numbered map of the chain, one line per step, execution order:
 
 ```
 1. path/to/entry.py:120      — entry point: what triggers it
