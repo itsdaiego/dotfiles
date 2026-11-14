@@ -14,6 +14,11 @@
 - Use `oncall-intake` for intake on-call pings or the intake dashboard. Use `walle-review-risk` when the user asks how critical or risky a Butler MR, branch, or working tree is.
 - Use `butler-sentry-session-metrics` for Eve session-length or engagement metrics, and `brain` for a full sweep of unresolved requests, promises, and pending reviews. Use `brain-update` to add, close, or recheck one item, and `brain-alerts` for overdue and due-tomorrow warnings.
 
+## Code explanations
+
+- When you explain or cite code, show the relevant concise source excerpt without waiting to be asked.
+- Link to source files with their absolute local paths and line anchors. Do not use worktree-relative links, because Pi Pocket resolves them from the session folder.
+
 ## Atomic commits
 
 - Make and stage one logical change at a time. Do not mix a feature or bug fix with cleanup, refactors, formatting, dependency updates, generated output for unrelated work, or another task.
