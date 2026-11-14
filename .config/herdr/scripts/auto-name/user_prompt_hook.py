@@ -63,22 +63,6 @@ def focused_agent(workspace_id):
         return None
 
 
-def set_harness_tab_label(tab_id, harness):
-    if not tab_id or harness not in {"codex", "claude", "pi"}:
-        return
-
-    try:
-        subprocess.run(
-            ["herdr", "tab", "rename", tab_id, harness],
-            capture_output=True,
-            check=False,
-            text=True,
-            timeout=1,
-        )
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        pass
-
-
 def main():
     sys.stdin.read()
 
@@ -96,9 +80,6 @@ def main():
         return
 
     live_pane_id = agent.get("pane_id") or pane_id
-    live_tab_id = agent.get("tab_id") or os.environ.get("HERDR_TAB_ID")
-    set_harness_tab_label(live_tab_id, agent.get("agent"))
-
     if agent.get("name"):
         return
 

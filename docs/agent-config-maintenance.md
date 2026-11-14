@@ -42,6 +42,12 @@ The managed files identify themselves with `HERDR_INTEGRATION_ID` and `HERDR_INT
 
 After a refresh, inspect the Git diff. Keep the `UserPromptSubmit` entries in `.claude/settings.json`, `.codex/hooks.json`, and `.codex-personal/hooks.json`. Keep `[features].hooks = true` in both Codex `config.toml` files, and keep the `herdr-auto-name.ts` link in both Pi profiles. The installer manages only `.config/herdr/scripts`, so it does not replace machine-local Herdr configuration or state. Run the verification script before committing.
 
+### Preserve the harness tab label
+
+Set a Herdr tab label from the harness that started the session, not from Herdr's current agent record. At startup, that record can still describe the harness that previously occupied the pane. Reading it can label a new Pi, Claude, or Codex session as Claude until a later state update.
+
+`.config/herdr/scripts/auto-name/set_harness_tab_label.py` renames the current `HERDR_TAB_ID` with the supplied, fixed harness name. The Claude and both Codex `SessionStart` hooks call it directly. The Pi auto-name extension labels its tab `pi` before looking up naming state. Keep these calls when changing integrations or hooks so every shared machine gets the correct label as soon as a harness opens.
+
 ## Files that never belong in Git
 
 Do not add authentication files, OAuth state, MCP credentials, session transcripts, histories, caches, SQLite databases, downloaded plugins, generated system skills, machine installation IDs, or per-machine trust files. The tracked MCP configuration may name environment variables, but it must never contain the token values.

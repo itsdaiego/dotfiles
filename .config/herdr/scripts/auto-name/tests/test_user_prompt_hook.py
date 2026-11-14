@@ -21,12 +21,6 @@ class UserPromptHookTest(unittest.TestCase):
             stdout=json.dumps(agent_payload),
             stderr="",
         )
-        rename_completed = subprocess.CompletedProcess(
-            args=["herdr", "tab", "rename", "w1:t1", "codex"],
-            returncode=0,
-            stdout="{}",
-            stderr="",
-        )
         output = io.StringIO()
         hook_input = io.StringIO(json.dumps({"hook_event_name": "UserPromptSubmit"}))
         hook_env = {
@@ -42,7 +36,7 @@ class UserPromptHookTest(unittest.TestCase):
             patch("sys.stdout", output),
             patch(
                 "subprocess.run",
-                side_effect=[get_completed, rename_completed],
+                return_value=get_completed,
             ) as run,
         ):
             user_prompt_hook.main()
@@ -63,10 +57,7 @@ class UserPromptHookTest(unittest.TestCase):
         self.assertIn("lower description line", context)
         self.assertIn("workspace/project", context)
         self.assertIn("harness", context)
-        self.assertEqual(
-            calls[1].args[0],
-            ["herdr", "tab", "rename", "w1:t1", "codex"],
-        )
+        self.assertEqual(len(calls), 1)
 
     def test_emits_nothing_when_agent_already_has_a_name(self):
         output, calls = self.run_hook(
@@ -74,9 +65,42 @@ class UserPromptHookTest(unittest.TestCase):
         )
 
         self.assertEqual(output, "")
-        self.assertEqual(
-            calls[1].args[0],
-            ["herdr", "tab", "rename", "w1:t1", "codex"],
+        self.assertEqual(len(calls), 1)
+
+    def test_uses_agent_state_for_naming_without_overwriting_the_tab_label(self):
+        current_agent = subprocess.CompletedProcess(
+            args=["herdr", "agent", "get", "w1:p1"],
+            returncode=0,
+            stdout=json.dumps(
+                {"result": {"agent": {"agent": "pi", "name": "current-task"}}}
+            ),
+            stderr="",
+        )
+        output = io.StringIO()
+
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "HERDR_ENV": "1",
+                    "HERDR_PANE_ID": "w1:p1",
+                    "HERDR_TAB_ID": "w1:t1",
+                },
+                clear=True,
+            ),
+            patch("sys.stdin", io.StringIO("{}")),
+            patch("sys.stdout", output),
+            patch("subprocess.run", return_value=current_agent) as run,
+        ):
+            user_prompt_hook.main()
+
+        self.assertEqual(output.getvalue(), "")
+        run.assert_called_once_with(
+            ["herdr", "agent", "get", "w1:p1"],
+            capture_output=True,
+            check=False,
+            text=True,
+            timeout=1,
         )
 
     def test_emits_nothing_outside_herdr(self):
@@ -119,12 +143,6 @@ class UserPromptHookTest(unittest.TestCase):
             ),
             stderr="",
         )
-        tab_rename = subprocess.CompletedProcess(
-            args=["herdr", "tab", "rename", "w1:t2", "codex"],
-            returncode=0,
-            stdout="{}",
-            stderr="",
-        )
         output = io.StringIO()
 
         with (
@@ -142,7 +160,7 @@ class UserPromptHookTest(unittest.TestCase):
             patch("sys.stdout", output),
             patch(
                 "subprocess.run",
-                side_effect=[stale_get, agent_list, tab_rename],
+                side_effect=[stale_get, agent_list],
             ) as run,
         ):
             user_prompt_hook.main()
@@ -151,10 +169,7 @@ class UserPromptHookTest(unittest.TestCase):
             "additionalContext"
         ]
         self.assertIn('herdr agent rename "w1:p2"', context)
-        self.assertEqual(
-            run.call_args_list[2].args[0],
-            ["herdr", "tab", "rename", "w1:t2", "codex"],
-        )
+        self.assertEqual(len(run.call_args_list), 2)
 
     def test_injects_focused_pane_when_inherited_workspace_is_stale(self):
         stale_get = subprocess.CompletedProcess(
@@ -184,12 +199,6 @@ class UserPromptHookTest(unittest.TestCase):
             ),
             stderr="",
         )
-        tab_rename = subprocess.CompletedProcess(
-            args=["herdr", "tab", "rename", "w2:t2", "codex"],
-            returncode=0,
-            stdout="{}",
-            stderr="",
-        )
         output = io.StringIO()
 
         with (
@@ -207,7 +216,7 @@ class UserPromptHookTest(unittest.TestCase):
             patch("sys.stdout", output),
             patch(
                 "subprocess.run",
-                side_effect=[stale_get, agent_list, tab_rename],
+                side_effect=[stale_get, agent_list],
             ) as run,
         ):
             user_prompt_hook.main()
@@ -216,10 +225,7 @@ class UserPromptHookTest(unittest.TestCase):
             "additionalContext"
         ]
         self.assertIn('herdr agent rename "w2:p2"', context)
-        self.assertEqual(
-            run.call_args_list[2].args[0],
-            ["herdr", "tab", "rename", "w2:t2", "codex"],
-        )
+        self.assertEqual(len(run.call_args_list), 2)
 
     def test_does_not_guess_from_focus_when_multiple_agents_are_live(self):
         stale_get = subprocess.CompletedProcess(

@@ -15,7 +15,7 @@ const renameContext =
   "lower description line. Do not rename an agent that already has a task name, and " +
   "do not rename subagents.";
 
-type AgentDetails = { harness: string; needsName: boolean } | null;
+type AgentDetails = { needsName: boolean } | null;
 
 function getAgentDetails(): Promise<AgentDetails> {
   if (!enabled) {
@@ -37,9 +37,7 @@ function getAgentDetails(): Promise<AgentDetails> {
           const payload = JSON.parse(stdout);
           const agent = payload?.result?.agent;
           resolve(
-            agent
-              ? { harness: agent.agent, needsName: !agent.name }
-              : null,
+            agent ? { needsName: !agent.name } : null,
           );
         } catch {
           resolve(null);
@@ -49,15 +47,15 @@ function getAgentDetails(): Promise<AgentDetails> {
   });
 }
 
-function setHarnessTabLabel(harness: string): Promise<void> {
-  if (!tabId || !["codex", "claude", "pi"].includes(harness)) {
+function setHarnessTabLabel(): Promise<void> {
+  if (!tabId) {
     return Promise.resolve();
   }
 
   return new Promise((resolve) => {
     execFile(
       "herdr",
-      ["tab", "rename", tabId, harness],
+      ["tab", "rename", tabId, "pi"],
       { timeout: 1000 },
       () => resolve(),
     );
@@ -70,12 +68,12 @@ export default function (pi) {
   }
 
   pi.on("before_agent_start", async (event) => {
+    await setHarnessTabLabel();
+
     const details = await getAgentDetails();
     if (!details) {
       return;
     }
-
-    await setHarnessTabLabel(details.harness);
 
     if (!details.needsName) {
       return;

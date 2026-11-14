@@ -33,6 +33,11 @@
             "type": "command",
             "command": "bash '/Users/daiego/.claude/hooks/herdr-agent-state.sh' session",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python3 \"$HOME/.config/herdr/scripts/auto-name/set_harness_tab_label.py\" claude",
+            "timeout": 5
           }
         ]
       }
