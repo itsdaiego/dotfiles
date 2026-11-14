@@ -1,1 +1,0 @@
-../../agent/extensions/zz-aws-command-guard.ts

@@ -36,11 +36,11 @@
 - Do not write production code for a behavior change before its failing test exists. When a test is not practical, explain why and use the strongest relevant verification instead.
 - Documentation, configuration-only, and non-behavioral changes do not require a test; run any applicable validation instead.
 
-## Pi profile parity
+## Pi profiles
 
-- `pi-personal` and `pi-work` use separate config roots: `~/.pi/pi-personal` and `~/.pi/pi-work`.
-- When adding or changing a Pi extension, prompt, skill, theme, setting, or other shared Pi customization, make it available in both profiles. Prefer a shared source (such as a symlink) so future edits stay in sync.
-- Verify both profile paths after making a shared Pi customization.
+- `pi` and `pi-work` share the `~/.pi/agent` config root. Do not add configuration under `~/.pi/pi-work`.
+- `pi-personal` uses its own `~/.pi/pi-personal` root. Add shared Pi customizations under `.pi/agent/`, then link them from `pi-personal` when it needs them.
+- Keep `pi-personal` settings separate only when the difference is intentional.
 
 ## Herdr session names
 
