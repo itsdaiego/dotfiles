@@ -45,6 +45,9 @@
         "-y",
         "next-devtools-mcp@latest"
       ]
+    },
+    "braintrust": {
+      "url": "https://api.braintrust.dev/mcp"
     }
   }
 }

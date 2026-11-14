@@ -79,6 +79,9 @@ url = "https://api.fireflies.ai/mcp"
 url = "https://mcp.render.com/mcp"
 bearer_token_env_var = "RENDER_MCP_TOKEN"
 
+[mcp_servers.braintrust]
+url = "https://api.braintrust.dev/mcp"
+
 [mcp_servers.aida]
 url = "https://app.getaida.com/mcp"
 
