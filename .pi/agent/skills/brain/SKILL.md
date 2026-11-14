@@ -1,18 +1,18 @@
 ---
 name: brain
-description: Rebuild Daiego's shared Eve brain (`~/.ai/eve/brain.md`) from Slack, Gmail, Notion, Linear, GitLab, and Granola. Find unresolved requests from other people, the user's own outstanding commitments, and Intake MR reviews still owed. Use when the user runs /brain or /todo, asks "what should I do", "what do I owe", "what did I promise", or wants a full to-do sweep. Use `brain-update` for small edits and `brain-alerts` for overdue and due-soon warnings.
+description: Rebuild Daiego's shared Eve brain (`~/.ai/eve/brain.md`) from Slack, Gmail, Notion, Linear, GitLab, and Granola. Find unresolved requests from other people, the user's own outstanding commitments, the user's own sent emails and Slack messages still awaiting a reply, and Intake MR reviews still owed. Use when the user runs /brain or /todo, asks "what should I do", "what do I owe", "what did I promise", or wants a full to-do sweep. Use `brain-update` for small edits and `brain-alerts` for overdue and due-soon warnings.
 ---
 
 # Brain
 
-Build one actionable list across the requested services, then write it to the shared brain at `~/.ai/eve/brain.md`. Include unresolved requests from other people, the user's own unresolved commitments, and MR reviews owed to the Intake team. Read `~/.ai/README.md` first for the brain's rules.
+Build one actionable list across the requested services, then write it to the shared brain at `~/.ai/eve/brain.md`. Include unresolved requests from other people, the user's own unresolved commitments, the user's own sent emails and Slack messages that nobody answered, and MR reviews owed to the Intake team. Awaiting-reply items are for the user's awareness only: following up is the user's call, and this skill never drafts, sends, or schedules a follow-up. Read `~/.ai/README.md` first for the brain's rules.
 
 The sweep is read-only toward every external service. Do not reply, react, send or draft mail, change notification state, assign work, approve, or mark anything complete. The only writes are to `~/.ai/eve/brain.md`, `~/.ai/eve/log.md`, and `~/.ai/eve/weekly/`, made with the `brain-update` rules.
 
 ## Input and scope
 
 - `/brain` searches Slack, Gmail, Notion, Linear, GitLab, and Granola. `/todo` is an alias.
-- `/brain slack, linear` searches only the named sources. Accept `all` as all six sources. `commitments` narrows results to the user's own promises; `requests` narrows results to requests from other people.
+- `/brain slack, linear` searches only the named sources. Accept `all` as all six sources. `commitments` narrows results to the user's own promises; `requests` narrows results to requests from other people; `awaiting` narrows results to the user's own sent messages still waiting on a reply.
 - Treat a direct request to run this skill as consent to search the user's accessible Slack channels, private channels, and DMs when looking for the user's own commitments. For ordinary incoming-request searches, exclude DMs unless the user asks for them.
 - Search live sources for items created or updated in the last 30 days by default. Also read open items from `/Users/daiego/.local/state/to-do-backlog/backlog.json` when it exists; this durable backlog may contain older requests discovered by the `to-do-backlog` refresh. Honor a shorter user-supplied date range for the live search, but keep older cached items unless the user explicitly asks to exclude them. State the live time range and whether the retained backlog was included before the table.
 - Resolve the authenticated identity for every service at the beginning. Never guess an ID, username, or display name from an earlier run.
@@ -33,9 +33,20 @@ A self-authored commitment belongs in the list only when all of these are true:
 
 Do not turn brainstorming, estimates, conditional possibilities, acknowledgements, vague intent, or completed-work statements into tasks. A phrase such as "I could look into it" is a commitment only when the surrounding conversation shows the user accepted that work. Preserve the promised deadline when present. When attribution, scope, or resolution is unclear, include `Check context` instead of guessing.
 
+A sent-and-awaiting-reply item belongs in the list only when all of these are true:
+
+1. The authenticated user sent the email or Slack message, and it asks a question, requests information or a decision, or otherwise clearly expects a response from one or more specific people.
+2. A reply is reasonably due: at least one full business day has passed since the user's message, unless the user supplies another range.
+3. No one else has replied in that thread or email chain since the user's message. Any reply from someone else resolves it, including an out-of-office reply or a partial answer, unless the reply calls out the remaining part as still open.
+4. The user has not sent a later follow-up on the same ask in the same thread. If they have, only the most recent outgoing message is the candidate.
+
+Do not include FYI notes, status broadcasts, messages that say no reply is needed, or threads where the user spoke last only to acknowledge something ("thanks", "sounds good").
+
 ## Gather items
 
 Run independent source searches in parallel where the MCP tools allow it. Resolve the authenticated identity for every source, then search both incoming requests and self-authored commitments. Read the surrounding thread, comment, page, issue, or meeting before deciding whether an item needs action. Keep the original link for every result.
+
+For an awaiting-reply search, pull the user's own sent messages within the period (Gmail sent mail, Slack messages authored by the signed-in user). Keep only those that read as a question or a clear ask of someone else. Then compare each thread's latest activity with the user's send time.
 
 For a commitment search, exhaust pagination for every search query and report when a source cannot enumerate all author-owned content. Use several narrowly targeted commitment queries rather than assuming one phrase catches every promise. Search natural variations of future ownership: `I'll`, `I will`, `I'll take`, `I can`, `I can own`, `I'll handle`, `I'll send`, `I'll check`, `I'll look`, `I'll follow up`, `I'm going to`, `I plan to`, `I'll get back`, and the authenticated user's name where a source needs it. Inspect candidates in context. An explicit user request for all history overrides the default live window; otherwise the durable backlog provides the historical pass.
 
@@ -51,6 +62,8 @@ Before live searches, read the durable backlog when available. Keep only records
 For commitments, search messages authored by the signed-in user across accessible public and private channels and DMs, using the service's author filter or equivalent search syntax. Paginate each query within the period, read the full thread, and retain only unresolved commitments. If the Slack API cannot enumerate all author-owned messages, state that limitation rather than claiming complete coverage.
 
 A message that says "FYI <@U123456>" is not a task. A message that says "<@U123456>, can you check the deploy?" is one.
+
+For awaiting-reply items, reuse the author-filtered search. Keep only messages that ask something of a specific person or that `@`-mention someone with a question or request. Read the thread with `slack_read_thread`. Keep the message when nobody else posted after it and a reply is due. Drop it when someone else replied. Use the thread permalink as the link and the person addressed as `From`.
 
 ### Linear
 
@@ -76,8 +89,9 @@ For commitments, search notes authored by the signed-in user in merge requests a
 
 1. Search sent mail in the period (`in:sent after:YYYY/MM/DD`) and read each thread. Keep concrete promises the user made with no later evidence of completion.
 2. Search the inbox for threads from real people that ask the user for a reply, decision, document, or action, and that the user has not answered. Exclude newsletters, calendar invites, and notification mail from GitLab, Linear, Slack, or Notion.
-3. Keep personal-admin and security items that need the user's action, such as an expense-tool activation or an unknown-device login alert.
-4. Never send, draft, label, archive, or trash mail. Link each item as `https://mail.google.com/mail/u/0/#all/<threadId>`.
+3. For awaiting-reply items, keep sent messages that make a clear ask of a named recipient. Exclude calendar invites, notifications, and receipts. Keep the thread when the user's message is still the last one and a reply is due. Drop it when a recipient replied, even partly, unless the reply leaves part of the ask open. Use the recipient as `From`.
+4. Keep personal-admin and security items that need the user's action, such as an expense-tool activation or an unknown-device login alert.
+5. Never send, draft, label, archive, or trash mail. Link each item as `https://mail.google.com/mail/u/0/#all/<threadId>`.
 
 ### Notion
 
@@ -109,7 +123,7 @@ Rewrite `~/.ai/eve/brain.md` with the `brain-update` format and sections. Keep i
 
 ## Combine and present
 
-Deduplicate results that refer to the same Slack thread, Linear issue or comment, GitLab note, Notion page/comment, or Granola meeting. Prefer the newest unresolved request or commitment when a thread has several. Sort by urgency when stated, then by newest activity. In the `Source` cell, append ` (promise)` for a self-authored commitment and set `From` to `You`.
+Deduplicate results that refer to the same Slack thread, Linear issue or comment, GitLab note, Notion page/comment, or Granola meeting. Prefer the newest unresolved request or commitment when a thread has several. Sort by urgency when stated, then by newest activity. In the `Source` cell, append ` (promise)` for a self-authored commitment and set `From` to `You`. Append ` (awaiting reply)` for the user's own unanswered message, set `From` to the people it waits on, and phrase `What needs attention` as `No reply yet - <short gist of the ask>`.
 
 Open with one sentence that says the services searched, time range, and any unavailable service. Then present every result in this exact ASCII-table shape. Keep cell text short, wrap long text onto following table rows, and use a short stable link label when a full URL would make the table unreadable.
 

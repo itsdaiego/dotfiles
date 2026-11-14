@@ -25,6 +25,7 @@ One line per item:
 ```
 
 - Prefix `(promise)` when the user said they would do it.
+- Prefix `(awaiting reply)` when the user sent an ask that nobody answered. Put it under `🟢 Customer and team promises` or `Admin and personal`.
 - Add `📅 YYYY-MM-DD` for a deadline. Use the real date. Convert "tomorrow" or "Friday" to a date.
 - Prefix `?` when the item may already be done or ownership is unclear.
 - Add `needs prod check` when only production data can confirm it.
