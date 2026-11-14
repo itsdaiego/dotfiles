@@ -26,5 +26,9 @@ test -f .claude/skills/brain-update/SKILL.md
 test -f .claude/skills/brain-alerts/SKILL.md
 test -f .claude/skills/copy-all/SKILL.md
 test -f .codex/skills/copy-all/SKILL.md
+test -f .claude/skills/walle-chat/SKILL.md
+test -f .codex/skills/walle-chat/SKILL.md
+test -f .pi/agent/skills/walle-chat/SKILL.md
+test -f .pi/pi-personal/skills/walle-chat/SKILL.md
 
 printf 'Automatic skill routing checks passed.\n'
