@@ -1,34 +1,18 @@
 onboarding = false
-# herdr config — mirrors ~/.config/tmux/tmux.conf keybindings
-# See /home/daiego/.config/tmux/tmux.conf for the source bindings.
 
 [keys]
-# tmux default prefix is unset in tmux.conf, so it stays ctrl+b — same here.
 prefix = "ctrl+b"
-
-# Ctrl-b then 0–9 selects workspaces (projects), not tabs/windows.
-# Custom commands below keep this zero-indexed on Herdr 0.8.0 as well.
 switch_workspace = ""
-# Collapse or expand the right sidebar.
 toggle_sidebar = "prefix+b"
-# tmux: `bind-key V split-window -h` (pane appears to the right)
 split_horizontal = "prefix+s"
-# tmux: `bind-key S split-window -v` (pane appears below)
 split_vertical = "prefix+v"
-
-# tmux: `bind r source-file ~/.config/tmux/tmux.conf`
 reload_config = "prefix+r"
-# freed up from the default prefix+r (moved here since tmux used r for reload)
 resize_mode = "prefix+shift+r"
-
-# tmux: `bind h/j/k/l select-pane -L/-D/-U/-R` (these already matched
-# herdr's own defaults, restated here for clarity)
 focus_pane_left = "prefix+h"
 focus_pane_down = "prefix+j"
 focus_pane_up = "prefix+k"
 focus_pane_right = "prefix+l"
 
-# tmux: `bind -n M-h/M-j/M-k/M-l select-pane ...` (no prefix, direct alt+hjkl)
 [[keys.command]]
 key = "alt+h"
 type = "shell"
@@ -49,7 +33,6 @@ key = "alt+l"
 type = "shell"
 command = "herdr pane focus --direction right --current"
 
-# tmux: `bind -n M-Left/M-Right/M-Up/M-Down resize-pane -L/-R/-U/-D 10`
 [[keys.command]]
 key = "alt+left"
 type = "shell"
@@ -70,7 +53,6 @@ key = "alt+down"
 type = "shell"
 command = "herdr pane resize --direction down --amount 10 --current"
 
-# tmux: `bind-key M-j/M-k/M-h/M-l resize-pane -D/-U/-L/-R` (prefixed alt+hjkl)
 [[keys.command]]
 key = "prefix+alt+h"
 type = "shell"
@@ -91,8 +73,6 @@ key = "prefix+alt+l"
 type = "shell"
 command = "herdr pane resize --direction right --amount 1 --current"
 
-# Ctrl-b then w: flat projects-only picker (built-in workspace_picker
-# and goto both drill into tabs/panes, this stays workspace-scoped).
 [[keys.command]]
 key = "prefix+w"
 type = "popup"
@@ -100,7 +80,6 @@ command = "herdr-workspace-picker"
 width = "60%"
 height = "60%"
 
-# Ctrl-b then a: same flat picker style, scoped to agent panes only.
 [[keys.command]]
 key = "prefix+a"
 type = "popup"
@@ -108,7 +87,6 @@ command = "herdr-agent-picker"
 width = "60%"
 height = "60%"
 
-# Zero-indexed project switching. The helper resolves the current sidebar/API order.
 [[keys.command]]
 key = "prefix+0"
 command = "herdr-workspace-focus-index 0"
@@ -162,8 +140,6 @@ sidebar_max_width = 20
 # Hidden by default, full width for panes. Ctrl-b then b brings it back.
 sidebar_start_collapsed = true
 sidebar_collapsed_mode = "hidden"
-
-# tmux: `set -g mouse on`
 mouse_capture = true
 
 # Use terminal ANSI yellow (Kitty Melange color3: #E49B5D) as Herdr's accent.
@@ -180,12 +156,8 @@ pane_borders = "auto"
 # the outer pane-area edges.
 pane_outer_borders = false
 pane_gaps = false
-# Keep pane scrollbars visible for navigation.
 pane_scrollbars = true
-# Remove the tab-number row whenever this space has a single tab.
 hide_tab_bar_when_single_tab = true
-
-# Move the tab row below the panes instead of above.
 tab_bar_position = "bottom"
 
 # Dots already label tabs, so a name prompt adds nothing. Create tabs at once.
@@ -205,7 +177,6 @@ delay_seconds = 1
 position = "bottom-right"
 
 [ui.sound]
-# no per-event (done vs needs-attention) toggle exists, only global on/off
 enabled = false
 
 # Use the host terminal's ANSI palette. Omarchy updates that palette whenever
