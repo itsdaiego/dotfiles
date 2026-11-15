@@ -1,11 +1,11 @@
 ---
 name: walle-review-risk
-description: Assess a Butler merge request or working tree with Wall-E's agent-owned review policy, then state whether it needs, should get, or does not need more review. Use for every Butler MR review or review-triage request.
+description: Assess or find Butler merge requests and working trees with Wall-E's agent-owned review policy, then state whether each needs, should get, or does not need more review. Use for every Butler MR review, risk search, or review-triage request.
 ---
 
 # Wall-E review risk
 
-Use this skill for every Butler merge-request review, audit, or triage, including when another review skill is used. It assesses the exact change that Wall-E would review. It does not call Slack or GitLab APIs, change labels, create a sandbox, or publish anything.
+Use this skill for every Butler merge-request review, risk search, audit, or triage, including when another review skill is used. It assesses the exact change that Wall-E would review. It may use read-only GitLab and Git calls to discover and inspect MRs. It does not change labels, create a sandbox, publish comments, approve MRs, or mutate remote state.
 
 ## Policy boundary
 
@@ -19,13 +19,33 @@ For a GitLab MR, read the exact source and target revisions, changed paths, diff
 
 Pass that context to the assessment. Do not rely on a path-only classifier: paths identify likely impact, while the diff determines whether the change actually creates the risk.
 
+## Find matching MRs
+
+When the user asks for a number of MRs at a risk level or within a scope, treat the request as discovery followed by one complete assessment per selected MR. A title, changed path, existing risk comment, or prior assessment is only shortlist evidence. It never fills a result slot by itself.
+
+1. Enumerate the complete current open-MR pool with pagination. Apply any explicit author, reviewer, draft, target, team, or product filter. Prefer ready MRs when the user does not mention drafts. Include a draft only when the ready pool cannot satisfy the request, and label it as a draft.
+2. Shortlist candidates from titles and changed-path summaries. Then inspect each candidate's exact head and target, complete diff, tests, pipeline, discussions, conflicts, and blast radius before classifying it.
+3. Apply every policy adjustment, including always-human paths, semantic size, feature flags, and graph reach. Existing Wall-E or human risk comments are evidence to check against the current policy and head. They do not override this assessment.
+4. Reject a candidate that misses the requested risk or scope, record the concrete reason, and continue searching. Never lower a result, ignore an always-human path, omit generated-source behavior, or substitute review attention for risk to meet the requested count.
+5. Never force the quota. If fewer verified matches exist, report the verified count and the closest rejected candidates with their actual classifications.
+
+Interpret scope qualifiers from authored changes, not repository language or filenames alone:
+
+- **Backend** without another qualifier means production runtime backend code under `src/document_extractor`, excluding changes that are only tests, fixtures, snapshots, generated clients, prompts, documentation, `analysis/`, or `evals/`. An MR may include those files, but it needs at least one authored runtime backend change to fill a backend slot.
+- **Internal backend**, **backend tooling**, or an explicit request that allows evals includes `analysis/`, `evals/`, and offline scripts. Label each selected MR as production runtime, eval, analysis, or test-only so the user can see what satisfied the scope.
+- **Docs do not count** means a docs-only MR cannot fill a slot. Documentation that accompanies qualifying code remains part of the diff and risk assessment.
+- Prompt and Jinja template changes are prompt changes, not documentation changes. Apply the prompt policy even when the file extension is Markdown.
+- Generated output does not establish frontend or backend scope. Use the authored source that produced it.
+
+For a discovery response, add a short search audit after the result table: how many open MRs were scanned, how many candidates received complete assessments, and the specific near-misses rejected for risk or scope. This audit must make it possible to tell that every selected MR was classified at its reported current head.
+
 ## Wall-E policy
 
 The change sets the risk, not the author. Assess risk from the highest applicable impact. Each level says how many people should approve the MR:
 
-- **High (two people):** authentication, authorization, secrets, payments, destructive data operations, database migrations, tenant isolation, public API compatibility breaks, production deployment controls, any always-human path below, or an unbounded change with no credible verification.
-- **Medium (one person):** ordinary product changes, shared business behavior, background jobs or alert delivery, integration/provider handling, data selection or persistence, infrastructure changes, generated client or DTO contracts that change compatibility behavior, or a change whose tests do not cover its main failure mode. In Butler, these sensitive areas are also medium: LLM prompts and system prompts, caching, Celery tasks and schedules, and integration sync.
-- **Low (no person once CI and the automated review are green):** isolated tests, documentation, copy, local tooling, internal-only features, narrowly scoped presentation-only code, mechanical refactors that preserve behavior and have adequate verification, compatibility-preserving internal contract additions, or additive changes behind a feature flag that is off by default.
+- **High (two people):** platform authentication or authorization boundaries; secret storage, transmission, redaction, or access; payments; destructive data operations; database migrations; tenant isolation; public API compatibility breaks; production deployment controls; any always-human path below; or an unbounded change with no credible verification.
+- **Medium (one person):** product behavior with meaningful shared reach, shared business behavior, shared account or integration configuration behavior, background jobs or alert delivery, integration/provider handling, data selection or persistence, infrastructure changes, generated client or DTO contracts that change compatibility behavior, or a change whose tests do not cover its main failure mode. In Butler, these sensitive areas are also medium: LLM prompts and system prompts, caching, Celery tasks and schedules, and integration sync.
+- **Low (no person once CI and the automated review are green):** localized product bug fixes and behavior changes with isolated code and user reach plus focused verification; localized self-service account or integration configuration; isolated tests; documentation; copy; local tooling; internal-only features; narrowly scoped presentation-only code; mechanical refactors that preserve behavior and have adequate verification; compatibility-preserving internal contract additions; or additive changes behind a feature flag that is off by default.
 
 Then adjust the result:
 
@@ -33,6 +53,26 @@ Then adjust the result:
 - **Feature flag.** When every logic change runs only behind a feature flag that defaults to off, and the diff does not change the flag's default, the result may drop to low. Name the flag in the report.
 - **Size.** When the semantic diff changes more than 1,000 lines, raise the result by one step, because most changes that large have findings. Count authored source, configuration, migrations, and tests. Do not count deterministic generated output or lockfile churn when a small reviewed source change produces it, the generator recreates the exact output, and the relevant checks pass. Report both the raw and semantic line counts when they differ. A large authored change does not become small because it also updates generated output.
 - **Blast radius.** Apply the code-graph result as described below.
+
+### Impact and reach assessment
+
+Start with the consequence if the change is wrong. A sensitive consequence makes the change high even when the edited function is isolated. Otherwise, use actual code reach and user reach to distinguish low from medium.
+
+A production logic edit does not become medium only because it changes behavior. A localized conditional, bug fix, or UI interaction stays low when it affects one narrow path or audience, has few production dependents, does not cross a sensitive boundary, and has a focused regression test. Raise it to medium when it affects several workflows, modules, organizations, or user groups, or when it changes shared behavior without adequate verification.
+
+Use the graph when it covers the code. When the graph does not cover a changed area, inspect callers, consumers, and the product surface directly. Unknown graph reach does not automatically make a change medium when the diff and direct usage evidence prove that it is isolated. Report the missing graph coverage as uncertainty.
+
+Classify secret-related changes by the boundary they alter. Storage, transmission, logging, redaction, and who may access a secret are high. A standard reveal control that shows an authorized administrator only the value they just entered is presentation behavior, unless the diff also returns, persists, logs, or exposes a saved secret.
+
+### User-managed configuration
+
+An authorized user who changes settings for their own account or organization is not changing the platform's authorization boundary. Classify configuration from its code reach and failure consequences, even when the setting controls which integration tools the product may use. Examples include changing an email address, selecting integration tools, editing firm instructions, or enabling an account feature.
+
+A configuration change can be low when it is isolated to one account or integration, preserves the existing role and tenant checks, affects only the user's chosen settings, and has focused verification. It is medium when it changes shared runtime behavior, persisted configuration semantics, provider calls, automatic external writes, or several configuration consumers. It is high only when it changes who may manage the configuration, bypasses role or tenant checks, applies one tenant's choice to another tenant, exposes protected data, or independently creates another high consequence.
+
+A surprising result within one organization's authorized configuration, such as interpreting a stale selection as every tool, is usually a product or integration bug. Classify it by reach and side effects instead of treating it as platform authorization. Raise it to high only when it crosses a platform security boundary or creates another high consequence.
+
+Risk measures the impact and reach of the code change. Pipeline failures, unresolved findings, and merge-state concerns determine review attention separately, unless they also prove that the change lacks credible verification.
 
 ### Contract and behavior assessment
 
@@ -95,8 +135,8 @@ The first lines of the output give the reach and its reason, the exact head SHA 
 ### Apply the result
 
 - A `high` reach raises the policy result by one step: low becomes medium, and medium becomes high.
-- A `medium` reach supports a medium result for shared behavior, but does not raise the result by itself.
-- A `low` reach never lowers the result. A one-line change to a leaf authorization check is still high.
+- A `medium` reach raises a low logic change to medium when the changed behavior is shared. It does not raise medium to high.
+- A `low` reach preserves a low result for localized behavior. It never lowers a sensitive result. A one-line change to an isolated authorization check is still high.
 - A `low` reach that says the diff only adds names, text, or imports to widely used code does not raise the result. For an additive contract, confirm that old producers may omit it, old consumers tolerate it, and code generation and type checks cover every affected boundary. Mention broad reach only when the new name is wired into shared behavior elsewhere in the same diff, because that wiring shows up as its own logic change.
 - A high-reach change with few tests covering it is a coverage gap. Name it in the report.
 - When the reason says "Partial", the estimate covers only the files in the graph. Say so. When the reach is `unknown`, say the blast radius was not measured and leave the policy result unchanged.
@@ -144,9 +184,11 @@ Open with one line per MR: `Risk: <low|medium|high>. <one plain sentence that sa
 
 When the report covers more than one MR, put them in a table with these columns, in this order: MR, Title, Risk, Why, Link. The MR column holds the number, such as `!24253`. Title is the MR title. Link is the full MR URL and is always the last column.
 
+For a discovery request, report only MRs that completed the full assessment. Follow the table with the search audit from **Find matching MRs**. Do not present a shortlist as a verified result.
+
 Then state:
 
-- The policy version: `Wall-E agent policy v4`.
+- The policy version: `Wall-E agent policy v6`.
 - The changed areas and the diff evidence that raised or lowered the result: always-human paths, raw and semantic size when they differ, feature flag, blast radius, and compatibility evidence for a contract or iteration change.
 - The blast radius: the reach and its reason, any other high- or medium-reach nodes, and whether the graph was partial, stale, or missing. Do not use the words hub, shared, or leaf in the report.
 - The exact head SHA that was assessed, the target branch, and the merge base, or the working-tree scope.

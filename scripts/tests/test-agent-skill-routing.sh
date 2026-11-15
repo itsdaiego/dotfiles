@@ -51,4 +51,13 @@ test -f .codex/skills/walle-chat/SKILL.md
 test -f .pi/agent/skills/walle-chat/SKILL.md
 test -f .pi/pi-personal/skills/walle-chat/SKILL.md
 
+risk_skill=.pi/agent/skills/walle-review-risk/SKILL.md
+grep -F 'complete current open-MR pool with pagination' "$risk_skill" >/dev/null
+grep -F 'It never fills a result slot by itself.' "$risk_skill" >/dev/null
+grep -F 'Never force the quota.' "$risk_skill" >/dev/null
+grep -F '**Backend** without another qualifier means production runtime backend code' "$risk_skill" >/dev/null
+grep -F '**Docs do not count** means a docs-only MR cannot fill a slot.' "$risk_skill" >/dev/null
+grep -F 'Prompt and Jinja template changes are prompt changes, not documentation changes.' "$risk_skill" >/dev/null
+grep -F 'add a short search audit after the result table' "$risk_skill" >/dev/null
+
 printf 'Automatic skill routing checks passed.\n'
