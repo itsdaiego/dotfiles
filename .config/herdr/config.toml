@@ -155,9 +155,9 @@ sidebar_position = "right"
 
 # Keep spaces/agents compact; one-character pane/workspace numbers cannot be
 # rendered smaller independently in a terminal UI.
-sidebar_width = 25
-sidebar_min_width = 25
-sidebar_max_width = 25
+sidebar_width = 20
+sidebar_min_width = 20
+sidebar_max_width = 20
 
 # Hidden by default, full width for panes. Ctrl-b then b brings it back.
 sidebar_start_collapsed = true
