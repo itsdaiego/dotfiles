@@ -9,6 +9,7 @@ sh -n scripts/install-agent-configs.sh
 sh -n scripts/tests/test-install-agent-configs.sh
 sh -n scripts/tests/test-agent-skill-routing.sh
 sh -n scripts/tests/test-herdr-agent-picker.sh
+sh -n scripts/tests/test-herdr-agent-picker-focus.sh
 sh -n .local/bin/codex-company
 sh -n .local/bin/codex-personal
 sh -n .claude/hooks/herdr-agent-state.sh
@@ -33,6 +34,7 @@ python3 -m unittest discover -s .agent-customizations/start-reviewer/scripts -p 
 sh scripts/tests/test-install-agent-configs.sh
 sh scripts/tests/test-agent-skill-routing.sh
 sh scripts/tests/test-herdr-agent-picker.sh
+sh scripts/tests/test-herdr-agent-picker-focus.sh
 
 find .config/herdr/scripts .agent-customizations .codex .codex-personal .claude .pi .local/bin -type l -print | while IFS= read -r link; do
   case "$link" in
