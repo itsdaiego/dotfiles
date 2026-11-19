@@ -124,7 +124,7 @@ The file `BUILT_FROM`, next to `graphify-out/`, records the Butler commit the gr
 Run the estimate from a checkout that has both revisions. Use the MR's target branch as `--base` and the exact source head as `--head`. The script is `scripts/blast_radius.py` next to this file:
 
 ```sh
-python3 -I ~/.pi/agent/skills/walle-review-risk/scripts/blast_radius.py \
+python3 -I ~/.pi/agent/skills/review-risk/scripts/blast_radius.py \
   --graph ~/Documents/code-stuff/eve/graphify-intake-full/graphify-out/graph.json \
   --repo <butler checkout> --base origin/master --head <source sha> \
   --prefix src/document_extractor

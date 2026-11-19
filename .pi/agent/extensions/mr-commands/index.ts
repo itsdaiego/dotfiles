@@ -1,22 +1,13 @@
 import { execFile as execFileCallback } from "node:child_process";
 import { promisify } from "node:util";
-import path from "node:path";
-
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 
 const execFile = promisify(execFileCallback);
 const BUTLER_PROJECT = "butlerinc/butler";
-const RISK_WORKTREE =
-	process.env.WALLE_RISK_WORKTREE ?? "/Users/daiego/Documents/code-stuff/eve/butler-walle-risk";
-const RISK_PREVIEW_POLICY_REF =
-	process.env.WALLE_RISK_PREVIEW_POLICY_REF ?? "origin/empran/risk-tier-gate";
 const MAX_TOTAL_DIFF_CHARS = 120_000;
 
 type MergeRequest = {
 	iid: number;
-	sourceBranch: string;
-	targetBranch: string;
-	sha: string;
 	title: string;
 };
 
@@ -115,63 +106,8 @@ async function getMergeRequest(iid: number): Promise<MergeRequest> {
 	const responseIid = readNumber(parsed, "iid");
 	return {
 		iid: responseIid,
-		sourceBranch: readString(parsed, "source_branch"),
-		targetBranch: readString(parsed, "target_branch"),
-		sha: readString(parsed, "sha"),
 		title: readString(parsed, "title"),
 	};
-}
-
-async function refHasPolicy(ref: string): Promise<boolean> {
-	try {
-		await run("git", ["cat-file", "-e", `${ref}:.gitlab/risk-tiers.toml`], RISK_WORKTREE);
-		return true;
-	} catch {
-		return false;
-	}
-}
-
-async function riskReport(mr: MergeRequest): Promise<string> {
-	const sourceRef = `refs/walle-review-risk/mr-${mr.iid}`;
-	const targetRef = `origin/${mr.targetBranch}`;
-	const reporter = path.join(
-		RISK_WORKTREE,
-		".claude/skills/walle-review-risk/scripts/report.py",
-	);
-
-	await run("git", ["fetch", "origin", mr.targetBranch], RISK_WORKTREE);
-	await run("git", ["fetch", "origin", `${mr.sourceBranch}:${sourceRef}`], RISK_WORKTREE);
-
-	const command = [
-		reporter,
-		"--target",
-		targetRef,
-		"--head",
-		sourceRef,
-	];
-	const environment = { ...process.env, PYTHONPATH: path.join(RISK_WORKTREE, "src/document_extractor") };
-	const executeReport = async (args: string[]): Promise<string> => {
-		const { stdout } = await execFile("python3", args, {
-			cwd: RISK_WORKTREE,
-			encoding: "utf8",
-			maxBuffer: 2_000_000,
-			env: environment,
-		});
-		return stdout;
-	};
-
-	if (await refHasPolicy(targetRef)) {
-		return `Wall-E-equivalent risk result\n\n${await executeReport(command)}`;
-	}
-	if (!(await refHasPolicy(RISK_PREVIEW_POLICY_REF))) {
-		return `Wall-E-equivalent result: unlabelled. ${targetRef} has no risk policy, and the local preview policy is unavailable.`;
-	}
-	return [
-		`Wall-E-equivalent result: unlabelled. ${targetRef} has no risk policy.`,
-		"",
-		`Local preview using ${RISK_PREVIEW_POLICY_REF}:`,
-		await executeReport([...command, "--policy-ref", RISK_PREVIEW_POLICY_REF]),
-	].join("\n");
 }
 
 function truncate(text: string, maxChars: number): string {
@@ -182,8 +118,8 @@ function truncate(text: string, maxChars: number): string {
 }
 
 export default function (pi: ExtensionAPI) {
-	pi.registerCommand("walle-review-risk", {
-		description: "Classify Butler GitLab MRs with Wall-E's local risk policy; infers recent MRs when omitted",
+	pi.registerCommand("review-risk", {
+		description: "Classify Butler GitLab MRs with the review-risk skill; infers recent MRs when omitted",
 		handler: async (args, ctx) => {
 		if (!ctx.isIdle()) {
 			ctx.ui.notify("Wait for the current response before running a risk report.", "warning");
@@ -196,12 +132,8 @@ export default function (pi: ExtensionAPI) {
 		}
 		try {
 			const mrs = await Promise.all(iids.map(getMergeRequest));
-			const reports: string[] = [];
-			for (const mr of mrs) {
-				reports.push(`!${mr.iid}, ${mr.title}:\n\n${await riskReport(mr)}`);
-			}
 			pi.sendUserMessage(
-				`Local deterministic Wall-E risk report for ${mrs.map((mr) => `!${mr.iid}`).join(", ")}:\n\n${reports.join("\n\n---\n\n")}\n\nExplain each result concisely. Do not post to Slack or GitLab, change labels, or publish anything.`,
+				`Run the review-risk skill for these Butler MRs at their current exact heads: ${mrs.map((mr) => `!${mr.iid} (${mr.title})`).join(", ")}. Follow its deterministic-first flow, use Jev only when the risk is not already unavoidably high, and report the final risk, Jev result or skip reason, blast radius, exact SHA, and review attention. Do not post to Slack or GitLab, change labels, approve, or publish anything.`,
 			);
 		} catch (error) {
 			ctx.ui.notify(`Could not classify the MR: ${commandError(error)}`, "error");

@@ -70,8 +70,8 @@ grep -F 'TypeSafe Jev classification' "$risk_skill" >/dev/null
 grep -F 'Apply the deterministic policy before calling Jev.' "$risk_skill" >/dev/null
 grep -F 'Skip Jev when an always-human path already makes the result high.' "$risk_skill" >/dev/null
 
-grep -F 'TypeSafe Jev classifier' .pi/agent/skills/review-mr/SKILL.md >/dev/null
-grep -F 'TypeSafe Jev classifier' .claude/skills/review-mr/SKILL.md >/dev/null
+grep -F 'TypeSafe Jev result' .pi/agent/skills/review-mr/SKILL.md >/dev/null
+grep -F 'TypeSafe Jev result' .claude/skills/review-mr/SKILL.md >/dev/null
 grep -F '`review-risk` for every exact MR head' .agent-customizations/walle-review/SKILL.md >/dev/null
 grep -F 'pi.registerCommand("review-risk"' .pi/agent/extensions/mr-commands/index.ts >/dev/null
 ! grep -F 'pi.registerCommand("walle-review-risk"' .pi/agent/extensions/mr-commands/index.ts >/dev/null
