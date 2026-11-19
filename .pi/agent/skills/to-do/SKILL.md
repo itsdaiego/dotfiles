@@ -1,6 +1,6 @@
 ---
 name: to-do
-description: Build a read-only personal to-do list from Slack, Notion, Linear, and GitLab, including retained unresolved requests older than 30 days. Use when Daiego asks for "/todo", "to do", what needs attention, recent pings, explicit mentions, or pending code reviews. Report only actionable requests from other people, not ordinary assignments or general notifications.
+description: Build a read-only personal to-do list from Slack, Notion, Linear, and GitLab, including retained unresolved requests older than 30 days. Use when Daiego asks for "/todo", "to do", what needs attention, recent pings, or explicit mentions. Report only actionable requests from other people, not ordinary assignments, code reviews, or general notifications.
 ---
 
 # To do
@@ -17,11 +17,11 @@ Build one short, actionable list across the requested services. This skill is re
 
 An item belongs in the list only when all of these are true:
 
-1. Someone other than the authenticated user explicitly mentioned or tagged them, or formally requested their review on a GitLab merge request.
+1. Someone other than the authenticated user explicitly mentioned or tagged them.
 2. The message, comment, or page asks for a reply, decision, investigation, change, review of content, or another concrete next action.
 3. The item is not clearly resolved in a later reply, comment, or page update.
 
-Exclude FYIs, automated notices, status updates, ordinary assignments without a mention, reactions, and messages that merely include the user's name. A formal GitLab review request is the only assignment-style exception. When the request is unclear, include it with `Check context` as the action instead of inventing work.
+Exclude FYIs, automated notices, status updates, code-review requests, ordinary assignments without a mention, reactions, and messages that merely include the user's name. Use the review-queue skill for merge-request reviews. When the request is unclear, include it with `Check context` as the action instead of inventing work.
 
 ## Gather items
 
@@ -52,7 +52,7 @@ Do not use `linear_list_issues` with `assignee: "me"` as a substitute for mentio
 1. Identify the signed-in user with `gitlab_get_user` using `me: true`.
 2. Search GitLab notes with `gitlab_search`, `scope: "notes"`, and the exact mention form `@<username>`. Search the user's display name only when the workspace uses it for real mentions, then verify the note contains an explicit tag.
 3. Exclude notes authored by the signed-in user. Read the parent merge request or work item when the note lacks enough context.
-4. Keep direct, unresolved action requests and formal review requests. Do not add an item merely because the user is an assignee. A merged or closed merge request resolves its review request unless a later note asks for another action.
+4. Keep only direct, unresolved action requests. Exclude merge-request reviews, reviewer assignments, approval requests, and merge-request status updates; use the review-queue skill for those.
 
 ### Notion
 
@@ -64,16 +64,12 @@ Do not use `linear_list_issues` with `assignee: "me"` as a substitute for mentio
 
 Deduplicate results that refer to the same Slack thread, Linear issue or comment, GitLab note, or Notion page/comment. Prefer the newest explicit request when a thread has several. Sort by urgency when stated, then by newest activity.
 
-Open with one sentence that says the services searched, time range, and any unavailable service. Then present every result in this exact ASCII-table shape. Keep cell text short, wrap long text onto following table rows, and use a short stable link label when a full URL would make the table unreadable.
+Open with one sentence that says the services searched, time range, and any unavailable service. Then present every result in a GitHub-flavored Markdown table. Do not put the table in a code block or emit a raw ASCII table: the chat renderer will flatten it.
 
-```text
-+--------+----------------------+------------------+------------------+------------------+
-| Source | What needs attention | From             | When             | Link             |
-+--------+----------------------+------------------+------------------+------------------+
-| Slack  | Check the deploy log | Alex Kim         | 2026-10-21 09:14 | Slack thread     |
-+--------+----------------------+------------------+------------------+------------------+
-```
+| Source | What needs attention | From | When | Link |
+| --- | --- | --- | --- | --- |
+| Slack | Check the deploy log | Alex Kim | 2026-10-21 09:14 | [Slack thread](https://example.com) |
 
-Make `What needs attention` an imperative or a clear `Check context` prompt. Do not repeat long message text. Put the actual link behind the link label when the client supports Markdown links; otherwise print the URL on a continuation row below its item.
+Keep every cell to one concise line. Make `What needs attention` an imperative or a clear `Check context` prompt; shorten the action instead of splitting it onto a second row. Put the actual URL behind a short Markdown link label. Do not print bare URLs unless the client cannot render Markdown links.
 
 If no items qualify, still return the table with one row that says `No unresolved explicit requests found`. If a service cannot be searched, include one row for it with the cause and the next safe step. End with one short line that names any excluded categories only when that matters to the result.
