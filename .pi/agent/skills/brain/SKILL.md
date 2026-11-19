@@ -121,11 +121,36 @@ Before you keep an item that is due or older than 3 days, check whether it is al
 
 Rewrite `~/.ai/eve/brain.md` with the `brain-update` format and sections. Keep items that the sweep could not recheck, and mark them `?`. Then write or refresh `~/.ai/eve/weekly/YYYY-Www.md` when the user asks what to do next week.
 
+## Classify status
+
+Classify every unresolved item before presenting it:
+
+- `Pending`: no concrete execution has started. This includes unclaimed work, a request that only has an assignee, an unanswered question, a decision that still needs an owner, or work waiting for its first action.
+- `In progress`: concrete execution has started. Evidence includes an active branch or MR, implementation or testing underway, a submitted setup, a draft document being revised, a partial deployment, or active investigation with recorded findings. Assignment alone is not progress.
+- `Done`: the work is complete, canceled, superseded, or no longer actionable. Keep its evidence in `brain.md` or `log.md` according to the `brain-update` rules, but never show it in the current-results table.
+
+When the evidence is unclear, use `Pending`. Do not infer progress from an owner, Linear status, or stale claim without a concrete action.
+
 ## Combine and present
 
-Deduplicate results that refer to the same Slack thread, Linear issue or comment, GitLab note, Notion page/comment, or Granola meeting. Prefer the newest unresolved request or commitment when a thread has several. Sort by urgency when stated, then by newest activity. In the `Source` cell, append ` (promise)` for a self-authored commitment and set `From` to `You`. Append ` (awaiting reply)` for the user's own unanswered message, set `From` to the people it waits on, and phrase `What needs attention` as `No reply yet - <short gist of the ask>`.
+Deduplicate results that refer to the same Slack thread, Linear issue or comment, GitLab note, Notion page/comment, or Granola meeting. Prefer the newest unresolved request or commitment when a thread has several.
 
-Open with one sentence that says the services searched, time range, and any unavailable service. Then present every result in one table. Keep cell text short and use a short stable link label when a full URL would make the table unreadable.
+Sort the table in this exact order:
+
+1. `Pending`, newest activity first.
+2. `In progress`, newest activity first.
+3. Never include `Done` rows.
+
+Within each status, use the source's latest activity time, not the original creation time. In the `Source` cell, append ` (promise)` for a self-authored commitment and set `From` to `You`. Append ` (awaiting reply)` for the user's own unanswered message, set `From` to the people it waits on, and phrase `What needs attention` as `No reply yet - <short gist of the ask>`.
+
+Open with one sentence that says the services searched, time range, and any unavailable service. Then present every unresolved result in one table. Keep cell text short and use a short stable link label when a full URL would make the table unreadable.
+
+Make the source easy to identify:
+
+- Slack: set `Source` to `Slack`, put the channel name in `Channel / MR`, and link the thread.
+- GitLab: set `Source` to `GitLab`, put the linked MR number in `Channel / MR`, and link the MR.
+- A Slack-originated item with active MR work: use `Slack + GitLab`, show both the Slack channel and MR number in `Channel / MR`, and include both links.
+- Linear, Gmail, Notion, or Granola: use the service name and a short issue, thread, page, or meeting label in `Channel / MR`.
 
 Pick the table format from the interface that renders this reply:
 
@@ -134,26 +159,26 @@ Pick the table format from the interface that renders this reply:
 
 The `table-view` skill holds the same rule when another skill needs it.
 
-Give every row a leading `Done` column with a literal `[ ]`, so the user can reply naming a row (or paste its checked line back) to mark it done. This is a visual marker only, not a live checkbox: nothing in the rendered reply writes back on click. Marking something done still means the user tells you in chat, which you then handle with the `brain-update` rules (close the brain.md line, log it with evidence).
-
 Rendered client:
 
 ```markdown
-| Done | Source | What needs attention | From | When | Link |
-|---|---|---|---|---|---|
-| [ ] | Slack | Check the deploy log | Alex Kim | 2026-10-21 09:14 | [Slack thread](https://...) |
+| Status | Source | Channel / MR | What needs attention | From | When | Link |
+|---|---|---|---|---|---|---|
+| Pending | Slack | #intake-alerts | Check the deploy log | Alex Kim | 2026-10-21 09:14 | [Slack thread](https://...) |
+| In progress | Slack + GitLab | #bug-report · !12345 | Merge and deploy the fix | You | 2026-10-20 16:30 | [Slack](https://...) · [!12345](https://...) |
 ```
 
 Plain terminal (wrap long text onto following rows):
 
 ```text
-+------+--------+----------------------+------------------+------------------+------------------+
-| Done | Source | What needs attention | From             | When             | Link             |
-+------+--------+----------------------+------------------+------------------+------------------+
-| [ ]  | Slack  | Check the deploy log | Alex Kim         | 2026-10-21 09:14 | Slack thread     |
-+------+--------+----------------------+------------------+------------------+------------------+
++-------------+------------------+----------------------+----------------------+------------------+------------------+------------------+
+| Status      | Source           | Channel / MR         | What needs attention | From             | When             | Link             |
++-------------+------------------+----------------------+----------------------+------------------+------------------+------------------+
+| Pending     | Slack            | #intake-alerts       | Check the deploy log | Alex Kim         | 2026-10-21 09:14 | Slack thread     |
+| In progress | Slack + GitLab   | #bug-report · !12345 | Merge and deploy fix | You              | 2026-10-20 16:30 | Slack · !12345   |
++-------------+------------------+----------------------+----------------------+------------------+------------------+------------------+
 ```
 
 Make `What needs attention` an imperative or a clear `Check context` prompt. Do not repeat long message text.
 
-If no items qualify, still return the table with one row that says `No unresolved explicit requests found`. If a service cannot be searched, include one row for it with the cause and the next safe step. End with one short line that names excluded categories or any source-coverage limitation only when that matters to the result.
+If no unresolved items qualify, still return the table with one row that says `No unresolved explicit requests found`. If a service cannot be searched, include one `Pending` row for it with the cause and the next safe step. End with one short line that names excluded categories or any source-coverage limitation only when that matters to the result.
