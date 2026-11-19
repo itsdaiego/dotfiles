@@ -10,6 +10,7 @@
     "@tmustier/pi-usage-extension": "^0.9.4",
     "graphify-pi": "^0.3.0",
     "pi-mcp-adapter": "3.3.0",
+    "pi-remote-control": "^1.0.9",
     "pi-vim": "^0.14.1"
   },
   "scripts": {

@@ -134,22 +134,24 @@ Pick the table format from the interface that renders this reply:
 
 The `table-view` skill holds the same rule when another skill needs it.
 
+Give every row a leading `Done` column with a literal `[ ]`, so the user can reply naming a row (or paste its checked line back) to mark it done. This is a visual marker only, not a live checkbox: nothing in the rendered reply writes back on click. Marking something done still means the user tells you in chat, which you then handle with the `brain-update` rules (close the brain.md line, log it with evidence).
+
 Rendered client:
 
 ```markdown
-| Source | What needs attention | From | When | Link |
-|---|---|---|---|---|
-| Slack | Check the deploy log | Alex Kim | 2026-10-21 09:14 | [Slack thread](https://...) |
+| Done | Source | What needs attention | From | When | Link |
+|---|---|---|---|---|---|
+| [ ] | Slack | Check the deploy log | Alex Kim | 2026-10-21 09:14 | [Slack thread](https://...) |
 ```
 
 Plain terminal (wrap long text onto following rows):
 
 ```text
-+--------+----------------------+------------------+------------------+------------------+
-| Source | What needs attention | From             | When             | Link             |
-+--------+----------------------+------------------+------------------+------------------+
-| Slack  | Check the deploy log | Alex Kim         | 2026-10-21 09:14 | Slack thread     |
-+--------+----------------------+------------------+------------------+------------------+
++------+--------+----------------------+------------------+------------------+------------------+
+| Done | Source | What needs attention | From             | When             | Link             |
++------+--------+----------------------+------------------+------------------+------------------+
+| [ ]  | Slack  | Check the deploy log | Alex Kim         | 2026-10-21 09:14 | Slack thread     |
++------+--------+----------------------+------------------+------------------+------------------+
 ```
 
 Make `What needs attention` an imperative or a clear `Check context` prompt. Do not repeat long message text.
