@@ -7,7 +7,7 @@ This directory starts one Pi Pocket server for each Pi profile. Both servers use
 | Personal | `~/.pi/pi-personal` | `http://<tailscale-ip>:8788` | `~/.pi-pocket-personal` |
 | Work | `~/.pi/pi-work` | `http://<tailscale-ip>:8789` | `~/.pi-pocket-work` |
 
-Both profiles use `~/.pi/agent/sessions` to find existing terminal Pi sessions. A Pi Pocket continuation is a new durable session. It does not live-sync with the original terminal session after it starts.
+The work profile uses Pi's default discovery under `~/.pi/agent/sessions`, including the project subdirectories that hold `pi-work` sessions. The personal profile keeps the shared session-directory override. A Pi Pocket continuation is a new durable session. It does not live-sync with the original terminal session after it starts.
 
 ## Start servers
 

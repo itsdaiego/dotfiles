@@ -7,6 +7,7 @@ cd "$repo_dir"
 
 sh -n scripts/install-agent-configs.sh
 sh -n scripts/tests/test-install-agent-configs.sh
+sh -n scripts/tests/test-pi-durable.sh
 sh -n scripts/tests/test-agent-skill-routing.sh
 sh -n scripts/tests/test-herdr-agent-picker.sh
 sh -n .local/bin/codex-company
@@ -31,6 +32,7 @@ CODEX_HOME=$codex_check_dir codex features list >/dev/null
 python3 -m unittest discover -s .config/herdr/scripts/auto-name/tests -v
 python3 -m unittest discover -s .agent-customizations/start-reviewer/scripts -p 'test_*.py' -v
 sh scripts/tests/test-install-agent-configs.sh
+sh scripts/tests/test-pi-durable.sh
 sh scripts/tests/test-agent-skill-routing.sh
 sh scripts/tests/test-herdr-agent-picker.sh
 
