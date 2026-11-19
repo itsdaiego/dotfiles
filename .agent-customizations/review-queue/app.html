@@ -202,14 +202,14 @@ function adversarialPill(r) {
   return '<span class="pill ok">Adversarial pass complete</span>';
 }
 
-function walleRisk(r) { return r && r.walle_risk; }
-function walleRiskPill(r) {
-  const risk = walleRisk(r);
+function reviewRisk(r) { return r && (r.review_risk || r.walle_risk); }
+function reviewRiskPill(r) {
+  const risk = reviewRisk(r);
   if (!risk) return "";
-  if (!risk.available) return '<span class="pill grey">Wall-E risk unavailable</span>';
-  const level = risk.report && risk.report.risk;
-  if (!level) return '<span class="pill grey">Wall-E risk unavailable</span>';
-  return `<span class="pill ${level === "high" ? "bad" : level === "medium" ? "warn" : "ok"}">Wall-E risk: ${esc(level)}</span>`;
+  if (!risk.available) return '<span class="pill grey">Review risk unavailable</span>';
+  const level = risk.risk || (risk.report && risk.report.risk);
+  if (!level) return '<span class="pill grey">Review risk unavailable</span>';
+  return `<span class="pill ${level === "high" ? "bad" : level === "medium" ? "warn" : "ok"}">Review risk: ${esc(level)}</span>`;
 }
 
 function jobState(iid) { return JOBS[String(iid)] || null; }
@@ -316,7 +316,7 @@ function renderList() {
           ${ci.key !== "none" && l.ci.url ? `<a href="${esc(l.ci.url)}" target="_blank" onclick="event.stopPropagation()"><span class="pill ${ci.cls}">${esc(ci.label)}</span></a>` : `<span class="pill ${ci.cls}">${esc(ci.label)}</span>`}
           ${l.draft ? '<span class="pill grey">Draft</span>' : ""}
           ${l.has_conflicts ? '<span class="pill bad">Conflicts</span>' : ""}
-          ${nc ? `<span class="pill bad">${nc} new critical</span>` : ""}${l.is_mine ? "" : verdictPill(x)}${walleRiskPill(x.review)}${adversarialPill(x.review)}
+          ${nc ? `<span class="pill bad">${nc} new critical</span>` : ""}${l.is_mine ? "" : verdictPill(x)}${reviewRiskPill(x.review)}${adversarialPill(x.review)}
         </div>
       </div>
       <div class="side">
@@ -346,11 +346,13 @@ function renderPanel() {
   else html += `<div class="box info">${l.is_mine ? "No automated review results yet." : "No review yet. Start one to get the read-mr summary and the review-mr findings."}</div>`;
   const teamStatus = teamReview(l);
   const teamReviewDetail = l.is_mine ? teamStatus.state === "changes" ? `changes requested by ${esc(teamStatus.people)} (${commentLabel(teamStatus.count)})` : teamStatus.state === "approved" ? `approved by ${esc(teamStatus.people)}` : teamStatus.state === "commented" ? `${esc(teamStatus.people)} left ${commentLabel(teamStatus.count)}` : "no teammate review" : l.approved_by_me ? "you approved" : l.needs_review ? "nobody on the team (" + esc(DATA.team.join(", ")) + ") started" : "started by " + esc(l.team_started_by.map(n => n + (l.team_comments[n] ? ` (${l.team_comments[n]} notes)` : "") + (l.team_approved.includes(n) ? " (approved)" : "")).join(", "));
-  const risk = walleRisk(r), riskReport = risk && risk.report;
-  const riskDetail = !risk ? "not assessed" : !risk.available ? `unavailable: ${esc(risk.reason || "Wall-E could not classify this MR.")}` : riskReport && riskReport.risk ? `${esc(riskReport.risk)} (policy ${esc(riskReport.policy_ref || "unknown")})` : "unavailable: Wall-E returned no risk level.";
+  const risk = reviewRisk(r), riskReport = risk && risk.report;
+  const riskLevel = risk && (risk.risk || (riskReport && riskReport.risk));
+  const riskPolicy = risk && (risk.policy_version || (riskReport && riskReport.policy_ref));
+  const riskDetail = !risk ? "not assessed" : !risk.available ? `unavailable: ${esc(risk.reason || "Review risk could not classify this MR.")}` : riskLevel ? `${esc(riskLevel)} (policy ${esc(riskPolicy || "unknown")})` : "unavailable: no risk level was returned.";
   html += `<dl class="facts">
     <dt>Team review</dt><dd>${teamReviewDetail}</dd>
-    <dt>Wall-E risk</dt><dd>${riskDetail} <span class="muted small">Private metadata. It does not change the approval verdict.</span></dd>
+    <dt>Review risk</dt><dd>${riskDetail} <span class="muted small">Private metadata. It does not change the approval verdict.</span></dd>
     <dt>CI</dt><dd>${l.ci.url ? `<a href="${esc(l.ci.url)}" target="_blank"><span class="pill ${ci.cls}">${esc(ci.label)}</span></a>` : `<span class="pill ${ci.cls}">${esc(ci.label)}</span>`}${l.ci.failed_jobs.length ? `<div class="small">Failed jobs: ${l.ci.failed_jobs.map(esc).join(", ")}</div>` : ""}</dd>
     <dt>Merge</dt><dd>${esc(l.merge_status)}${l.has_conflicts ? ' <span class="pill bad">Conflicts</span>' : ""}${l.draft ? ' <span class="pill grey">Draft</span>' : ""}</dd>
     <dt>Approvals</dt><dd>${l.approved_by.length ? esc(l.approved_by.join(", ")) : "none"}${l.approvals_left ? ` · ${l.approvals_left} left` : ""}</dd>

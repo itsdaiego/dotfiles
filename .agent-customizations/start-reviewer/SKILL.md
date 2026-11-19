@@ -17,7 +17,7 @@ Act only when all of these are true at action time:
 - No teammate has commented on or approved the MR.
 - The review result matches the live head SHA.
 
-Use the `review-queue` workflow to refresh candidates and the `review-mr` workflow to review each exact head. That workflow includes unresolved-thread triage, feature-gate checks, two adversarial passes, and the private Wall-E risk classifier.
+Use the `review-queue` workflow to refresh candidates and the `review-mr` workflow to review each exact head. That workflow includes unresolved-thread triage, feature-gate checks, two adversarial passes, and the private `review-risk` assessment.
 
 After review:
 

@@ -16,9 +16,9 @@ Use the read-mr skill on !{iid}. If you have a Skill tool, invoke `read-mr` with
 
 Use the review-mr skill on !{iid}. If you have a Skill tool, invoke `review-mr` with args `!{iid}`. Otherwise read `{review_mr_skill}` and follow it. It writes `~/Code/.claude/code-reviews/MR-{iid}-review.md`. Do every step it lists, including the check of each finding against existing threads and the re-fetch of the head sha. Ignore its step that presents findings to the user.
 
-## Step 2a: record the private Wall-E risk assessment
+## Step 2a: record the private review-risk assessment
 
-Use the `walle-review-risk` skill at `{walle_risk_skill}` for this MR after you fetch the source and target refs. Follow its MR workflow so it classifies the exact head with the policy from the target branch. Add its low, medium, high, or unavailable result to a `## Wall-E risk (private)` section in the local review file.
+Use the `review-risk` skill at `{review_risk_skill}` for this MR after you fetch the source and target refs. Follow its full exact-head workflow: deterministic policy and blast radius first, then Jev only when the result is not already unavoidably high. Add its low, medium, high, or unavailable result and the TypeSafe result, skip reason, or error to a `## Review risk (private)` section in the local review file.
 
 This is private metadata for Daiego. Do not add it to the MR description, post it to GitLab, or use it to change the approval verdict. The parent runner independently records the classifier output in the result JSON for the queue page.
 
@@ -61,6 +61,8 @@ Write `{result_path}` as a JSON array with exactly one object, built from steps 
  "iid": int, "head_sha": str (the full head sha you reviewed), "title": str, "url": str, "author": str,
  "source_branch": str, "target_branch": str, "draft": bool, "pipeline": str, "merge_status": str,
  "approvals": str (e.g. "0/1, approved by: x"),
+ "review_risk": {{"available": bool, "risk": "low"|"medium"|"high"|null, "reason": str,
+                  "policy_version": str, "jev": {{"status": "used"|"skipped"|"unavailable", "detail": str}}}},
  "ready": bool, "ready_reason": str,
  "can_approve": bool, "verdict_reason": str (1-2 sentences),
  "digest": {{"tldr": str, "terms": str|null, "key_points": [str], "before_after": [str], "risk": [str],
@@ -76,6 +78,7 @@ Write `{result_path}` as a JSON array with exactly one object, built from steps 
 }}]
 ```
 
+- `review_risk` holds the exact-head result from step 2a. Use `jev.status=skipped` when deterministic high-risk evidence made Jev unnecessary, and `unavailable` only when a required call failed.
 - `digest` holds the read-mr digest, section by section.
 - `thread_triage` holds every unresolved thread from step 4, one entry per thread. `open_threads_needing_fix` holds the subset with verdict `fix`, with `status` set to the reason.
 - `adversarial` records that one pass for each lens completed and where its audit file is. Do not copy individual findings into the result JSON.

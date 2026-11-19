@@ -43,11 +43,9 @@ Extract: title, description, source branch, target branch, author, changed files
 
 ### 1a. Generate review attention
 
-For every MR, invoke the `walle-review-risk` skill after you fetch its metadata and refs. Use the MR diff, changed paths, checks, tests, and discussion to generate an on-the-fly `Needs review`, `Should review`, or `Don't need review` label with one short concrete reason.
+For every MR, invoke the `review-risk` skill after you fetch its metadata and refs. Use the exact-head diff, changed paths, checks, tests, pipeline, merge state, and discussion. The skill applies deterministic policy first, skips Jev for unavoidable high results, and otherwise uses Jev as an independent low-versus-medium signal before producing the final risk and attention label.
 
-This result is private review metadata for Daiego. Do not add it to the MR description, post it to GitLab, or let it change the approval verdict. Record the evidence and uncertainty behind the label in the local review file. Missing evidence cannot justify `Don't need review`.
-
-If the target repository provides Wall-E's policy and classifier, record its low, medium, high, or unavailable result separately as optional supplementary evidence. It never blocks the review-attention assessment.
+This result is private review metadata for Daiego. Do not add it to the MR description, post it to GitLab, or let it change the approval verdict. Record the final risk, the TypeSafe Jev result, skip reason, or availability error, the evidence, and any disagreement or uncertainty in the local review file. Missing evidence cannot justify `Don't need review`.
 
 ### 2. Understand the change
 
@@ -71,7 +69,7 @@ These never block approval. Recommend approval, and leave them as non-blocking c
 
 - A title or description that needs a fix, including stale claims, a wrong commit list, or outdated eval or CI notes.
 - Findings of medium or low severity: suggestions, coverage gaps, nits, cleanups, and open bot threads about them.
-- A medium or high Wall-E risk tier, or a `Needs review` or `Should review` attention label, on its own.
+- A medium or high review-risk tier, or a `Needs review` or `Should review` attention label, on its own.
 
 Use `Approve with nits` when such non-blocking items exist.
 
@@ -127,9 +125,9 @@ Use this structure:
 
 <1-2 sentence summary of what the MR does and your overall assessment>
 
-## Wall-E policy preview (optional, private)
+## Review risk (private)
 
-<Low / medium / high / unavailable, with the policy ref, matched rules and paths, content signals, and uncertainty. This is supplementary evidence only.>
+<Final low / medium / high risk, TypeSafe Jev result, skip reason, or availability error, policy version, matched rules, exact head, blast radius, and uncertainty.>
 
 ## Review attention
 

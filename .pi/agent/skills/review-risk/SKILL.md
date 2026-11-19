@@ -1,9 +1,9 @@
 ---
-name: walle-review-risk
-description: Assess or find Butler merge requests and working trees with Wall-E's agent-owned review policy, then state whether each needs, should get, or does not need more review. Use for every Butler MR review, risk search, or review-triage request.
+name: review-risk
+description: Assess or find Butler merge requests and working trees with the agent-owned review policy, then state whether each needs, should get, or does not need more review. Use for every Butler MR review, risk search, or review-triage request.
 ---
 
-# Wall-E review risk
+# Review risk
 
 Use this skill for every Butler merge-request review, risk search, audit, or triage, including when another review skill is used. It assesses the exact change that Wall-E would review. It may use read-only GitLab and Git calls to discover and inspect MRs. It does not change labels, create a sandbox, publish comments, approve MRs, or mutate remote state.
 
@@ -164,6 +164,33 @@ echo "$SHA" > "$S/BUILT_FROM"
 
 `git archive` copies only tracked files at that exact commit, so untracked output such as a stray `graphify-out/` folder in the checkout stays out of the graph.
 
+## TypeSafe Jev classification
+
+Apply the deterministic policy before calling Jev. Gather the complete exact-head evidence, apply explicit high consequences, semantic-size adjustments, feature flags, compatibility rules, and blast radius, then decide whether the unresolved judgment is mainly low versus medium.
+
+Skip Jev when an always-human path already makes the result high. You may also skip it when another explicit high consequence makes the final result unavoidable. Record `TypeSafe Jev: skipped (<deterministic reason>)` so the report shows that the classifier was intentionally unnecessary.
+
+For the remaining assessments, build one JSON object with:
+
+- MR URL, title, exact source and target SHAs, target branch, and merge base, or the exact working-tree scope;
+- change summary, complete changed paths, and the authored semantic diff; include the complete raw diff when it fits the classifier's 64,000-token context;
+- tests changed and checks run, current pipeline and merge state, conflicts, and existing review discussion;
+- always-human paths, raw and semantic changed-line counts, feature flag and default, compatibility evidence, and blast-radius output;
+- any omitted generated output or lockfile churn, with the reason it is deterministic.
+
+Write the object to a temporary JSON file, then run:
+
+```sh
+python3 -I ~/.pi/agent/skills/review-risk/scripts/typesafe_risk.py \
+  /path/to/evidence.json --pretty
+```
+
+The helper reads `TYPESAFE_API_KEY` from the process. Background review runners that did not inherit the variable load it through a fresh `zsh` process from `~/.zshrc`. Never print, copy, log, or place the key in a command argument, repository file, review artifact, or prompt.
+
+Use Jev as an uncertainty detector and independent second opinion. Its probabilities help distinguish an obvious low result from a borderline low-versus-medium call. If Jev returns high after the deterministic pass did not, inspect the evidence for a missed high consequence. Jev never overrides direct diff evidence or a deterministic rule, and it cannot fill missing MR context, tests, pipeline state, discussions, or graph evidence. Explain any disagreement.
+
+If TypeSafe is unavailable, reports an authentication error, or returns an invalid answer, record `TypeSafe Jev: unavailable (<reason>)` and finish from the exact evidence. Classifier failure alone does not make a complete policy assessment unknown, but it is uncertainty that must appear in the report.
+
 ## Review attention
 
 After the risk assessment, give the user a review-attention label and one short reason. This label is a review queue aid, not a GitLab label or an approval verdict.
@@ -192,6 +219,7 @@ Then state:
 - The changed areas and the diff evidence that raised or lowered the result: always-human paths, raw and semantic size when they differ, feature flag, blast radius, and compatibility evidence for a contract or iteration change.
 - The blast radius: the reach and its reason, any other high- or medium-reach nodes, and whether the graph was partial, stale, or missing. Do not use the words hub, shared, or leaf in the report.
 - The exact head SHA that was assessed, the target branch, and the merge base, or the working-tree scope.
+- The TypeSafe Jev classification, confidence when present, or its availability error. When it disagrees with the final risk, state the policy evidence that decided the result.
 - Any uncertainty that affects the result.
 - The review-attention label, how many people should approve, and a short, concrete reason.
 

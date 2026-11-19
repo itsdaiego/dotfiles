@@ -58,7 +58,7 @@ Drop an MR from the watch list when it merges or closes.
 ## One round
 
 1. **Read open threads first.** For each pending request thread, read it with `slack_read_thread` (concise). When Wall-E has posted a file, read it with `slack_read_file`. A large file is saved to disk; read it from there in full. Save it to the scratchpad. If no file is there yet, skip to step 6.
-2. **Re-check each MR before you act.** Fetch the MR from the GitLab API. Skip it, and drop it from the watch list, if it no longer qualifies per Scope above (Daiego has since approved it, its only reviewer entry is a self-request, it went back to draft, the author changed, or he's just waiting on an unanswered comment with no re-review request). Act only when the current `sha` starts with the head SHA in Wall-E's section. If the head moved, skip the MR and put it back on the watch list for the next round.
+2. **Re-check each MR before you act.** Fetch the MR from the GitLab API. Skip it, and drop it from the watch list, if it no longer qualifies per Scope above (Daiego has since approved it, its only reviewer entry is a self-request, it went back to draft, the author changed, or he's just waiting on an unanswered comment with no re-review request). Act only when the current `sha` starts with the head SHA in Wall-E's section. If the head moved, skip the MR and put it back on the watch list for the next round. Run `review-risk` for every exact MR head that remains, including its deterministic-first Jev flow, and save the final risk and attention label in the state file before posting findings or listing it as ready to approve.
 3. **List each APPROVE verdict for Daiego** with its link and exact head SHA, as `Ready to approve`. Do not call the approve endpoint. When Daiego explicitly asks to approve named MRs, approve only those, at the reviewed head: `glab api -X POST projects/butlerinc%2Fbutler/merge_requests/<iid>/approve -f sha=<full sha>`. If the head moved, do not approve, and say so.
 4. **Post each BLOCK finding.** Load the `write-mr-comment` skill and write one comment per finding. Post it inline at the file and line when that line is in the diff. Otherwise post a general discussion. Skip a finding when an open thread already raises it.
 5. **Downgrade stale blockers.** When Wall-E rates one of Daiego's open blocking threads as medium or low and recommends approval, reply in that thread. Label the reply `suggestion (no longer blocking)` or `follow-up (no longer blocking)`, give the one-line reason and the fix, and name the head Wall-E reviewed.
@@ -78,10 +78,11 @@ Drop an MR from the watch list when it merges or closes.
 
 After every round, and whenever Daiego asks for the status, show one table with every MR checked so far, including MRs that merged. Every row links to its MR.
 
-| MR | Author | Status | Head | Note |
-|---|---|---|---|---|
-| [!24151](https://gitlab.com/butlerinc/butler/-/merge_requests/24151) | urvesh.patel1 | Blocked | `6ab43a75` | Blocker posted: 16 comms snapshot files not regenerated |
+| MR | Author | Risk | Status | Head | Note |
+|---|---|---|---|---|---|
+| [!24151](https://gitlab.com/butlerinc/butler/-/merge_requests/24151) | urvesh.patel1 | High | Blocked | `6ab43a75` | Blocker posted: 16 comms snapshot files not regenerated |
 
+- Risk is the exact-head `review-risk` result: Low, Medium, High, or Unavailable.
 - Status is one of: Merged, Approved (by a person), Ready to approve, Blocked, Hold, Pending, Obsolete.
 - Note gives the one reason that matters now, in plain words: the blocker, the conflict, the thread it waits on, or why CI is red.
 - Sort by status, in this order: Blocked, Ready to approve, Hold, Pending, Approved, Merged, Obsolete.

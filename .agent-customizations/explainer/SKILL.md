@@ -49,7 +49,7 @@ If the fetch or the worktree command fails, say so, read the code with `git show
 
 ## Code graph
 
-A graphify code graph maps which functions, classes, and modules call, import, or reference each other. The graph list, with path prefixes and coverage, is the "Known graphs" table in the `walle-review-risk` skill. Use one when the question is about Butler code inside its coverage (leads, lead chase, voice AI, phone systems, MCP plugins).
+A graphify code graph maps which functions, classes, and modules call, import, or reference each other. The graph list, with path prefixes and coverage, is the "Known graphs" table in the `review-risk` skill. Use one when the question is about Butler code inside its coverage (leads, lead chase, voice AI, phone systems, MCP plugins).
 
 Graph paths are relative to the graph's prefix — add the prefix for the repo path. Set `G` to the graph's `graph.json`:
 
@@ -57,7 +57,7 @@ Graph paths are relative to the graph's prefix — add the prefix for the repo p
 - `graphify path "<from>" "<to>" --graph "$G"` — shortest chain between two symbols.
 - `graphify query "<question>" --seed "<symbol>" --graph "$G" --budget 1500` — walks outward from a known symbol; always pass `--seed` (a keyword-only query matches unrelated nodes).
 - Ambiguous name → exit code 3 with the matches; retry as `path::symbol` or the full node ID.
-- For blast radius, run `walle-review-risk`'s script and report its production and test dependent counts.
+- For blast radius, run `review-risk`'s script and report its production and test dependent counts.
 
 The graph is a map, not proof: its line numbers trail the commit in its `BUILT_FROM` file, and the AST extractor misses dynamic dispatch (a method called through a registry or `getattr`), so a node with no callers there may still have callers. Never cite a graph line number — read the file and cite that. Code wins when the two disagree; say the graph is stale.
 

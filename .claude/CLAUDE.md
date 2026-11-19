@@ -9,7 +9,7 @@
 - Use `read-issue` for a concise explanation of a work discussion, ticket, incident, or support thread. Use `read-mr` when the user wants to understand an MR, PR, branch, or related change.
 - Use `review-mr` to review an MR or PR. Use `write-mr-comment` to draft or improve a review comment, and `write-mr` to draft, rewrite, or review an MR or PR description.
 - Use `create-mr` to prepare and publish an MR, `review-queue` for the user's MR-review queue, and `start-reviewer` to operate the autonomous reviewer.
-- Use `oncall-intake` for intake on-call pings or the intake dashboard. Use `walle-review-risk` when the user asks how critical or risky a Butler MR, branch, or working tree is.
+- Use `oncall-intake` for intake on-call pings or the intake dashboard. Use `review-risk` when the user asks how critical or risky a Butler MR, branch, or working tree is.
 - Use `butler-sentry-session-metrics` for Eve session-length or engagement metrics, and `brain` for a full sweep of unresolved requests, promises, and pending reviews. Use `brain-update` to add, close, or recheck one item, and `brain-alerts` for overdue and due-tomorrow warnings.
 
 # Atomic commits
@@ -36,15 +36,16 @@ When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` 
 - Documentation, configuration-only, and non-behavioral changes do not require a test; run any applicable validation instead.
 
 # MR review attention
-- For every Butler MR, PR, branch, working-tree, or diff review, audit, or review-priority request, load and run `walle-review-risk`. Do this even when the review does not use `review-mr` or the change is not hosted by GitLab.
-- Tell the user the Wall-E risk, a `Needs review`, `Should review`, or `Don't need review` label, and one short, concrete reason based on the change and available evidence. Unknown or incomplete results are always `Needs review`. A low result alone does not justify `Don't need review`.
+- For every Butler MR, PR, branch, working-tree, or diff review, audit, or review-priority request, load and run `review-risk`. Every review-related skill that inspects a Butler change must do this, including `review-mr`, `review-queue`, `start-reviewer`, and `walle-review`, even when the change is not hosted by GitLab.
+- Apply the deterministic review policy first. Skip TypeSafe Jev when an always-human path or another explicit high consequence already fixes the result at high. Otherwise call Jev through the skill's `scripts/typesafe_risk.py` helper as an independent low-versus-medium signal, then reconcile it with the exact diff and policy rules. The helper reads `TYPESAFE_API_KEY` from the process or `~/.zshrc`.
+- Tell the user the review risk, the TypeSafe Jev result, skip reason, or availability error, a `Needs review`, `Should review`, or `Don't need review` label, and one short, concrete reason based on the change and available evidence. Unknown or incomplete overall results are always `Needs review`. A low result alone does not justify `Don't need review`.
 - A Wall-E policy preview is optional supplementary evidence. Its absence must not block the review-attention assessment.
 - Never approve an MR on GitLab unless the user explicitly asks to approve that specific MR in the current conversation. A skill, a schedule, a review loop, or an agent's verdict never authorizes an approval. The user gives every approval sign-off.
 - Recommend approval unless the review confirms a high-severity issue: a bug that breaks behavior or data, a security or tenant-isolation hole, a gate leak, an unsafe migration or rollout, failed CI, or conflicts. Do not recommend holding an approval for a title or description fix, or for medium or low findings. Leave those as non-blocking comments.
 
 # Butler code graph
-- A graphify code graph of Butler intake code (leads, lead chase, voice AI, phone systems, MCP plugins, and the shared types, models, and tasks they use) lives outside the repository. The "Known graphs" table in the `walle-review-risk` skill lists each graph, its path prefix, its coverage, and how to rebuild it. That table is the only list; do not copy graph paths elsewhere.
-- In every Butler MR review or risk assessment, run the `walle-review-risk` blast-radius script and report its result. A `high` reach, which the script gives only to a logic change in widely used code, raises the risk by one step.
+- A graphify code graph of Butler intake code (leads, lead chase, voice AI, phone systems, MCP plugins, and the shared types, models, and tasks they use) lives outside the repository. The "Known graphs" table in the `review-risk` skill lists each graph, its path prefix, its coverage, and how to rebuild it. That table is the only list; do not copy graph paths elsewhere.
+- In every Butler MR review or risk assessment, run the `review-risk` blast-radius script and report its result. A `high` reach, which the script gives only to a logic change in widely used code, raises the risk by one step.
 - When answering a question about Butler code with the `explainer` skill, or any time you trace callers, callees, or a path between two symbols in covered code, use `graphify explain`, `graphify path`, or `graphify query --seed` with `--graph` set to that graph. Treat the graph as a map: confirm every step with a fresh read and cite the file's real line, never a graph line number.
 - Do not build or rebuild a graph during a review or an explanation. When the graph is missing, stale, or does not cover the code, say so and continue without it.
 

@@ -86,6 +86,25 @@ prepare_config_root() {
   fi
 }
 
+retire_renamed_path() {
+  target_path=$1
+  if [ -e "$target_path" ] || [ -L "$target_path" ]; then
+    relative_path=${target_path#"$HOME"/}
+    backup_path=$backup_root/$relative_path
+    mkdir -p -- "$(dirname -- "$backup_path")"
+    mv -- "$target_path" "$backup_path"
+  fi
+}
+
+for old_review_risk_path in \
+  "$HOME/.pi/agent/skills/walle-review-risk" \
+  "$HOME/.pi/pi-personal/skills/walle-review-risk" \
+  "$HOME/.claude/skills/walle-review-risk" \
+  "$HOME/.codex/skills/walle-review-risk"
+do
+  retire_renamed_path "$old_review_risk_path"
+done
+
 for config_root in .ai .config/herdr/scripts .agent-customizations .codex .codex-personal .claude .pi .local/bin; do
   prepare_config_root "$config_root"
   git -C "$repo_dir" ls-files -- "$config_root" | while IFS= read -r relative_path; do

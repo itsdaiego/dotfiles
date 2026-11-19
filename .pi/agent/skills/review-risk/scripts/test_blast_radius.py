@@ -1,4 +1,4 @@
-"""Tests for the graph-based blast-radius estimate used by the Wall-E risk skill."""
+"""Tests for the graph-based blast-radius estimate used by the review-risk skill."""
 
 import json
 import subprocess

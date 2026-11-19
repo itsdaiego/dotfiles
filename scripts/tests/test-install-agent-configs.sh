@@ -33,9 +33,10 @@ test "$(readlink "$test_home/.config/herdr/scripts/auto-name/user_prompt_hook.py
 test ! -L "$stale_root/.config/herdr/scripts/auto-name/user_prompt_hook.py"
 grep -Fx 'stale hook' \
   "$stale_root/.config/herdr/scripts/auto-name/user_prompt_hook.py" >/dev/null
+test ! -e "$test_home/.pi/agent/skills/walle-review-risk"
 test ! -L "$test_home/.pi/agent/skills/walle-review-risk"
-test "$(readlink "$test_home/.pi/agent/skills/walle-review-risk/SKILL.md")" = \
-  "$repo_dir/.pi/agent/skills/walle-review-risk/SKILL.md"
+test "$(readlink "$test_home/.pi/agent/skills/review-risk/SKILL.md")" = \
+  "$repo_dir/.pi/agent/skills/review-risk/SKILL.md"
 test ! -L "$stale_root/walle-review-risk/SKILL.md"
 grep -Fx 'stale skill' "$stale_root/walle-review-risk/SKILL.md" >/dev/null
 test ! -e "$test_home/.pi/agent/sessions/$(basename -- "$generated_source")"
@@ -49,8 +50,13 @@ test "$(readlink "$test_home/.codex-personal/AGENTS.md")" = "$test_home/.pi/pi-p
 test "$(readlink "$test_home/.codex-personal/skills")" = "$test_home/.codex/skills"
 test "$(readlink "$test_home/.codex/rules/default.rules")" = "$repo_dir/.codex/rules/default.rules"
 test "$(readlink "$test_home/.codex-personal/rules/default.rules")" = "$test_home/.codex/rules/default.rules"
-test "$(readlink "$test_home/.claude/skills/walle-review-risk")" = \
-  "$repo_dir/.pi/agent/skills/walle-review-risk"
+test ! -e "$test_home/.claude/skills/walle-review-risk"
+test "$(readlink "$test_home/.claude/skills/review-risk")" = \
+  "$repo_dir/.pi/agent/skills/review-risk"
+test "$(readlink "$test_home/.codex/skills/review-risk")" = \
+  "$repo_dir/.pi/agent/skills/review-risk"
+test "$(readlink "$test_home/.pi/pi-personal/skills/review-risk")" = \
+  "$repo_dir/.pi/agent/skills/review-risk"
 test "$(readlink "$test_home/.claude/skills/adversarial-review-stop")" = \
   "$repo_dir/.pi/agent/skills/adversarial-review-stop"
 test "$(readlink "$test_home/.claude/skills/brain")" = "$repo_dir/.pi/agent/skills/brain"
