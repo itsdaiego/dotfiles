@@ -374,17 +374,8 @@ def act_on_result(
     actions: dict[str, object] = state["actions"]  # type: ignore[assignment]
     critical = result.get("new_critical", [])
     if result.get("can_approve") is True and not critical:
-        key = action_key("approve", iid, head_sha)
-        if key in actions:
-            emit("approval_already_recorded", iid=iid, head_sha=head_sha)
-            return
-        approved = run_command(["glab", "mr", "approve", str(iid), "--sha", head_sha], check=False)
-        if approved.returncode:
-            emit("approval_failed", iid=iid, head_sha=head_sha, error=(approved.stderr or approved.stdout).strip())
-            return
-        actions[key] = {"at": dt.datetime.now(dt.timezone.utc).isoformat(), "kind": "approval"}
-        save_state(state)
-        emit("approved", iid=iid, head_sha=head_sha)
+        # Approval needs a human sign-off; the runner only records the recommendation.
+        emit("approval_recommended", iid=iid, head_sha=head_sha)
         return
 
     if not isinstance(critical, list) or not critical:

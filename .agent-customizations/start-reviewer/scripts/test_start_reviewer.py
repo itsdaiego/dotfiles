@@ -64,20 +64,19 @@ class StartReviewerTests(unittest.TestCase):
     @patch.object(reviewer, "run_command")
     @patch.object(reviewer, "still_untouched", return_value=True)
     @patch.object(reviewer, "live_mr", return_value={"sha": "abc123", "state": "opened", "draft": False})
-    def test_clean_result_approves_exact_head(
+    def test_clean_result_recommends_approval_without_approving(
         self,
         _live_mr,
         _still_untouched,
         run_command,
         _save_state,
     ) -> None:
-        run_command.return_value = subprocess.CompletedProcess([], 0, "ok", "")
         state = {"actions": {}}
-        reviewer.act_on_result(candidate(), {"head_sha": "abc123", "can_approve": True, "new_critical": []}, "me", state)
-        run_command.assert_called_once_with(
-            ["glab", "mr", "approve", "123", "--sha", "abc123"],
-            check=False,
-        )
+        with patch.object(reviewer, "emit") as emit:
+            reviewer.act_on_result(candidate(), {"head_sha": "abc123", "can_approve": True, "new_critical": []}, "me", state)
+        run_command.assert_not_called()
+        self.assertEqual(state["actions"], {})
+        emit.assert_called_once_with("approval_recommended", iid=123, head_sha="abc123")
 
     @patch.object(reviewer, "save_state")
     @patch.object(reviewer, "publish_draft")
