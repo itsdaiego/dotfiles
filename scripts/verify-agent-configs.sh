@@ -39,6 +39,7 @@ sh scripts/tests/test-pi-durable.sh
 sh scripts/tests/test-agent-skill-routing.sh
 sh scripts/tests/test-herdr-agent-picker.sh
 sh scripts/tests/test-herdr-agent-picker-session-name.sh
+node --experimental-strip-types --test scripts/tests/pi-aws-command-guard.test.ts
 
 find .config/herdr/scripts .agent-customizations .codex .codex-personal .claude .pi .local/bin -type l -print | while IFS= read -r link; do
   case "$link" in

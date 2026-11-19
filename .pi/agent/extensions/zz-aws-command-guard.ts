@@ -1,8 +1,10 @@
 import { lstatSync } from "node:fs"
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent"
 
-const AWS_BLOCK_REASON =
-  "Only demonstrably read-only AWS CLI commands are allowed. This command is mutating or cannot be classified safely."
+const AWS_NO_UI_REASON =
+  "This AWS command can write to AWS or cannot be classified as read-only. It needs user confirmation in an interactive Pi session."
+const AWS_DENIED_REASON =
+  "User denied this AWS command. Do not retry it through another command, script, or tool."
 const DELETE_BLOCK_REASON =
   "Recursive forced deletion requires explicit user confirmation in an interactive Pi session."
 
@@ -37,72 +39,220 @@ const GLOBAL_OPTIONS_WITH_VALUES = new Set([
   "--region",
 ])
 
-type AwsInvocation = {
-  service: string
-  operation: string
-  args: string[]
+const S3_TRANSFER_OPTIONS_WITH_VALUES = new Set([
+  ...GLOBAL_OPTIONS_WITH_VALUES,
+  "--exclude",
+  "--include",
+  "--expected-size",
+  "--page-size",
+  "--request-payer",
+  "--sse-c",
+  "--sse-c-key",
+  "--source-region",
+])
+
+// Keywords and wrappers that can stand before the real command word of a segment.
+const LEADING_KEYWORDS = new Set(["!", "{", "}", "then", "do", "else", "elif", "if", "while", "until", "time"])
+const COMMAND_WRAPPERS = new Set([
+  "caffeinate",
+  "command",
+  "env",
+  "exec",
+  "nice",
+  "nohup",
+  "parallel",
+  "rtk",
+  "sudo",
+  "timeout",
+  "watch",
+  "xargs",
+])
+const SHELLS = new Set(["bash", "dash", "sh", "zsh"])
+
+export type AwsCommandClass = "none" | "read" | "ask"
+
+type ShellParse = {
+  segments: string[][]
+  hasSubstitution: boolean
 }
 
-function containsAwsCommand(command: string): boolean {
-  return /\baws\b/i.test(command)
-}
+function parseShell(command: string): ShellParse {
+  const segments: string[][] = []
+  let tokens: string[] = []
+  let token = ""
+  let inToken = false
+  let hasSubstitution = false
 
-function unquote(token: string): string {
-  if (
-    token.length >= 2 &&
-    ((token.startsWith('"') && token.endsWith('"')) ||
-      (token.startsWith("'") && token.endsWith("'")))
-  ) {
-    return token.slice(1, -1)
+  const endToken = () => {
+    if (inToken) tokens.push(token)
+    token = ""
+    inToken = false
   }
-  return token
-}
-
-function parseAwsInvocation(command: string): AwsInvocation | null {
-  // Reject shell composition because a second command can hide a mutation.
-  if (/[;&|`\n]|\$\(/.test(command)) return null
-
-  const tokens = command.match(/"(?:\\.|[^"])*"|'[^']*'|\S+/g)?.map(unquote) ?? []
-  const awsIndex = tokens.findIndex((token) => token.split("/").at(-1)?.toLowerCase() === "aws")
-  if (awsIndex < 0) return null
-
-  let index = awsIndex + 1
-  if (tokens[index] === "--version" || tokens[index] === "help") {
-    return { service: "help", operation: "help", args: [] }
+  const endSegment = () => {
+    endToken()
+    if (tokens.length > 0) segments.push(tokens)
+    tokens = []
   }
 
-  while (index < tokens.length && tokens[index].startsWith("-")) {
-    const option = tokens[index]
+  for (let i = 0; i < command.length; i++) {
+    const char = command[i]
+    if (char === "'") {
+      const close = command.indexOf("'", i + 1)
+      const stop = close < 0 ? command.length : close
+      token += command.slice(i + 1, stop)
+      inToken = true
+      i = stop
+    } else if (char === '"') {
+      inToken = true
+      for (i++; i < command.length && command[i] !== '"'; i++) {
+        if (command[i] === "\\" && i + 1 < command.length) {
+          token += command[++i]
+        } else {
+          if (command[i] === "`" || (command[i] === "$" && command[i + 1] === "(")) hasSubstitution = true
+          token += command[i]
+        }
+      }
+    } else if (char === "\\") {
+      if (command[i + 1] !== "\n") token += command[i + 1] ?? ""
+      inToken = true
+      i++
+    } else if (char === "`" || (char === "$" && command[i + 1] === "(")) {
+      hasSubstitution = true
+      token += char
+      inToken = true
+    } else if ((char === "<" || char === ">") && command[i + 1] === "(") {
+      hasSubstitution = true
+      token += char
+      inToken = true
+    } else if (";&|\n()".includes(char)) {
+      endSegment()
+    } else if (/\s/.test(char)) {
+      endToken()
+    } else {
+      token += char
+      inToken = true
+    }
+  }
+  endSegment()
+  return { segments, hasSubstitution }
+}
+
+function basename(word: string): string {
+  return word.split("/").at(-1)?.toLowerCase() ?? ""
+}
+
+function isAssignment(word: string): boolean {
+  return /^[A-Za-z_][A-Za-z0-9_]*=/.test(word)
+}
+
+function positionalArgs(args: string[], optionsWithValues: Set<string>): string[] {
+  const positional: string[] = []
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i]
+    if (arg === "--") {
+      positional.push(...args.slice(i + 1))
+      break
+    }
+    if (arg.startsWith("-") && arg !== "-") {
+      if (optionsWithValues.has(arg)) i++
+      continue
+    }
+    if (/^\d*[<>]/.test(arg)) {
+      // A redirection such as `> out.txt` or `2>/dev/null` is not an AWS argument.
+      if (/^\d*[<>]+&?$/.test(arg)) i++
+      continue
+    }
+    positional.push(arg)
+  }
+  return positional
+}
+
+function classifyAwsArgs(args: string[]): AwsCommandClass {
+  let index = 0
+  while (index < args.length && args[index].startsWith("-")) {
+    const option = args[index]
+    if (option === "--version") return "read"
     index += GLOBAL_OPTIONS_WITH_VALUES.has(option) ? 2 : 1
   }
 
-  const service = tokens[index]?.toLowerCase()
-  const operation = tokens[index + 1]?.toLowerCase()
-  if (!service || !operation) return null
-  return { service, operation, args: tokens.slice(index + 2) }
-}
+  const service = args[index]?.toLowerCase()
+  const operation = args[index + 1]?.toLowerCase()
+  const rest = args.slice(index + 2)
+  if (!service || service === "help") return "read"
+  if (!operation) return "ask"
+  if (operation === "help" || rest.at(-1) === "help") return "read"
 
-function isReadOnlyS3Transfer(invocation: AwsInvocation): boolean {
-  if (invocation.service !== "s3") return false
-  if (invocation.operation !== "cp" && invocation.operation !== "sync") return false
+  if (service === "sso" && (operation === "login" || operation === "logout")) return "read"
+  if (service === "configure" && (operation === "list" || operation === "get" || operation === "list-profiles")) {
+    return "read"
+  }
+  if (service === "s3" && (operation === "ls" || operation === "presign")) return "read"
+  if (service === "logs" && operation === "tail") return "read"
+  if (operation === "wait") return "read"
 
-  const [source, destination] = invocation.args
-  return source?.startsWith("s3://") === true && destination?.startsWith("s3://") === false
-}
+  if (service === "s3" && (operation === "cp" || operation === "sync")) {
+    const [source, destination] = positionalArgs(rest, S3_TRANSFER_OPTIONS_WITH_VALUES)
+    const downloads = source?.startsWith("s3://") === true && destination !== undefined && !destination.startsWith("s3://")
+    return downloads ? "read" : "ask"
+  }
 
-function isReadOnlyAwsCommand(command: string): boolean {
-  const invocation = parseAwsInvocation(command)
-  if (!invocation) return false
-
-  if (invocation.service === "help" || invocation.operation === "help") return true
-  if (invocation.service === "s3" && invocation.operation === "ls") return true
-  if (invocation.service === "logs" && invocation.operation === "tail") return true
-  if (invocation.operation === "wait") return true
-  if (isReadOnlyS3Transfer(invocation)) return true
-
-  return READ_ONLY_OPERATION_PREFIXES.some(
-    (prefix) => invocation.operation === prefix || invocation.operation.startsWith(`${prefix}-`),
+  const readOnly = READ_ONLY_OPERATION_PREFIXES.some(
+    (prefix) => operation === prefix || operation.startsWith(`${prefix}-`),
   )
+  return readOnly ? "read" : "ask"
+}
+
+function strongest(a: AwsCommandClass, b: AwsCommandClass): AwsCommandClass {
+  const rank = { none: 0, read: 1, ask: 2 }
+  return rank[a] >= rank[b] ? a : b
+}
+
+function classifySegment(tokens: string[], depth: number): AwsCommandClass {
+  let i = 0
+  while (i < tokens.length && (isAssignment(tokens[i]) || LEADING_KEYWORDS.has(tokens[i]))) i++
+  const word = tokens[i]
+  if (word === undefined) return "none"
+  const name = basename(word)
+  const rest = tokens.slice(i + 1)
+
+  if (name === "aws") return classifyAwsArgs(rest)
+
+  if (COMMAND_WRAPPERS.has(name)) {
+    // Wrapper options can take values, so find the wrapped aws call by name.
+    const awsIndex = rest.findIndex((arg) => basename(arg) === "aws")
+    return awsIndex < 0 ? "none" : classifyAwsArgs(rest.slice(awsIndex + 1))
+  }
+
+  if (SHELLS.has(name) || name === "eval") {
+    const scriptIndex = name === "eval" ? 0 : rest.findIndex((arg) => /^-[A-Za-z]*c[A-Za-z]*$/.test(arg)) + 1
+    if (scriptIndex <= 0 && name !== "eval") return "none"
+    const script = name === "eval" ? rest.join(" ") : rest[scriptIndex]
+    return script === undefined ? "none" : classify(script, depth + 1)
+  }
+
+  return "none"
+}
+
+function classify(command: string, depth: number): AwsCommandClass {
+  if (depth > 4) return /\baws\b/i.test(command) ? "ask" : "none"
+
+  const { segments, hasSubstitution } = parseShell(command)
+  // A substitution can run aws in a place the segment parser does not inspect.
+  if (hasSubstitution && /\baws\b/i.test(command)) return "ask"
+
+  return segments.reduce<AwsCommandClass>(
+    (result, segment) => strongest(result, classifySegment(segment, depth)),
+    "none",
+  )
+}
+
+/**
+ * Classify the AWS CLI calls in a shell command.
+ * "none" means no aws call, "read" means every aws call is read-only,
+ * and "ask" means at least one call can write or cannot be classified.
+ */
+export function classifyAwsCommand(command: string): AwsCommandClass {
+  return classify(command, 0)
 }
 
 type RecursiveForcedDelete = {
@@ -202,15 +352,30 @@ function blockedUserBashResult(reason: string) {
   }
 }
 
+type GuardContext = {
+  hasUI: boolean
+  ui: { confirm(title: string, message: string): Promise<boolean> }
+}
+
+// Returns a block reason, or null when the command may run.
+async function awsBlockReason(command: string, ctx: GuardContext): Promise<string | null> {
+  if (classifyAwsCommand(command) !== "ask") return null
+  if (!ctx.hasUI) return AWS_NO_UI_REASON
+
+  const allowed = await ctx.ui.confirm(
+    "Allow AWS command?",
+    `This command can write to AWS, or it cannot be classified as read-only:\n\n${command}`,
+  )
+  return allowed ? null : AWS_DENIED_REASON
+}
+
 export default function (pi: ExtensionAPI) {
   pi.on("tool_call", async (event, ctx) => {
     if (event.toolName !== "bash") return
 
     const command = event.input.command as string
-    if (containsAwsCommand(command) && !isReadOnlyAwsCommand(command)) {
-      if (ctx.hasUI) ctx.ui.notify(AWS_BLOCK_REASON, "warning")
-      return { block: true, reason: AWS_BLOCK_REASON, terminate: true }
-    }
+    const awsReason = await awsBlockReason(command, ctx)
+    if (awsReason) return { block: true, reason: awsReason }
 
     const deletions = recursiveForcedDeletes(command)
     if (deletions.length === 0 || canAutoApproveTmpDeletes(command, deletions)) return
@@ -224,9 +389,9 @@ export default function (pi: ExtensionAPI) {
   })
 
   pi.on("user_bash", async (event, ctx) => {
-    if (containsAwsCommand(event.command) && !isReadOnlyAwsCommand(event.command)) {
-      return blockedUserBashResult(AWS_BLOCK_REASON)
-    }
+    const awsReason = await awsBlockReason(event.command, ctx)
+    if (awsReason) return blockedUserBashResult(awsReason)
+
     const deletions = recursiveForcedDeletes(event.command)
     if (deletions.length === 0 || canAutoApproveTmpDeletes(event.command, deletions)) return
     if (!ctx.hasUI) return blockedUserBashResult(DELETE_BLOCK_REASON)
