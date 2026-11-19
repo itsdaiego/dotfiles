@@ -29,6 +29,7 @@ CODEX_HOME=$codex_check_dir codex features list | awk '$1 == "hooks" && $3 == "t
 cp .codex-personal/Codex-Personal.config.toml "$codex_check_dir/config.toml"
 CODEX_HOME=$codex_check_dir codex features list >/dev/null
 python3 -m unittest discover -s .config/herdr/scripts/auto-name/tests -v
+node --experimental-strip-types --test .config/herdr/scripts/auto-name/tests/test_pi_extension.mjs
 python3 -m unittest discover -s .agent-customizations/start-reviewer/scripts -p 'test_*.py' -v
 sh scripts/tests/test-install-agent-configs.sh
 sh scripts/tests/test-agent-skill-routing.sh
