@@ -43,9 +43,11 @@ for profile in "${profiles[@]}"; do
     fi
 
     mkdir -p "$data_dir"
-    env \
-        PI_CODING_AGENT_DIR="$agent_dir" \
-        PI_CODING_AGENT_SESSION_DIR="$HOME/.pi/agent/sessions" \
+    env_args=(PI_CODING_AGENT_DIR="$agent_dir")
+    if [ "$profile" = "personal" ]; then
+        env_args+=(PI_CODING_AGENT_SESSION_DIR="$HOME/.pi/agent/sessions")
+    fi
+    env "${env_args[@]}" \
         nohup pi-pocket --access tailscale --port "$port" --data "$data_dir" --cwd "$HOME" \
         >"$log_file" 2>&1 &
     echo "$!" >"$pid_file"
