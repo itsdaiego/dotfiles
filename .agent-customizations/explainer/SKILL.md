@@ -104,10 +104,7 @@ Three layers, each deeper than the last.
   +            headers[EVE_KEY_HEADER] = self._eve_key
   ```
 
-### 4. Find it yourself
-The 2-5 commands that found the answer, most useful first.
-
-### 5. Verified vs. inferred
+### 4. Verified vs. inferred
 Only what is not **Verified**, and what would confirm it. Omit this section when everything is Verified.
 
 ## Style
