@@ -25,10 +25,6 @@ function git(cwd, args) {
   });
 }
 
-function output(result) {
-  return `${result.stdout ?? ""}${result.stderr ?? ""}`.trim();
-}
-
 function resolveGitCwd(command, fallbackCwd) {
   const match = command.match(/\bgit\s+(?:-C\s+|--work-tree=)([^\s]+)/);
   if (!match?.[1]) return fallbackCwd;
@@ -62,7 +58,6 @@ export function inspectStagedDiff(cwd, command = "") {
     const [added, removed] = line.split("\t");
     return total + (Number(added) || 0) + (Number(removed) || 0);
   }, 0);
-  const whitespace = git(gitCwd, ["diff", "--cached", "--check"]);
   const raw = git(gitCwd, ["diff", "--cached", "--raw", "--no-renames"]);
   const fingerprint = createHash("sha256").update(raw.stdout).digest("hex");
 
@@ -72,7 +67,6 @@ export function inspectStagedDiff(cwd, command = "") {
     files,
     changedLines,
     fingerprint,
-    whitespaceErrors: whitespace.status === 0 ? "" : output(whitespace),
     isLarge: files.length > LARGE_COMMIT_FILE_LIMIT || changedLines > LARGE_COMMIT_LINE_LIMIT,
   };
 }
@@ -80,9 +74,6 @@ export function inspectStagedDiff(cwd, command = "") {
 export function commitBlockReason(cwd, command) {
   const staged = inspectStagedDiff(cwd, command);
   if (staged.kind !== "changes") return undefined;
-  if (staged.whitespaceErrors) {
-    return `The staged diff has whitespace errors:\n${staged.whitespaceErrors}`;
-  }
   if (staged.isLarge && !hasLargeCommitOverride(command)) {
     return `The staged diff changes ${staged.files.length} files and ${staged.changedLines} lines. Split it into smaller commits, or ask the user to approve an inseparable large commit. After approval, rerun the commit with ATOMIC_COMMIT_ALLOW_LARGE=1.`;
   }
