@@ -357,6 +357,17 @@ class FilesViewComponent {
 
 // ─── Extension ───────────────────────────────────────────────────────────────
 
+// The package's FileTracker has no way to drop one entry, so rebuild it from the
+// entries that still show a change in Git. Returns how many entries were removed.
+function clearResolved(tracker: FileTracker, gitDiff: GitDiffSnapshot): number {
+	const entries = tracker.getEntries();
+	const kept = entries.filter((entry) => gitDiff.has(entry.path));
+	if (kept.length === entries.length) return 0;
+	tracker.clear();
+	for (const entry of kept) tracker.add(entry.path, entry.relPath, entry.changeType);
+	return entries.length - kept.length;
+}
+
 export default function diffFilesExtension(pi: any): void {
 	const config = loadConfig();
 	const tracker = new FileTracker();
@@ -375,7 +386,7 @@ export default function diffFilesExtension(pi: any): void {
 		if (inGit) {
 			const currentDiff = getGitDiff(config.cwd);
 			tracker.resolveFromGitDiff(currentDiff);
-			tracker.clearResolved(currentDiff);
+			clearResolved(tracker, currentDiff);
 		}
 
 		const lines = renderWidget(tracker.getEntries(), colors, config);
@@ -432,7 +443,7 @@ export default function diffFilesExtension(pi: any): void {
 
 		const after = getGitDiff(config.cwd);
 		tracker.resolveFromGitDiff(after);
-		tracker.clearResolved(after);
+		clearResolved(tracker, after);
 
 		const newEntries: GitDiffSnapshot = new Map();
 		for (const [path, changeType] of after) {
@@ -563,7 +574,7 @@ export default function diffFilesExtension(pi: any): void {
 
 			const currentDiff = getGitDiff(config.cwd);
 			tracker.resolveFromGitDiff(currentDiff);
-			const cleared = tracker.clearResolved(currentDiff);
+			const cleared = clearResolved(tracker, currentDiff);
 			updateWidget(ctx, ctx?.theme);
 			ctx.ui.notify(
 				cleared === 1 ? "Removed 1 resolved file." : `Removed ${cleared} resolved files.`,
