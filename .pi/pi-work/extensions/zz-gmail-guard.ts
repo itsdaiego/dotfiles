@@ -1,1 +1,0 @@
-../../agent/extensions/zz-gmail-write-guard.ts
