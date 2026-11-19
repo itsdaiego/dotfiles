@@ -13,6 +13,8 @@
     "npm:@agnishc/edb-diff-files",
     "npm:@narumitw/pi-btw",
     "npm:@narumitw/pi-goal",
-    "npm:pi-vim"
+    "npm:pi-vim",
+    "npm:pi-remote-control@1.0.9",
+    "git:github.com/dmmulroy/pi-claude-cli"
   ]
 }
