@@ -109,18 +109,8 @@ For commitments, search pages, databases, and comments created or edited by the 
 
 ## Combine and present
 
-Deduplicate results that refer to the same Slack thread, Gmail thread, Linear issue or comment, GitLab note, Notion page/comment, or Granola meeting. Prefer the newest unresolved request or commitment when a thread has several. Sort by urgency when stated, then by newest activity. In the `Source` cell, append ` (promise)` for a self-authored commitment and set `From` to `You`; append ` (awaiting reply)` for the user's own unanswered send and set `From` to the person or people it is waiting on, with `What needs attention` phrased as `No reply yet - <short gist of the ask>`.
+Deduplicate results that refer to the same Slack thread, Gmail thread, Linear issue or comment, GitLab note, Notion page/comment, or Granola meeting. Prefer the newest unresolved request or commitment when a thread has several. Sort by urgency when stated, then by newest activity. Tag a self-authored commitment as a promise with `From` set to `You`; tag the user's own unanswered send as awaiting reply with `From` set to the person or people it is waiting on, and its action phrased as `No reply yet - <short gist of the ask>`.
 
-Open with one sentence that says the services searched, time range, and any unavailable service. Then present every result in this exact ASCII-table shape. Keep cell text short, wrap long text onto following table rows, and use a short stable link label when a full URL would make the table unreadable.
+Open with one sentence that says the services searched, time range, and any unavailable service. Then hand every result — columns `Source`, `What needs attention`, `From`, `When`, `Link`, plus each row's category tag (request / promise / awaiting reply) — to the `table-view` skill to render, instead of formatting a table yourself. Keep cell text short before handing it off: no repeated long message text, and a short stable link label instead of a raw URL.
 
-```text
-+--------+----------------------+------------------+------------------+------------------+
-| Source | What needs attention | From             | When             | Link             |
-+--------+----------------------+------------------+------------------+------------------+
-| Slack  | Check the deploy log | Alex Kim         | 2026-10-21 09:14 | Slack thread     |
-+--------+----------------------+------------------+------------------+------------------+
-```
-
-Make `What needs attention` an imperative or a clear `Check context` prompt. Do not repeat long message text. Put the actual link behind the link label when the client supports Markdown links; otherwise print the URL on a continuation row below its item.
-
-If no items qualify, still return the table with one row that says `No unresolved explicit requests found`. If a service cannot be searched, include one row for it with the cause and the next safe step. End with one short line that names excluded categories or any source-coverage limitation only when that matters to the result.
+Make `What needs attention` an imperative or a clear `Check context` prompt. If no items qualify, still hand over one row that says `No unresolved explicit requests found`. If a service cannot be searched, include one row for it with the cause and the next safe step. End with one short line that names excluded categories or any source-coverage limitation only when that matters to the result.
