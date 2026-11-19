@@ -31,6 +31,15 @@
 - A staged change over 25 files or 1,200 changed lines needs explicit user approval before the agent commits it. Explain why it cannot be split first.
 - Follow the repository's commit and authorization rules. Never create a commit unless the user has authorized it.
 
+## Disposable worktrees
+
+- Put every non-primary Git worktree under `/tmp/worktrees/<repository>/<task>`. On macOS, tools may report the same path under `/private/tmp`. Do not create task worktrees in `~/Documents`, the repository's parent directory, or another persistent workspace.
+- Create each writable worktree with its own local branch. Do not make changes in a detached worktree. The worktree directory is disposable; the branch is the durable record of committed work.
+- A branch does not preserve uncommitted files. Before moving, removing, or abandoning a worktree, run `scripts/backup-worktree-state.sh <worktree-path>` when the repository provides it. Otherwise preserve a binary patch plus an archive of untracked files in the repository's common Git directory. Committing is also valid when the user has authorized that commit.
+- A local branch protects work from loss of the temporary checkout. It is not a remote backup. Push only when the user explicitly authorizes that specific push after review.
+- Keep installed agent configuration linked to the primary checkout, never to a temporary worktree. Run `scripts/install-agent-configs.sh` from any checkout; it must resolve managed links back to the primary checkout.
+- Remove temporary worktrees after their branch is merged or abandoned. Do not keep them as long-lived storage.
+
 ## Intake worktrees
 
 - For Butler Intake work, create a dedicated worktree whose branch and directory name start with the actual Linear ticket ID, such as `intake-452-leaddocket-catalog`. Do not use an MR number or a generic task name in place of the ticket ID.
@@ -76,7 +85,7 @@
 
 ## Shared harness maintenance
 
-- When updating the shared Pi, Claude Code, or Codex setup, work in `~/Documents/code-stuff/dotfiles` and follow `docs/agent-config-maintenance.md`.
+- When updating the shared Pi, Claude Code, or Codex setup, use the repository at `~/Documents/code-stuff/dotfiles`, create the task worktree under `/tmp/worktrees/dotfiles/`, and follow `docs/agent-config-maintenance.md`.
 - Keep authentication, OAuth state, sessions, caches, databases, downloaded plugins, generated system skills, and per-machine trust state out of Git.
 
 ## Shared agent brain

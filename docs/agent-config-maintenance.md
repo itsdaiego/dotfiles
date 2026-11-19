@@ -19,7 +19,11 @@ Use `codex-company` for the `~/.codex` home and `codex-personal` for the isolate
 
 ## Change shared configuration
 
-Create a dedicated worktree and branch. Do not commit from `master` or from the primary checkout. Change the tracked source in the worktree, run `./scripts/verify-agent-configs.sh`, then commit the reviewed files.
+Create a dedicated branch and a disposable worktree under `/tmp/worktrees/dotfiles/<task>`. On macOS, Git may display this as `/private/tmp/worktrees/dotfiles/<task>`. Do not commit from `master` or from the primary checkout. Change the tracked source in the temporary worktree, run `./scripts/verify-agent-configs.sh`, then commit the reviewed files.
+
+Every writable worktree must have its own local branch. The branch preserves committed work if the temporary directory disappears, but it does not preserve uncommitted files. Before moving, removing, or abandoning a dirty worktree, run `scripts/backup-worktree-state.sh <worktree-path>`. The script stores binary patches and an archive of untracked files under the repository's common Git directory. Committing is also valid when that commit is authorized. A local branch is not a remote backup; pushing still requires explicit authorization.
+
+Installed Pi, Claude Code, and Codex files must point to the primary checkout at `~/Documents/code-stuff/dotfiles`, never to a temporary worktree. `scripts/install-agent-configs.sh` resolves the common Git directory so it uses the primary checkout even when invoked from a linked worktree.
 
 `pi` and `pi-work` share `~/.pi/agent`, including sessions, plugins, MCP configuration, and skills. The installer links `~/.pi/pi-work` to that root. Do not add files under `.pi/pi-work`.
 
