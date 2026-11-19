@@ -7,7 +7,7 @@ description: Render tabular results back to the user in the format that fits the
 
 One shared way to show tabular data, so every skill stops hand-rolling its own ASCII table and instead gets a rendering that matches where the person is actually reading it: a raw terminal versus Claude Code, Pi, or Codex's own desktop/GUI surface.
 
-This skill does not fetch or shape data. The caller (another skill, or the main task) already has the rows; this skill only decides how to draw them and draws them, inline, in the same reply.
+This skill does not fetch or shape data. The caller (another skill, or the main task) already has the rows; this skill only decides how to draw them and draws them, inline, in the same reply. Browser-rendered chat and web app surfaces count as GUI surfaces: use a native Markdown table in chat. For a standalone browser page or artifact, use a semantic HTML `<table>` and make it responsive.
 
 ## When to use this
 
@@ -24,7 +24,9 @@ The caller hands this skill, in its own prompt or inline:
 
 Keep cell text short at the source. This skill does not rewrite the caller's content, only its presentation — wrap long text onto continuation rows/lines rather than truncating meaning.
 
-## Step 1 — decide the surface: terminal or desktop/GUI
+## Step 1 — decide the surface: terminal, desktop/GUI, or browser
+
+A browser-rendered chat or web app is a GUI surface, including on a phone. Use a Markdown table in chat. For a standalone browser page or artifact, use a semantic HTML table with responsive overflow when needed.
 
 Decide once per reply, not per table. Use the first signal that applies, in this order:
 
