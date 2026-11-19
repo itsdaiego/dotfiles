@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Notion Doc"
+  short_description: "Create a private Notion one-pager"
+  default_prompt: "Create a private Notion one-pager from the context I provide, using the humanizer skill."
