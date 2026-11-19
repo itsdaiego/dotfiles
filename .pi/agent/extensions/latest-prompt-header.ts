@@ -1,10 +1,13 @@
+import path from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth } from "@earendil-works/pi-tui";
+import { buildRexAgentTitle, findInitialTaskPrompt } from "./lib/rex-agent-title.ts";
 import { replaceReferences } from "./resume-screenshot-paths.ts";
 
 /** Keep the latest submitted request in a one-line overlay at screen row zero. */
 export default function latestPromptHeader(pi: ExtensionAPI) {
   let latestPrompt = "";
+  let taskPrompt = "";
   let requestRender: (() => void) | undefined;
   let overlayHandle: { hide(): void; unfocus(): void } | undefined;
 
@@ -12,21 +15,30 @@ export default function latestPromptHeader(pi: ExtensionAPI) {
     return replaceReferences(text).replace(/\s+/g, " ").trim();
   }
 
-  function restoreLatestPrompt(ctx: ExtensionContext): void {
-    for (const entry of [...ctx.sessionManager.getBranch()].reverse()) {
+  function updateTerminalTitle(ctx: ExtensionContext): void {
+    ctx.ui.setTitle(buildRexAgentTitle(taskPrompt, path.basename(ctx.cwd)));
+  }
+
+  function restorePrompts(ctx: ExtensionContext): void {
+    const prompts: string[] = [];
+    for (const entry of ctx.sessionManager.getBranch()) {
       if (entry.type !== "message" || entry.message.role !== "user") continue;
 
       const { content } = entry.message;
-      latestPrompt = toOneLine(
-        typeof content === "string"
-          ? content
-          : content
-              .filter((block) => block.type === "text")
-              .map((block) => block.text)
-              .join(" "),
+      prompts.push(
+        toOneLine(
+          typeof content === "string"
+            ? content
+            : content
+                .filter((block) => block.type === "text")
+                .map((block) => block.text)
+                .join(" "),
+        ),
       );
-      return;
     }
+
+    latestPrompt = prompts.at(-1) ?? "";
+    taskPrompt = findInitialTaskPrompt(prompts);
   }
 
   function showOverlay(ctx: ExtensionContext): void {
@@ -71,13 +83,16 @@ export default function latestPromptHeader(pi: ExtensionAPI) {
 
   pi.on("session_start", (_event, ctx) => {
     if (ctx.mode !== "tui") return;
-    restoreLatestPrompt(ctx);
+    restorePrompts(ctx);
+    updateTerminalTitle(ctx);
     showOverlay(ctx);
   });
 
   pi.on("input", (event, ctx) => {
     if (ctx.mode !== "tui") return;
     latestPrompt = toOneLine(event.text);
+    taskPrompt ||= findInitialTaskPrompt([latestPrompt]);
+    updateTerminalTitle(ctx);
     requestRender?.();
   });
 
