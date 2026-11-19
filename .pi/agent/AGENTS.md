@@ -17,7 +17,8 @@
 ## Code explanations
 
 - When you explain or cite code, show the relevant concise source excerpt without waiting to be asked.
-- Link to source files with their absolute local paths and line anchors. Do not use worktree-relative links, because Pi Pocket resolves them from the session folder.
+- Before citing a local file, verify that the path exists.
+- In Pi Pocket, cite local code with a clickable inline absolute path and a `:line` or `:start-end` suffix, such as `/absolute/path/file.py:42-55`. Do not put `#L...` anchors in local Markdown links because Pi Pocket treats the anchor as part of the file path. Do not use worktree-relative paths, because Pi Pocket resolves them from the session folder.
 
 ## Atomic commits
 
