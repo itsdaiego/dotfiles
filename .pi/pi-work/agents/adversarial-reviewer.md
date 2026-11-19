@@ -1,1 +1,0 @@
-../../agent/agents/adversarial-reviewer.md

@@ -21,7 +21,9 @@ Use `codex-company` for the `~/.codex` home and `codex-personal` for the isolate
 
 Create a dedicated worktree and branch. Do not commit from `master` or from the primary checkout. Change the tracked source in the worktree, run `./scripts/verify-agent-configs.sh`, then commit the reviewed files.
 
-Pi has separate `pi-personal` and `pi-work` roots. Put shared extensions, prompts, skills, agents, and themes under `.pi/agent/`. Add a relative symlink from both profile directories, then verify that the two profile trees match. Keep profile-specific settings separate when the difference is intentional.
+`pi` and `pi-work` share `~/.pi/agent`, including sessions, plugins, MCP configuration, and skills. The installer links `~/.pi/pi-work` to that root. Do not add files under `.pi/pi-work`.
+
+`pi-personal` has its own root at `~/.pi/pi-personal`. Put shared extensions, prompts, skills, agents, and themes under `.pi/agent/`, then add a relative symlink from `pi-personal` when it needs the resource. Keep `pi-personal` settings separate when the difference is intentional.
 
 Both Codex homes and Claude Code use the shared `.agent-customizations` directory for cross-harness behavior. Add portable skills and hook scripts there when the harnesses can use the same implementation. Keep generated first-party skills and downloaded plugins out of the repository.
 

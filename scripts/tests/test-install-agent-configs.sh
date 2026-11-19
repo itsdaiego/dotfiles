@@ -39,6 +39,8 @@ test "$(readlink "$test_home/.pi/agent/skills/walle-review-risk/SKILL.md")" = \
 test ! -L "$stale_root/walle-review-risk/SKILL.md"
 grep -Fx 'stale skill' "$stale_root/walle-review-risk/SKILL.md" >/dev/null
 test ! -e "$test_home/.pi/agent/sessions/$(basename -- "$generated_source")"
+test -L "$test_home/.pi/pi-work"
+test "$(readlink "$test_home/.pi/pi-work")" = "$test_home/.pi/agent"
 test "$(readlink "$test_home/.codex-personal/config.toml")" = "$repo_dir/.codex-personal/config.toml"
 test "$(readlink "$test_home/.local/bin/codex-personal")" = "$repo_dir/.local/bin/codex-personal"
 test "$(readlink "$test_home/.local/bin/codex-company")" = "$repo_dir/.local/bin/codex-company"
