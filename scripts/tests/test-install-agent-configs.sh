@@ -3,6 +3,8 @@
 set -eu
 
 repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
+common_git_dir=$(git -C "$repo_dir" rev-parse --path-format=absolute --git-common-dir)
+stable_repo_dir=$(dirname -- "$common_git_dir")
 test_home=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-install-test.XXXXXX")
 generated_source=$repo_dir/.pi/agent/sessions/install-test-generated-$$.jsonl
 
@@ -29,37 +31,37 @@ HOME=$test_home "$repo_dir/scripts/install-agent-configs.sh" >/dev/null
 
 test ! -L "$test_home/.config/herdr/scripts"
 test "$(readlink "$test_home/.config/herdr/scripts/auto-name/user_prompt_hook.py")" = \
-  "$repo_dir/.config/herdr/scripts/auto-name/user_prompt_hook.py"
+  "$stable_repo_dir/.config/herdr/scripts/auto-name/user_prompt_hook.py"
 test ! -L "$stale_root/.config/herdr/scripts/auto-name/user_prompt_hook.py"
 grep -Fx 'stale hook' \
   "$stale_root/.config/herdr/scripts/auto-name/user_prompt_hook.py" >/dev/null
 test ! -L "$test_home/.pi/agent/skills/walle-review-risk"
 test "$(readlink "$test_home/.pi/agent/skills/walle-review-risk/SKILL.md")" = \
-  "$repo_dir/.pi/agent/skills/walle-review-risk/SKILL.md"
+  "$stable_repo_dir/.pi/agent/skills/walle-review-risk/SKILL.md"
 test ! -L "$stale_root/walle-review-risk/SKILL.md"
 grep -Fx 'stale skill' "$stale_root/walle-review-risk/SKILL.md" >/dev/null
 test ! -e "$test_home/.pi/agent/sessions/$(basename -- "$generated_source")"
 test -L "$test_home/.pi/pi-work"
 test "$(readlink "$test_home/.pi/pi-work")" = "$test_home/.pi/agent"
-test "$(readlink "$test_home/.codex-personal/config.toml")" = "$repo_dir/.codex-personal/config.toml"
-test "$(readlink "$test_home/.ai/README.md")" = "$repo_dir/.ai/README.md"
-test "$(readlink "$test_home/.local/bin/codex-personal")" = "$repo_dir/.local/bin/codex-personal"
-test "$(readlink "$test_home/.local/bin/codex-company")" = "$repo_dir/.local/bin/codex-company"
+test "$(readlink "$test_home/.codex-personal/config.toml")" = "$stable_repo_dir/.codex-personal/config.toml"
+test "$(readlink "$test_home/.ai/README.md")" = "$stable_repo_dir/.ai/README.md"
+test "$(readlink "$test_home/.local/bin/codex-personal")" = "$stable_repo_dir/.local/bin/codex-personal"
+test "$(readlink "$test_home/.local/bin/codex-company")" = "$stable_repo_dir/.local/bin/codex-company"
 test "$(readlink "$test_home/.codex-personal/AGENTS.md")" = "$test_home/.pi/pi-personal/AGENTS.md"
 test "$(readlink "$test_home/.codex-personal/skills")" = "$test_home/.codex/skills"
-test "$(readlink "$test_home/.codex/rules/default.rules")" = "$repo_dir/.codex/rules/default.rules"
+test "$(readlink "$test_home/.codex/rules/default.rules")" = "$stable_repo_dir/.codex/rules/default.rules"
 test "$(readlink "$test_home/.codex-personal/rules/default.rules")" = "$test_home/.codex/rules/default.rules"
 test "$(readlink "$test_home/.claude/skills/walle-review-risk")" = \
-  "$repo_dir/.pi/agent/skills/walle-review-risk"
+  "$stable_repo_dir/.pi/agent/skills/walle-review-risk"
 test "$(readlink "$test_home/.claude/skills/adversarial-review-stop")" = \
-  "$repo_dir/.pi/agent/skills/adversarial-review-stop"
-test "$(readlink "$test_home/.claude/skills/brain")" = "$repo_dir/.pi/agent/skills/brain"
+  "$stable_repo_dir/.pi/agent/skills/adversarial-review-stop"
+test "$(readlink "$test_home/.claude/skills/brain")" = "$stable_repo_dir/.pi/agent/skills/brain"
 test "$(readlink "$test_home/.claude/skills/copy-all")" = \
-  "$repo_dir/.agent-customizations/copy-all"
+  "$stable_repo_dir/.agent-customizations/copy-all"
 test "$(readlink "$test_home/.codex/skills/copy-all")" = \
-  "$repo_dir/.agent-customizations/copy-all"
+  "$stable_repo_dir/.agent-customizations/copy-all"
 test "$(readlink "$test_home/.codex-personal/skills/copy-all")" = \
-  "$repo_dir/.agent-customizations/copy-all"
+  "$stable_repo_dir/.agent-customizations/copy-all"
 grep -F 'prefix_rule(pattern=["herdr", "agent", "rename"], decision="allow")' \
   "$test_home/.codex/rules/default.rules" >/dev/null
 grep -F 'prefix_rule(pattern=["herdr", "agent", "rename"], decision="allow")' \

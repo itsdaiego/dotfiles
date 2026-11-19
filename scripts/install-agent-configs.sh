@@ -2,7 +2,9 @@
 
 set -eu
 
-repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+script_repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+common_git_dir=$(git -C "$script_repo_dir" rev-parse --path-format=absolute --git-common-dir)
+repo_dir=$(dirname -- "$common_git_dir")
 backup_root="$HOME/.dotfiles-backups/$(date '+%Y%m%dT%H%M%S')"
 
 link_target() {

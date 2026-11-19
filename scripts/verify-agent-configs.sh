@@ -6,6 +6,8 @@ repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$repo_dir"
 
 sh -n scripts/install-agent-configs.sh
+sh -n scripts/backup-worktree-state.sh
+sh -n scripts/tests/test-backup-worktree-state.sh
 sh -n scripts/tests/test-install-agent-configs.sh
 sh -n scripts/tests/test-agent-skill-routing.sh
 sh -n scripts/tests/test-herdr-agent-picker.sh
@@ -30,6 +32,7 @@ cp .codex-personal/Codex-Personal.config.toml "$codex_check_dir/config.toml"
 CODEX_HOME=$codex_check_dir codex features list >/dev/null
 python3 -m unittest discover -s .config/herdr/scripts/auto-name/tests -v
 python3 -m unittest discover -s .agent-customizations/start-reviewer/scripts -p 'test_*.py' -v
+sh scripts/tests/test-backup-worktree-state.sh
 sh scripts/tests/test-install-agent-configs.sh
 sh scripts/tests/test-agent-skill-routing.sh
 sh scripts/tests/test-herdr-agent-picker.sh
