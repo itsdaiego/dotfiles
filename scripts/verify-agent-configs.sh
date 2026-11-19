@@ -33,6 +33,7 @@ python3 -m unittest discover -s .agent-customizations/start-reviewer/scripts -p 
 sh scripts/tests/test-install-agent-configs.sh
 sh scripts/tests/test-agent-skill-routing.sh
 sh scripts/tests/test-herdr-agent-picker.sh
+node --test scripts/tests/pi-aws-command-guard.test.ts
 
 find .config/herdr/scripts .agent-customizations .codex .codex-personal .claude .pi .local/bin -type l -print | while IFS= read -r link; do
   case "$link" in
