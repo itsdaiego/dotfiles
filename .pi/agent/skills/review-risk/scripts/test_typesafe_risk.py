@@ -86,6 +86,40 @@ class TypeSafeRiskTest(unittest.TestCase):
         self.assertEqual(result["risk"], "low")
         self.assertNotIn("secret-value", json.dumps(result))
 
+    def test_stale_environment_key_retries_with_zshrc_key(self):
+        success = {
+            "answers": {
+                "risk": {
+                    "type": "choice",
+                    "choice": "low",
+                    "probabilities": {"low": 1.0, "medium": 0.0, "high": 0.0},
+                    "confidence": 1.0,
+                }
+            }
+        }
+        unauthorized = typesafe_risk.urllib.error.HTTPError(
+            "https://api.typesafe.ai/v1/systemone",
+            401,
+            "Unauthorized",
+            {},
+            io.BytesIO(b'{"detail":"old key"}'),
+        )
+        calls = []
+
+        def urlopen(request, timeout):
+            calls.append(dict(request.header_items())["Authorization"])
+            if len(calls) == 1:
+                raise unauthorized
+            return FakeResponse(success)
+
+        with mock.patch.dict(os.environ, {"TYPESAFE_API_KEY": "stale-key"}, clear=True):
+            with mock.patch.object(typesafe_risk, "load_zshrc_api_key", return_value="fresh-key"):
+                with mock.patch.object(typesafe_risk.urllib.request, "urlopen", side_effect=urlopen):
+                    result = typesafe_risk.classify({"summary": "change"})
+
+        self.assertTrue(result["available"])
+        self.assertEqual(calls, ["Bearer stale-key", "Bearer fresh-key"])
+
     def test_authentication_failure_returns_unavailable_result(self):
         error = typesafe_risk.urllib.error.HTTPError(
             "https://api.typesafe.ai/v1/systemone",

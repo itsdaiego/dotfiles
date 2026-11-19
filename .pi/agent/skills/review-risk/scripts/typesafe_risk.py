@@ -42,12 +42,8 @@ RISK_CRITERIA = {
 }
 
 
-def load_api_key():
-    """Return the TypeSafe key without exposing it in command arguments or output."""
-    key = os.environ.get("TYPESAFE_API_KEY", "").strip()
-    if key:
-        return key
-
+def load_zshrc_api_key():
+    """Load the key from a fresh shell without exposing it in process arguments."""
     command = [
         "zsh",
         "-fc",
@@ -58,6 +54,11 @@ def load_api_key():
     except (OSError, subprocess.SubprocessError):
         return ""
     return result.stdout.strip() if result.returncode == 0 else ""
+
+
+def load_api_key():
+    """Return the TypeSafe key without exposing it in command arguments or output."""
+    return os.environ.get("TYPESAFE_API_KEY", "").strip() or load_zshrc_api_key()
 
 
 def build_payload(evidence):
@@ -98,30 +99,39 @@ def unavailable(reason, status=None):
 
 def classify(evidence, api_key=None):
     """Return a sanitized TypeSafe classification result for one exact-head review."""
-    key = (api_key if api_key is not None else load_api_key()).strip()
-    if not key:
+    if api_key is not None:
+        keys = [api_key.strip()]
+    else:
+        keys = [os.environ.get("TYPESAFE_API_KEY", "").strip(), load_zshrc_api_key()]
+    keys = list(dict.fromkeys(key for key in keys if key))
+    if not keys:
         return unavailable("TYPESAFE_API_KEY is unavailable in the environment and ~/.zshrc.")
 
-    request = urllib.request.Request(
-        API_URL,
-        data=json.dumps(build_payload(evidence), separators=(",", ":")).encode(),
-        headers={
-            "Authorization": f"Bearer {key}",
-            "Content-Type": "application/json",
-        },
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
-            body = json.loads(response.read())
-    except urllib.error.HTTPError as error:
-        if error.code in (401, 403):
-            return unavailable("TypeSafe authentication failed; refresh TYPESAFE_API_KEY.", error.code)
-        return unavailable(f"TypeSafe returned HTTP {error.code}.", error.code)
-    except urllib.error.URLError as error:
-        return unavailable(f"TypeSafe request failed: {error.reason}")
-    except (TimeoutError, json.JSONDecodeError) as error:
-        return unavailable(f"TypeSafe returned no usable classification: {error}")
+    body = None
+    for key in keys:
+        request = urllib.request.Request(
+            API_URL,
+            data=json.dumps(build_payload(evidence), separators=(",", ":")).encode(),
+            headers={
+                "Authorization": f"Bearer {key}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
+                body = json.loads(response.read())
+            break
+        except urllib.error.HTTPError as error:
+            if error.code in (401, 403):
+                continue
+            return unavailable(f"TypeSafe returned HTTP {error.code}.", error.code)
+        except urllib.error.URLError as error:
+            return unavailable(f"TypeSafe request failed: {error.reason}")
+        except (TimeoutError, json.JSONDecodeError) as error:
+            return unavailable(f"TypeSafe returned no usable classification: {error}")
+    if body is None:
+        return unavailable("TypeSafe authentication failed; refresh TYPESAFE_API_KEY.", 401)
 
     answer = body.get("answers", {}).get("risk", {}) if isinstance(body, dict) else {}
     risk = answer.get("choice") if isinstance(answer, dict) else None

@@ -105,7 +105,8 @@ def runner_env(runner):
 
 def attach_review_risk(result_path):
     """Validate the private exact-head review-risk result written by the runner."""
-    result = json.load(open(result_path))
+    with open(result_path) as source:
+        result = json.load(source)
     review = result[0] if isinstance(result, list) and len(result) == 1 else result
     if not isinstance(review, dict):
         raise RuntimeError("review result must hold one object")
