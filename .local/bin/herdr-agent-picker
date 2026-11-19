@@ -5,11 +5,20 @@ sel=$(jq -n \
   --argjson agents "$(herdr agent list)" \
   --argjson workspaces "$(herdr workspace list)" \
   -r '
+    def pad($width):
+      . + (" " * (($width - length) | if . > 0 then . else 0 end));
+
     ($workspaces.result.workspaces | map({(.workspace_id): .label}) | add) as $labels
     | $agents.result.agents[]
-    | "\($labels[.workspace_id])\t\(.agent)\t\(.agent_status)\t\(.pane_id)"
+    | ($labels[.workspace_id] // "-") as $workspace
+    | "\($workspace | pad(9)) \(.agent | pad(6)) \(.agent_status | pad(9)) \(.name // "-")\t\(.pane_id)\t\(.tab_id)"
   ' \
   | sort \
-  | fzf --with-nth=1,2,3 --delimiter='\t' --prompt="agent> ")
+  | fzf --layout=reverse --with-nth=1 --header='workspace agent  status    session' --delimiter='\t' --prompt="agent> ")
 
-[ -n "$sel" ] && herdr agent focus "$(printf '%s' "$sel" | cut -f4)"
+[ -n "$sel" ] || exit 0
+
+# In Herdr 0.9, agent focus updates the server's selection but may not move an
+# attached client. Focusing the selected tab makes the switch visible locally.
+herdr agent focus "$(printf '%s' "$sel" | cut -f2)" >/dev/null
+herdr tab focus "$(printf '%s' "$sel" | cut -f3)" >/dev/null
