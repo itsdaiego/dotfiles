@@ -14,6 +14,12 @@ gpt-6-astra = 4
 [mcp_servers.gitlab]
 url = "https://gitlab.com/api/v4/mcp"
 
+[mcp_servers.gitlab.tools.add_commit]
+approval_mode = "approve"
+
+[mcp_servers.gitlab.tools.save_merge_request]
+approval_mode = "approve"
+
 [mcp_servers.linear]
 url = "https://mcp.linear.app/mcp"
 
