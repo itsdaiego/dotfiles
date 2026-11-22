@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if (( $# < 3 )); then
+  echo "usage: resume-agent <pi|claude> <session-id> <name> [agent args...]" >&2
+  exit 2
+fi
+
+kind=$1
+session_id=$2
+name=$3
+shift 3
+
+case "$kind" in
+  pi)
+    # --session-id reopens this cwd's session after a Rex server restore,
+    # creating it on the first run.
+    exec pi --session-id "$session_id" --name "$name" "$@"
+    ;;
+  claude)
+    # Claude distinguishes creating a fixed session from resuming it.
+    # Transcript files are stored below ~/.claude/projects by UUID.
+    transcript=$(find "$HOME/.claude/projects" -type f -name "$session_id.jsonl" -print -quit 2>/dev/null || true)
+    if [[ -n "$transcript" ]]; then
+      exec claude --resume "$session_id" --name "$name" "$@"
+    else
+      exec claude --session-id "$session_id" --name "$name" "$@"
+    fi
+    ;;
+  *)
+    echo "resume-agent: unsupported agent kind: $kind" >&2
+    exit 2
+    ;;
+esac

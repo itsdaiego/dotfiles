@@ -2,7 +2,7 @@
 
 Read this file before diagnosing, changing, or documenting Yabai on a Mac.
 
-The shared Yabai configuration is the repository-root `yabairc`. The active configuration on a configured Mac is `~/.config/yabairc`. Keep changes to the two files in sync when the local configuration is not already linked to this repository.
+The shared Yabai configuration is `.config/yabai/yabairc`, matching Yabai's XDG path at `~/.config/yabai/yabairc`. On configured Macs, the active file should be linked to this repository. Do not create competing `~/.yabairc` or `~/.config/yabairc` files.
 
 ## Focus stealing across Spaces
 

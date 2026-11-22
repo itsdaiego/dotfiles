@@ -2,6 +2,12 @@
 
 Personal dotfiles that make my life easier! :D
 
+## Repository layout
+
+Configuration follows its natural home-directory path. XDG applications live under `.config/<tool>/`, while tools whose canonical files are in `$HOME` retain names such as `.zshrc`, `.vimrc`, and `.skhdrc`. Machine-specific configuration bundles that intentionally contain several home-directory trees live under `profiles/`, such as `profiles/omarchy/`.
+
+Avoid adding a second top-level directory for an application already represented under `.config/`, and avoid keeping both legacy and XDG variants of the same active configuration.
+
 ## Agent setup
 
 This repository keeps the portable configuration for the company and personal Codex homes, Claude Code, and both Pi profiles in one place. It includes global instructions, settings, skills, prompts, extensions, MCP server definitions that do not contain credentials, shared agent customizations, launchers, and the Pi extension package lock.

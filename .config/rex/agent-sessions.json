@@ -1,0 +1,19 @@
+{
+  "chessan": [
+    {"window": "full-brain-sweep", "kind": "pi", "session_id": "edb2202d-b409-498b-b230-46dad2ac27e1", "cwd": "/Users/daiego/Documents/code-stuff/python/chessan"},
+    {"window": "delete-scheduled-sessions", "kind": "pi", "session_id": "46c0ca50-b48a-46c7-b597-65139f87583e", "cwd": "/Users/daiego/Documents/code-stuff/python/chessan"},
+    {"window": "change-pi-theme", "kind": "pi", "session_id": "8122ebfa-640f-4702-bfbc-33addbd41391", "cwd": "/Users/daiego/Documents/code-stuff/python/chessan"},
+    {"window": "setup-local-full-stack", "kind": "pi", "session_id": "15c83314-e346-45d4-a034-15a54980e020", "cwd": "/Users/daiego/Documents/code-stuff/python/chessan"},
+    {"window": "pi", "kind": "pi", "session_id": "306d5a4c-2f84-47d8-ac8d-34ebe234123d", "cwd": "/Users/daiego/Documents/code-stuff/python/chessan"},
+    {"window": "pi", "kind": "pi", "session_id": "03831547-494d-412a-ab8d-38773ae3ae6a", "cwd": "/Users/daiego/Documents/code-stuff/python/chessan"}
+  ],
+  "macmarchy": [
+    {"window": "claude", "kind": "claude", "session_id": "9156b960-42db-4d30-9bfa-8fd950b952f8", "cwd": "/Users/daiego/Documents/code-stuff/python/macmarchy"}
+  ],
+  "eve": [
+    {"window": "reassess-transfer-verdict", "kind": "pi", "session_id": "a43933a0-3d45-4b7b-a504-3e898efda312", "cwd": "/Users/daiego/Documents/code-stuff/eve"}
+  ],
+  "bootcamp": [
+    {"window": "pi", "kind": "pi", "session_id": "dc5b0c4f-2f8b-47e5-8a46-3bcd4bdb58da", "cwd": "/Users/daiego/Documents/code-stuff/bootcamp"}
+  ]
+}

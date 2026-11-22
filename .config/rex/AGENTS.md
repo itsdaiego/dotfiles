@@ -2,7 +2,7 @@
 
 Read this file before diagnosing, changing, or documenting Rex on a Mac.
 
-The shared Rex configuration is the repository `rex/init.lua` and `rex/large-picker.py`, mirroring `tmux`-style bindings from `~/.config/herdr/config.toml`. The active configuration on a configured Mac is `~/.config/rex/init.lua` and `~/.config/rex/large-picker.py`. Keep changes to the two pairs of files in sync when the local configuration is not already linked to this repository.
+The shared Rex configuration is the repository `.config/rex/init.lua` and `.config/rex/large-picker.py`, mirroring `tmux`-style bindings from `~/.config/herdr/config.toml`. The active configuration on a configured Mac is `~/.config/rex/init.lua` and `~/.config/rex/large-picker.py`. Keep changes to the two pairs of files in sync when the local configuration is not already linked to this repository.
 
 Reload Rex after an `init.lua` change with `Ctrl+B`, then `R`, or `rex config reload`. Run `rex config check` afterward; it should report zero diagnostics.
 
