@@ -37,6 +37,8 @@ Rex's native `pane.focus` ends any zoom in the window when it moves focus (confi
 
 `zoom_aware_focus` in `init.lua` wraps `session.focus_direction` and `session.zoom_block`: it reads whether the active window is zoomed before moving focus, moves focus in the requested direction, then re-zooms the window on the pane focus landed on if it was zoomed before. All of the direction bindings above (`Ctrl+B H`/`J`/`K`/`L` and `Alt+H`/`J`/`K`/`L`) use this action instead of the native `pane.focus`. When the window isn't zoomed, it behaves exactly like `pane.focus`.
 
+The `Ctrl+B W` and `Ctrl+B A` pickers carry the target window's zoom state in their snapshot. After focusing the selected pane, `large-picker.py` re-enables zoom on that pane before showing its session and window, so picker navigation preserves maximized layouts too.
+
 ## Sidebar size patch
 
 Rex's sidebar text setting caps out at 15pt in its own UI, and the sidebar is pinned to the right and always visible. The current setup patches past that cap directly in `/Users/daiego/Library/Preferences/com.superlogical.rex.plist`, since Rex is a signed, closed-source app and patching its binary would be brittle:

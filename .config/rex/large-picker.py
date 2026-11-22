@@ -99,6 +99,7 @@ def records_from_snapshot(
         window_label = pane["window_label"]
         block_id = pane["block_id"]
         block_label = pane["block_label"]
+        window_zoomed = pane.get("window_zoomed", False)
         process = pane.get("process") or {}
         foreground = process.get("foreground") or process.get("child") or {}
         if Path(foreground.get("script", "")).name == "large-picker.py":
@@ -123,7 +124,9 @@ def records_from_snapshot(
         display = "  ·  ".join(display_parts[:2])
         if len(display_parts) > 2:
             display += "  ›  " + "  ›  ".join(display_parts[2:])
-        records.append((display, session_id, window_id, block_id))
+        records.append(
+            (display, session_id, window_id, block_id, "1" if window_zoomed else "0")
+        )
 
     return records
 
@@ -139,7 +142,7 @@ def detailed_records(rex: str, agents_only: bool) -> list[tuple[str, ...]]:
     with ThreadPoolExecutor(max_workers=max(1, min(8, len(sessions)))) as executor:
         inspected_sessions = list(executor.map(inspect_session, sessions))
 
-    panes: list[tuple[str, str, str, str, str, str]] = []
+    panes: list[tuple[str, str, str, str, str, str, bool]] = []
     for session, view in inspected_sessions:
         session_id = session["session_id"]
         session_label = session["label"]
@@ -159,11 +162,12 @@ def detailed_records(rex: str, agents_only: bool) -> list[tuple[str, ...]]:
                             window_label,
                             block_id,
                             block.get("label") or "Pane",
+                            window.get("zoomed_block_id") is not None,
                         )
                     )
 
     def inspect_process(pane: tuple[str, ...]) -> tuple[tuple[str, ...], dict]:
-        session_id, _, _, _, block_id, _ = pane
+        session_id, _, _, _, block_id, _, _ = pane
         command = [rex, "block", "call", "-s", session_id, "-b", block_id, "process"]
         return pane, try_json(command)
 
@@ -172,7 +176,15 @@ def detailed_records(rex: str, agents_only: bool) -> list[tuple[str, ...]]:
 
     snapshot = []
     for pane, process in inspected_panes:
-        session_id, session_label, window_id, window_label, block_id, block_label = pane
+        (
+            session_id,
+            session_label,
+            window_id,
+            window_label,
+            block_id,
+            block_label,
+            window_zoomed,
+        ) = pane
         snapshot.append(
             {
                 "session_id": session_id,
@@ -181,6 +193,7 @@ def detailed_records(rex: str, agents_only: bool) -> list[tuple[str, ...]]:
                 "window_label": window_label,
                 "block_id": block_id,
                 "block_label": block_label,
+                "window_zoomed": window_zoomed,
                 "process": process,
             }
         )
@@ -194,6 +207,61 @@ def block_records(rex: str) -> list[tuple[str, ...]]:
 
 def agent_records(rex: str) -> list[tuple[str, ...]]:
     return detailed_records(rex, agents_only=True)
+
+
+def run_picker_command(command: list[str], description: str) -> bool:
+    result = subprocess.run(command, capture_output=True, text=True)
+    if result.returncode == 0:
+        return True
+
+    detail = (result.stderr or result.stdout).strip()
+    print(f"Could not {description}.", file=sys.stderr)
+    if detail:
+        print(detail, file=sys.stderr)
+    print("Press Enter to close.", file=sys.stderr)
+    try:
+        input()
+    except EOFError:
+        pass
+    return False
+
+
+def open_choice(
+    rex: str, client_target: str, mode: str, choice: tuple[str, ...]
+) -> bool:
+    if mode == "sessions":
+        _, session_id = choice
+        return run_picker_command(
+            [rex, "-C", client_target, "do", "session.select", f"session_id={session_id}"],
+            "switch sessions",
+        )
+
+    _, session_id, window_id, block_id, *metadata = choice
+    was_zoomed = bool(metadata and metadata[0] == "1")
+    if not run_picker_command(
+        [rex, "focus", "-s", session_id, block_id],
+        "focus the selected pane",
+    ):
+        return False
+
+    if was_zoomed and not run_picker_command(
+        [rex, "zoom", "-s", session_id, block_id, "--on"],
+        "restore the selected pane's zoom",
+    ):
+        return False
+
+    return run_picker_command(
+        [
+            rex,
+            "-C",
+            client_target,
+            "do",
+            "session.select",
+            f"session_id={session_id}",
+            f"window_id={window_id}",
+        ],
+        "show the selected pane",
+    )
 
 
 def pick(fzf: str, title: str, records: list[tuple[str, ...]]) -> Optional[tuple[str, ...]]:
@@ -227,12 +295,12 @@ def pick(fzf: str, title: str, records: list[tuple[str, ...]]) -> Optional[tuple
 def main() -> int:
     if len(sys.argv) < 3:
         print(
-            "usage: large-picker.py <sessions|blocks|agents> <client-id> [--print]",
+            "usage: large-picker.py <sessions|blocks|agents> <client-target> [--print]",
             file=sys.stderr,
         )
         return 2
 
-    mode, client_id = sys.argv[1:3]
+    mode, client_target = sys.argv[1:3]
     extra_args = sys.argv[3:]
     rex = find_binary("rex")
     if mode == "sessions":
@@ -259,29 +327,7 @@ def main() -> int:
     if choice is None:
         return 0
 
-    if mode == "sessions":
-        _, session_id = choice
-        subprocess.run(
-            [rex, "-C", client_id, "do", "session.select", f"session_id={session_id}"],
-            check=False,
-        )
-        return 0
-
-    _, session_id, window_id, block_id = choice
-    subprocess.run([rex, "focus", "-s", session_id, block_id], check=False)
-    subprocess.run(
-        [
-            rex,
-            "-C",
-            client_id,
-            "do",
-            "session.select",
-            f"session_id={session_id}",
-            f"window_id={window_id}",
-        ],
-        check=False,
-    )
-    return 0
+    return 0 if open_choice(rex, client_target, mode, choice) else 1
 
 
 if __name__ == "__main__":

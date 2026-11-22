@@ -32,6 +32,7 @@ local function picker_snapshot()
             session_label = session.label,
             window_id = window.window_id,
             window_label = window.label or "Tab",
+            window_zoomed = window.zoomed_block_id ~= nil,
             block_id = block.block_id,
             block_label = block.label or "Pane",
             process = process,
@@ -43,13 +44,41 @@ local function picker_snapshot()
   return snapshot
 end
 
+local function client_target(client_id)
+  local inspected = rex.call("client.inspect", { client_id = client_id })
+  local client = inspected and inspected.client
+  local label = client and client.info and client.info.label
+  return label or (client and client.client_id)
+end
+
+local function picker_client_target(ctx)
+  local target = client_target(ctx.client_id)
+  if target ~= nil then return target end
+
+  -- A remote app can report its client ID from its home server rather than
+  -- its connection ID on this server. The focused terminal's owner is the
+  -- corresponding client on this server, so use that as the fallback.
+  local view = rex.session.view{ session_id = ctx.session_id }
+  for _, window in ipairs((view and view.windows) or {}) do
+    for _, layer in ipairs(window.layers or {}) do
+      for _, block in ipairs(layer.blocks or {}) do
+        if block.block_id == ctx.block_id and block.owner ~= nil then
+          return client_target(block.owner) or block.owner
+        end
+      end
+    end
+  end
+
+  return ctx.client_id
+end
+
 local function open_large_picker(ctx, mode)
   local command = {
     "/usr/bin/env",
     "python3",
     os.getenv("HOME") .. "/.config/rex/large-picker.py",
     mode,
-    ctx.client_id,
+    picker_client_target(ctx),
   }
   if mode ~= "sessions" then
     table.insert(command, "--snapshot-json")
@@ -129,7 +158,7 @@ rex.action{
     local selected, select_err = rex.exec.start({
       binary,
       "-C",
-      ctx.client_id,
+      picker_client_target(ctx),
       "do",
       "session.select",
       "session_id=" .. session.session_id,

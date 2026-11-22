@@ -1,7 +1,9 @@
 import importlib.util
+import io
+import subprocess
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "large-picker.py"
@@ -164,6 +166,99 @@ class LargePickerTest(unittest.TestCase):
         self.assertEqual(
             records[0][0],
             "Pi  ·  rex-sidebar-session-naming  ›  Editor  ›  ~/Documents/code-stuff/eve",
+        )
+
+    def test_open_choice_reports_client_action_failure(self):
+        failed = subprocess.CompletedProcess(
+            args=[],
+            returncode=1,
+            stdout="",
+            stderr=(
+                "Rex.app is not accepting actions. Turn on Remote Control in its "
+                "Settings under Rex Server."
+            ),
+        )
+
+        output = io.StringIO()
+        with (
+            patch.object(large_picker.subprocess, "run", return_value=failed),
+            patch.object(large_picker.sys, "stderr", output),
+            patch("builtins.input", return_value="") as wait_for_enter,
+        ):
+            opened = large_picker.open_choice(
+                "rex",
+                "client:remote",
+                "sessions",
+                ("eve", "session:1"),
+            )
+
+        self.assertFalse(opened)
+        self.assertIn("Turn on Remote Control", output.getvalue())
+        wait_for_enter.assert_called_once_with()
+
+    def test_open_choice_focuses_block_then_selects_its_window(self):
+        succeeded = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="", stderr=""
+        )
+
+        with patch.object(
+            large_picker.subprocess, "run", return_value=succeeded
+        ) as run:
+            opened = large_picker.open_choice(
+                "rex",
+                "client:remote",
+                "agents",
+                ("Pi · eve", "session:1", "window:1", "block:1", "0"),
+            )
+
+        self.assertTrue(opened)
+        self.assertEqual(
+            run.call_args_list,
+            [
+                call(
+                    ["rex", "focus", "-s", "session:1", "block:1"],
+                    capture_output=True,
+                    text=True,
+                ),
+                call(
+                    [
+                        "rex",
+                        "-C",
+                        "client:remote",
+                        "do",
+                        "session.select",
+                        "session_id=session:1",
+                        "window_id=window:1",
+                    ],
+                    capture_output=True,
+                    text=True,
+                ),
+            ],
+        )
+
+    def test_open_choice_restores_zoom_after_focusing_block(self):
+        succeeded = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="", stderr=""
+        )
+
+        with patch.object(
+            large_picker.subprocess, "run", return_value=succeeded
+        ) as run:
+            opened = large_picker.open_choice(
+                "rex",
+                "client:remote",
+                "agents",
+                ("Pi · eve", "session:1", "window:1", "block:1", "1"),
+            )
+
+        self.assertTrue(opened)
+        self.assertEqual(
+            run.call_args_list[1],
+            call(
+                ["rex", "zoom", "-s", "session:1", "block:1", "--on"],
+                capture_output=True,
+                text=True,
+            ),
         )
 
 
