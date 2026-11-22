@@ -1,6 +1,6 @@
 {
   "lastChangelogVersion": "1.4.0",
-  "theme": "dark",
+  "theme": "macmarchy-system",
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.6-sol",
   "hideThinkingBlock": true,

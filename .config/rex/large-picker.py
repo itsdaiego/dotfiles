@@ -88,10 +88,68 @@ def process_name(process: dict, block_label: str) -> tuple[str, bool]:
     return PROGRAM_NAMES.get(normalized, Path(str(raw_name)).name), normalized in AGENT_NAMES
 
 
+STATUS_PRIORITY = {"working": 5, "blocked": 4, "error": 3, "done": 2, "idle": 1}
+STATUS_LABELS = {
+    "working": "running",
+    "blocked": "idle",
+    "error": "done",
+    "done": "done",
+    "idle": "idle",
+}
+
+
+def normalized_agent_status(program_status: dict) -> str:
+    states = [
+        record.get("state")
+        for record in program_status.get("records", [])
+        if record.get("state") in STATUS_PRIORITY
+    ]
+    if not states:
+        return "idle"
+    state = max(states, key=lambda item: STATUS_PRIORITY[item])
+    return STATUS_LABELS[state]
+
+
+def clipped(value: str, limit: int) -> str:
+    if len(value) <= limit:
+        return value
+    return value[: limit - 1] + "…"
+
+
+def aligned_records(rows: list[dict], agents_only: bool) -> list[tuple[str, ...]]:
+    if not rows:
+        return []
+
+    for row in rows:
+        row["program"] = clipped(row["program"], 10)
+        row["session"] = clipped(row["session"], 32)
+        row["detail"] = clipped(row["detail"], 36)
+
+    program_width = max(5, *(len(row["program"]) for row in rows))
+    session_width = max(7, *(len(row["session"]) for row in rows))
+    detail_width = max(4, *(len(row["detail"]) for row in rows))
+
+    records: list[tuple[str, ...]] = []
+    for row in rows:
+        columns = [row["program"].ljust(program_width)]
+        if agents_only:
+            columns.append(row["status"].ljust(7))
+        columns.extend(
+            [
+                row["session"].ljust(session_width),
+                row["detail"].ljust(detail_width),
+                row["cwd"],
+            ]
+        )
+        display = " │ ".join(columns).rstrip()
+        records.append((display, *row["metadata"]))
+    return records
+
+
 def records_from_snapshot(
     snapshot: list[dict], agents_only: bool
 ) -> list[tuple[str, ...]]:
-    records: list[tuple[str, ...]] = []
+    rows: list[dict] = []
     for pane in snapshot:
         session_id = pane["session_id"]
         session_label = pane["session_label"]
@@ -116,19 +174,23 @@ def records_from_snapshot(
         if detail.startswith("Window ") or detail in {program, session_label}:
             detail = ""
 
-        display_parts = [program, session_label]
-        if detail:
-            display_parts.append(detail)
-        if cwd:
-            display_parts.append(cwd)
-        display = "  ·  ".join(display_parts[:2])
-        if len(display_parts) > 2:
-            display += "  ›  " + "  ›  ".join(display_parts[2:])
-        records.append(
-            (display, session_id, window_id, block_id, "1" if window_zoomed else "0")
+        rows.append(
+            {
+                "program": program,
+                "status": normalized_agent_status(pane.get("program_status") or {}),
+                "session": session_label,
+                "detail": detail,
+                "cwd": cwd,
+                "metadata": (
+                    session_id,
+                    window_id,
+                    block_id,
+                    "1" if window_zoomed else "0",
+                ),
+            }
         )
 
-    return records
+    return aligned_records(rows, agents_only)
 
 
 def detailed_records(rex: str, agents_only: bool) -> list[tuple[str, ...]]:
@@ -166,16 +228,20 @@ def detailed_records(rex: str, agents_only: bool) -> list[tuple[str, ...]]:
                         )
                     )
 
-    def inspect_process(pane: tuple[str, ...]) -> tuple[tuple[str, ...], dict]:
+    def inspect_pane(
+        pane: tuple[str, ...],
+    ) -> tuple[tuple[str, ...], dict, dict]:
         session_id, _, _, _, block_id, _, _ = pane
-        command = [rex, "block", "call", "-s", session_id, "-b", block_id, "process"]
-        return pane, try_json(command)
+        base = [rex, "block", "call", "-s", session_id, "-b", block_id]
+        process = try_json([*base, "process"])
+        program_status = try_json([*base, "program_status"])
+        return pane, process, program_status
 
     with ThreadPoolExecutor(max_workers=max(1, min(16, len(panes)))) as executor:
-        inspected_panes = list(executor.map(inspect_process, panes))
+        inspected_panes = list(executor.map(inspect_pane, panes))
 
     snapshot = []
-    for pane, process in inspected_panes:
+    for pane, process, program_status in inspected_panes:
         (
             session_id,
             session_label,
@@ -195,6 +261,7 @@ def detailed_records(rex: str, agents_only: bool) -> list[tuple[str, ...]]:
                 "block_label": block_label,
                 "window_zoomed": window_zoomed,
                 "process": process,
+                "program_status": program_status,
             }
         )
 

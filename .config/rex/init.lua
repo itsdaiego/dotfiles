@@ -21,8 +21,13 @@ local function picker_snapshot()
       for _, layer in ipairs(window.layers or {}) do
         for _, block in ipairs(layer.blocks or {}) do
           local process = {}
+          local program_status = {}
           if block.creator_name == terminal then
             process = rex.block.call(terminal, "process", {
+              session_id = session.session_id,
+              block_id = block.block_id,
+            }) or {}
+            program_status = rex.block.call(terminal, "program_status", {
               session_id = session.session_id,
               block_id = block.block_id,
             }) or {}
@@ -36,6 +41,7 @@ local function picker_snapshot()
             block_id = block.block_id,
             block_label = block.label or "Pane",
             process = process,
+            program_status = program_status,
           })
         end
       end

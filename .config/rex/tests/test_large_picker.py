@@ -100,22 +100,30 @@ class LargePickerTest(unittest.TestCase):
 
         self.assertEqual(len(records), 2)
         self.assertEqual(
-            records[0][0],
-            "Pi  ·  rex-sidebar-session-naming  ›  Editor  ›  ~/Documents/code-stuff/eve",
+            [column.strip() for column in records[0][0].split("│")],
+            ["Pi", "rex-sidebar-session-naming", "Editor", "~/Documents/code-stuff/eve"],
         )
         self.assertEqual(
-            records[1][0],
-            "Neovim  ·  rex-sidebar-session-naming  ›  Editor  ›  ~/Documents/code-stuff/eve",
+            [column.strip() for column in records[1][0].split("│")],
+            ["Neovim", "rex-sidebar-session-naming", "Editor", "~/Documents/code-stuff/eve"],
         )
+        separator_positions = [
+            [index for index, character in enumerate(record[0]) if character == "│"]
+            for record in records
+        ]
+        self.assertEqual(separator_positions[0], separator_positions[1])
 
-    def test_picker_fetches_only_process_metadata_for_each_pane(self):
+    def test_picker_fetches_process_and_status_metadata_for_each_pane(self):
         with (
             patch.dict(large_picker.os.environ, {"REX_BLOCK": "block:3"}, clear=False),
             patch.object(large_picker, "run_json", side_effect=self.fake_run_json),
         ):
             large_picker.block_records("rex")
 
-        self.assertEqual(self.block_methods, ["process", "process"])
+        self.assertEqual(
+            self.block_methods,
+            ["process", "program_status", "process", "program_status"],
+        )
 
     def test_precomputed_snapshot_needs_no_rex_queries(self):
         snapshot = [
@@ -140,8 +148,8 @@ class LargePickerTest(unittest.TestCase):
 
         run_json.assert_not_called()
         self.assertEqual(
-            records[0][0],
-            "Pi  ·  eve  ›  review-api  ›  ~/Documents/code-stuff/eve",
+            [column.strip() for column in records[0][0].split("│")],
+            ["Pi", "eve", "review-api", "~/Documents/code-stuff/eve"],
         )
 
     def test_program_picker_hides_generated_window_ids(self):
@@ -164,9 +172,46 @@ class LargePickerTest(unittest.TestCase):
 
         self.assertEqual(len(records), 1)
         self.assertEqual(
-            records[0][0],
-            "Pi  ·  rex-sidebar-session-naming  ›  Editor  ›  ~/Documents/code-stuff/eve",
+            [column.strip() for column in records[0][0].split("│")],
+            [
+                "Pi",
+                "running",
+                "rex-sidebar-session-naming",
+                "Editor",
+                "~/Documents/code-stuff/eve",
+            ],
         )
+
+    def test_agent_picker_aligns_idle_running_and_done_statuses(self):
+        snapshot = []
+        for index, state in enumerate(("idle", "working", "done"), start=1):
+            snapshot.append(
+                {
+                    "session_id": f"session:{index}",
+                    "session_label": ("short", "medium-session", "long-session-label")[index - 1],
+                    "window_id": f"window:{index}",
+                    "window_label": "Agent",
+                    "block_id": f"block:{index}",
+                    "block_label": ("a", "running-task", "completed-task")[index - 1],
+                    "process": {
+                        "foreground": {
+                            "argv0": "pi",
+                            "cwd": f"/tmp/project-{index}",
+                        }
+                    },
+                    "program_status": {"records": [{"state": state}]},
+                }
+            )
+
+        records = large_picker.records_from_snapshot(snapshot, agents_only=True)
+
+        statuses = [record[0].split("│")[1].strip() for record in records]
+        self.assertEqual(statuses, ["idle", "running", "done"])
+        separator_positions = [
+            [index for index, character in enumerate(record[0]) if character == "│"]
+            for record in records
+        ]
+        self.assertTrue(all(positions == separator_positions[0] for positions in separator_positions))
 
     def test_open_choice_reports_client_action_failure(self):
         failed = subprocess.CompletedProcess(
