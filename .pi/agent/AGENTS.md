@@ -12,7 +12,7 @@
 - Use `review-mr` to review an MR or PR. Use `write-mr-comment` to draft or improve a review comment, and `write-mr` to draft, rewrite, or review an MR or PR description.
 - Use `create-mr` to prepare and publish an MR, `review-queue` for the user's MR-review queue, and `start-reviewer` to operate the autonomous reviewer.
 - Use `oncall-intake` for intake on-call pings or the intake dashboard. Use `review-risk` when the user asks how critical or risky a Butler MR, branch, or working tree is.
-- Use `pi-cli` whenever Daiego asks to use Pi CLI or requests an integration that may be authenticated in the local Pi CLI. Spawn a fresh `pi --no-session -p` process instead of connecting to the same MCP service from the current session.
+- Use `pi-cli` whenever Daiego asks to use Pi CLI or requests an integration that may be authenticated in the local Pi CLI. Always spawn it through the skill's guarded runner, never with a raw `pi --no-session` command. When `PI_CLI_DELEGATED=1` or `PI_CLI_DELEGATION_DEPTH` is greater than zero, the current process is already the delegate: do not load `pi-cli` or spawn another Pi, and use the configured integration directly.
 - Use `butler-sentry-session-metrics` for Eve session-length or engagement metrics, and `brain` for a full sweep of unresolved requests, promises, and pending reviews. Use `brain-update` to add, close, or recheck one item, and `brain-alerts` for overdue and due-tomorrow warnings.
 
 ## Code explanations

@@ -10,7 +10,9 @@ sh -n scripts/backup-worktree-state.sh
 sh -n scripts/tests/test-backup-worktree-state.sh
 sh -n scripts/tests/test-install-agent-configs.sh
 sh -n scripts/tests/test-pi-durable.sh
+sh -n scripts/tests/test-pi-cli-guard.sh
 sh -n scripts/tests/test-agent-skill-routing.sh
+sh -n .pi/agent/skills/pi-cli/scripts/run-isolated-pi.sh
 sh -n scripts/tests/test-herdr-agent-picker.sh
 sh -n scripts/tests/test-herdr-agent-picker-session-name.sh
 sh -n .local/bin/codex-company
@@ -39,10 +41,12 @@ python3 -m unittest discover -s .pi/agent/skills/review-risk/scripts -p 'test_*.
 sh scripts/tests/test-backup-worktree-state.sh
 sh scripts/tests/test-install-agent-configs.sh
 sh scripts/tests/test-pi-durable.sh
+sh scripts/tests/test-pi-cli-guard.sh
 sh scripts/tests/test-agent-skill-routing.sh
 sh scripts/tests/test-herdr-agent-picker.sh
 sh scripts/tests/test-herdr-agent-picker-session-name.sh
 node --experimental-strip-types --test scripts/tests/pi-aws-command-guard.test.ts
+node --experimental-strip-types --test scripts/tests/pi-process-budget-guard.test.ts
 
 find .config/herdr/scripts .agent-customizations .codex .codex-personal .claude .pi .local/bin -type l -print | while IFS= read -r link; do
   case "$link" in

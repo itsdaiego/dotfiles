@@ -13,12 +13,24 @@ for instruction_file in .codex/AGENTS.md .pi/agent/AGENTS.md .claude/CLAUDE.md; 
   grep -F '`review-mr`' "$instruction_file" >/dev/null
   grep -F '`oncall-intake`' "$instruction_file" >/dev/null
   grep -F '`review-queue`' "$instruction_file" >/dev/null
+  if grep -F '`pi-cli`' "$instruction_file" >/dev/null; then
+    grep -F "guarded runner" "$instruction_file" >/dev/null
+    grep -F 'PI_CLI_DELEGATED=1' "$instruction_file" >/dev/null
+  fi
   grep -F '`review-risk`' "$instruction_file" >/dev/null
   grep -F 'TypeSafe Jev' "$instruction_file" >/dev/null
   grep -F 'Atomic commits' "$instruction_file" >/dev/null
   grep -F 'Make and stage one logical change at a time.' "$instruction_file" >/dev/null
   grep -F 'Before every git commit, inspect the staged diff' "$instruction_file" >/dev/null
 done
+
+test -x .pi/agent/skills/pi-cli/scripts/run-isolated-pi.sh
+grep -F 'run-isolated-pi.sh' .pi/agent/skills/pi-cli/SKILL.md >/dev/null
+grep -F 'exceeds 100 processes' .pi/agent/skills/pi-cli/SKILL.md >/dev/null
+grep -F 'do not run this skill and do not spawn another Pi process' .pi/agent/skills/pi-cli/SKILL.md >/dev/null
+test -f .pi/agent/extensions/zz-process-budget-guard.ts
+test -L .pi/pi-personal/extensions/zz-process-budget-guard.ts
+test "$(readlink .pi/pi-personal/extensions/zz-process-budget-guard.ts)" = '../../agent/extensions/zz-process-budget-guard.ts'
 
 test -f .claude/skills/review-risk/SKILL.md
 test -f .codex/skills/review-risk/SKILL.md
