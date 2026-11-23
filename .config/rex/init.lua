@@ -78,7 +78,23 @@ local function picker_client_target(ctx)
   return ctx.client_id
 end
 
+local function zoomed_source(ctx)
+  local view, view_err = rex.session.view{ session_id = ctx.session_id }
+  if view == nil then error(view_err, 0) end
+
+  for _, window in ipairs(view.windows or {}) do
+    for _, layer in ipairs(window.layers or {}) do
+      for _, block in ipairs(layer.blocks or {}) do
+        if block.block_id == ctx.block_id and window.zoomed_block_id ~= nil then
+          return window.zoomed_block_id
+        end
+      end
+    end
+  end
+end
+
 local function open_large_picker(ctx, mode)
+  local source_zoomed_block = zoomed_source(ctx)
   local command = {
     "/usr/bin/env",
     "python3",
@@ -86,6 +102,11 @@ local function open_large_picker(ctx, mode)
     mode,
     picker_client_target(ctx),
   }
+  if source_zoomed_block ~= nil then
+    table.insert(command, "--restore-zoom")
+    table.insert(command, ctx.session_id)
+    table.insert(command, source_zoomed_block)
+  end
   if mode ~= "sessions" then
     table.insert(command, "--snapshot-json")
     table.insert(command, rex.json.encode(picker_snapshot()))

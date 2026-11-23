@@ -29,7 +29,7 @@ Reload Rex after an `init.lua` change with `Ctrl+B`, then `R`, or `rex config re
 | `Ctrl+B`, then `Shift+R` | Enter resize mode (arrows or `H`/`J`/`K`/`L`; exit with Enter, Escape, or the same chord again) |
 | `Ctrl+B` twice | Send a literal `Ctrl+B` to the terminal |
 
-The two pickers (`large_program_picker`, `large_agent_picker`) open as large floating panes at 84% of the window's width and 78% of its height, because Rex's native session/pane switchers have a fixed size too small for a vertical display. `picker_snapshot()` gathers one in-process Rex snapshot before opening a picker; querying each pane's process separately made the picker take 1–2 seconds instead of about 0.5.
+The two pickers (`large_program_picker`, `large_agent_picker`) open as floating terminal panes at 84% of the window's width and 78% of its height, because Rex's native picker has a fixed size that is too small on the vertical display. `picker_snapshot()` gathers one in-process Rex snapshot before opening a picker; querying each pane's process separately made the picker take 1–2 seconds instead of about 0.5.
 
 ## Keeping focus zoomed across panes
 
@@ -37,7 +37,7 @@ Rex's native `pane.focus` ends any zoom in the window when it moves focus (confi
 
 `zoom_aware_focus` in `init.lua` wraps `session.focus_direction` and `session.zoom_block`: it reads whether the active window is zoomed before moving focus, moves focus in the requested direction, then re-zooms the window on the pane focus landed on if it was zoomed before. All of the direction bindings above (`Ctrl+B H`/`J`/`K`/`L` and `Alt+H`/`J`/`K`/`L`) use this action instead of the native `pane.focus`. When the window isn't zoomed, it behaves exactly like `pane.focus`.
 
-The `Ctrl+B W` and `Ctrl+B A` pickers carry the target window's zoom state in their snapshot. After focusing the selected pane, `large-picker.py` re-enables zoom on that pane before showing its session and window, so picker navigation preserves maximized layouts too.
+Opening a floating picker temporarily ends zoom in the source window. The picker receives the source pane ID and re-enables zoom before it closes or switches elsewhere. Each target window's zoom state is also carried in the snapshot, so selecting a pane re-enables zoom there when that window was previously maximized.
 
 ## Sidebar size patch
 

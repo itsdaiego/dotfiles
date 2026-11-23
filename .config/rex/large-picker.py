@@ -293,6 +293,17 @@ def run_picker_command(command: list[str], description: str) -> bool:
     return False
 
 
+def restore_zoom(rex: str, source_zoom: Optional[tuple[str, str]]) -> bool:
+    if source_zoom is None:
+        return True
+
+    session_id, block_id = source_zoom
+    return run_picker_command(
+        [rex, "zoom", "-s", session_id, block_id, "--on"],
+        "restore the pane that opened the picker",
+    )
+
+
 def open_choice(
     rex: str, client_target: str, mode: str, choice: tuple[str, ...]
 ) -> bool:
@@ -369,29 +380,52 @@ def main() -> int:
 
     mode, client_target = sys.argv[1:3]
     extra_args = sys.argv[3:]
+    source_zoom: Optional[tuple[str, str]] = None
+    if "--restore-zoom" in extra_args:
+        restore_index = extra_args.index("--restore-zoom")
+        try:
+            source_zoom = (
+                extra_args[restore_index + 1],
+                extra_args[restore_index + 2],
+            )
+        except IndexError:
+            print("--restore-zoom requires a session and block ID", file=sys.stderr)
+            return 2
+
     rex = find_binary("rex")
-    if mode == "sessions":
-        records = session_records(rex)
-        title = "Sessions"
-    elif "--snapshot-json" in extra_args:
-        snapshot_index = extra_args.index("--snapshot-json") + 1
-        snapshot = json.loads(extra_args[snapshot_index])
-        records = records_from_snapshot(snapshot, agents_only=mode == "agents")
-        title = "Agents" if mode == "agents" else "Programs"
-    elif mode == "agents":
-        records = agent_records(rex)
-        title = "Agents"
-    else:
-        records = block_records(rex)
-        title = "Programs"
+    choice: Optional[tuple[str, ...]] = None
+    printing = "--print" in extra_args
+    restored = True
+    try:
+        if mode == "sessions":
+            records = session_records(rex)
+            title = "Sessions"
+        elif "--snapshot-json" in extra_args:
+            snapshot_index = extra_args.index("--snapshot-json") + 1
+            snapshot = json.loads(extra_args[snapshot_index])
+            records = records_from_snapshot(snapshot, agents_only=mode == "agents")
+            title = "Agents" if mode == "agents" else "Programs"
+        elif mode == "agents":
+            records = agent_records(rex)
+            title = "Agents"
+        else:
+            records = block_records(rex)
+            title = "Programs"
 
-    if "--print" in extra_args:
-        for record in records:
-            print("\t".join(record))
-        return 0
+        if printing:
+            for record in records:
+                print("\t".join(record))
+        else:
+            choice = pick(find_binary("fzf"), title, records)
+    finally:
+        # Focusing the floating picker ends Rex's zoom in the source window. Put
+        # it back on every exit path before closing the picker or switching
+        # elsewhere, so returning to that window still shows the pane maximized.
+        restored = restore_zoom(rex, source_zoom)
 
-    choice = pick(find_binary("fzf"), title, records)
-    if choice is None:
+    if not restored:
+        return 1
+    if printing or choice is None:
         return 0
 
     return 0 if open_choice(rex, client_target, mode, choice) else 1

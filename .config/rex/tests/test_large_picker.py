@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import call, patch
 
 
+REX_CONFIG = Path(__file__).resolve().parents[1] / "init.lua"
 SCRIPT = Path(__file__).resolve().parents[1] / "large-picker.py"
 spec = importlib.util.spec_from_file_location("large_picker", SCRIPT)
 large_picker = importlib.util.module_from_spec(spec)
@@ -90,6 +91,13 @@ class LargePickerTest(unittest.TestCase):
         if block_id == "block:3" and method == "title":
             return {"title": "large-picker.py"}
         raise AssertionError(command)
+
+    def test_program_and_agent_shortcuts_open_the_large_floating_picker(self):
+        config = REX_CONFIG.read_text()
+
+        self.assertIn('return open_large_picker(ctx, "blocks")', config)
+        self.assertIn('return open_large_picker(ctx, "agents")', config)
+        self.assertIn('bounds = { 0.08, 0.08, 0.84, 0.78 }', config)
 
     def test_program_picker_names_the_program_session_and_current_pane(self):
         with (
@@ -240,6 +248,119 @@ class LargePickerTest(unittest.TestCase):
         self.assertFalse(opened)
         self.assertIn("Turn on Remote Control", output.getvalue())
         wait_for_enter.assert_called_once_with()
+
+    def test_restore_zoom_remaximizes_the_pane_that_opened_the_picker(self):
+        succeeded = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="", stderr=""
+        )
+
+        with patch.object(
+            large_picker.subprocess, "run", return_value=succeeded
+        ) as run:
+            restored = large_picker.restore_zoom(
+                "rex", ("session:source", "block:source")
+            )
+
+        self.assertTrue(restored)
+        run.assert_called_once_with(
+            [
+                "rex",
+                "zoom",
+                "-s",
+                "session:source",
+                "block:source",
+                "--on",
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+    def test_restore_zoom_is_a_noop_for_an_unzoomed_source(self):
+        with patch.object(large_picker.subprocess, "run") as run:
+            restored = large_picker.restore_zoom("rex", None)
+
+        self.assertTrue(restored)
+        run.assert_not_called()
+
+    def test_canceling_picker_restores_source_zoom(self):
+        argv = [
+            "large-picker.py",
+            "sessions",
+            "client:remote",
+            "--restore-zoom",
+            "session:source",
+            "block:source",
+        ]
+        with (
+            patch.object(large_picker.sys, "argv", argv),
+            patch.object(large_picker, "find_binary", side_effect=lambda name: name),
+            patch.object(large_picker, "session_records", return_value=[]),
+            patch.object(large_picker, "pick", return_value=None),
+            patch.object(large_picker, "restore_zoom", return_value=True) as restore,
+        ):
+            result = large_picker.main()
+
+        self.assertEqual(result, 0)
+        restore.assert_called_once_with(
+            "rex", ("session:source", "block:source")
+        )
+
+    def test_picker_restores_source_when_building_records_fails(self):
+        argv = [
+            "large-picker.py",
+            "sessions",
+            "client:remote",
+            "--restore-zoom",
+            "session:source",
+            "block:source",
+        ]
+        with (
+            patch.object(large_picker.sys, "argv", argv),
+            patch.object(large_picker, "find_binary", return_value="rex"),
+            patch.object(
+                large_picker, "session_records", side_effect=RuntimeError("boom")
+            ),
+            patch.object(large_picker, "restore_zoom", return_value=True) as restore,
+            self.assertRaisesRegex(RuntimeError, "boom"),
+        ):
+            large_picker.main()
+
+        restore.assert_called_once_with(
+            "rex", ("session:source", "block:source")
+        )
+
+    def test_picker_restores_source_before_opening_selected_target(self):
+        argv = [
+            "large-picker.py",
+            "sessions",
+            "client:remote",
+            "--restore-zoom",
+            "session:source",
+            "block:source",
+        ]
+        choice = ("target", "session:target")
+        events = []
+
+        with (
+            patch.object(large_picker.sys, "argv", argv),
+            patch.object(large_picker, "find_binary", side_effect=lambda name: name),
+            patch.object(large_picker, "session_records", return_value=[choice]),
+            patch.object(large_picker, "pick", return_value=choice),
+            patch.object(
+                large_picker,
+                "restore_zoom",
+                side_effect=lambda *args: events.append("restore") or True,
+            ),
+            patch.object(
+                large_picker,
+                "open_choice",
+                side_effect=lambda *args: events.append("open") or True,
+            ),
+        ):
+            result = large_picker.main()
+
+        self.assertEqual(result, 0)
+        self.assertEqual(events, ["restore", "open"])
 
     def test_open_choice_focuses_block_then_selects_its_window(self):
         succeeded = subprocess.CompletedProcess(
