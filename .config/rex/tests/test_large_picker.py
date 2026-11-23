@@ -99,6 +99,13 @@ class LargePickerTest(unittest.TestCase):
         self.assertIn('return open_large_picker(ctx, "agents")', config)
         self.assertIn('bounds = { 0.08, 0.08, 0.84, 0.78 }', config)
 
+    def test_picker_snapshot_attaches_to_every_session_before_listing_them(self):
+        config = REX_CONFIG.read_text()
+
+        attach = config.index('rex.call("session.attach_all"')
+        listing = config.index('rex.call("session.list")')
+        self.assertLess(attach, listing)
+
     def test_program_picker_names_the_program_session_and_current_pane(self):
         with (
             patch.dict(large_picker.os.environ, {"REX_BLOCK": "block:3"}, clear=False),

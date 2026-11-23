@@ -8,6 +8,9 @@ rex.bind("ctrl+b", "client.mode.enter", { name = "tmux_prefix", once = true })
 -- Sessions and agents. These open as large floating panes because Rex's native
 -- switchers have a fixed size that is too small on the vertical display.
 local function picker_snapshot()
+  local _, attach_err = rex.call("session.attach_all", { event_scope = "session" })
+  if attach_err ~= nil then error(attach_err, 0) end
+
   local listed, list_err = rex.call("session.list")
   if listed == nil then error(list_err, 0) end
 
