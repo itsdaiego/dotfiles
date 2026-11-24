@@ -2,6 +2,7 @@ import assert from "node:assert/strict"
 import { test } from "node:test"
 import registerProcessBudgetGuard, {
   findProcessBudgetViolation,
+  isBlockedDocumentExtractorTypecheck,
   isRawPiDelegation,
   parseProcessTable,
 } from "../../.pi/agent/extensions/zz-process-budget-guard.ts"
@@ -43,6 +44,15 @@ test("detects raw Pi delegation through common shell wrappers", () => {
   assert.equal(isRawPiDelegation(`bash -c "pi --no-session -p task"`), true)
   assert.equal(isRawPiDelegation("~/.pi/agent/skills/pi-cli/scripts/run-isolated-pi.sh task"), false)
   assert.equal(isRawPiDelegation("rg 'pi --no-session' docs"), false)
+})
+
+test("blocks the high-memory document extractor typecheck", () => {
+  const command = `cd /tmp/worktrees/butler/topic && direnv exec . bash -lc 'cd src/document_extractor && PATH="$PWD/.venv/bin:$PATH" ./typeCheck.sh'`
+  assert.equal(isBlockedDocumentExtractorTypecheck(command, "/tmp/worktrees/butler/topic"), true)
+  assert.equal(isBlockedDocumentExtractorTypecheck("./typeCheck.sh", "/tmp/worktrees/butler/topic/src/document_extractor"), true)
+  assert.equal(isBlockedDocumentExtractorTypecheck("uv run pyright --threads 8", "/tmp/worktrees/butler/topic/src/document_extractor"), true)
+  assert.equal(isBlockedDocumentExtractorTypecheck("./typeCheck.sh", "/tmp/another-project"), false)
+  assert.equal(isBlockedDocumentExtractorTypecheck(`rg 'typeCheck.sh' src/document_extractor`, "/tmp/worktrees/butler/topic"), false)
 })
 
 test("runs the polling watchdog only while a tool is active", async () => {

@@ -4,6 +4,8 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent"
 
 const execFileAsync = promisify(execFile)
 const RAW_PI_REASON = "Raw Pi delegation is blocked. Use the guarded pi-cli runner instead."
+const DOCUMENT_EXTRACTOR_TYPECHECK_REASON =
+  "Blocked: document_extractor/typeCheck.sh starts eight Pyright workers and exhausted system memory. Skip this check and report that it was not run."
 const DEFAULT_LIMIT = 100
 const MONITOR_INTERVAL_MS = 1000
 
@@ -164,6 +166,44 @@ export function isRawPiDelegation(command: string, depth = 0): boolean {
   return shellSegments(command).some((segment) => segmentRunsRawPi(segment, depth))
 }
 
+function segmentRunsDocumentExtractorTypecheck(tokens: string[], contextMatches: boolean, depth: number): boolean {
+  if (depth > 3) return false
+
+  const shellIndex = tokens.findIndex((token) => ["bash", "dash", "sh", "zsh"].includes(basename(token)))
+  if (shellIndex >= 0) {
+    const shellArgs = tokens.slice(shellIndex + 1)
+    const commandIndex = shellArgs.findIndex((argument) => /^-[A-Za-z]*c[A-Za-z]*$/.test(argument))
+    const script = commandIndex >= 0 ? shellArgs[commandIndex + 1] : undefined
+    if (script && isBlockedDocumentExtractorTypecheck(script, contextMatches ? "/src/document_extractor" : "", depth + 1)) {
+      return true
+    }
+  }
+
+  let index = 0
+  while (index < tokens.length && /^[A-Za-z_][A-Za-z0-9_]*=/.test(tokens[index])) index++
+  const executable = basename(tokens[index] ?? "")
+  const args = tokens.slice(index + 1)
+
+  if (executable === "typeCheck.sh") return contextMatches
+  return (
+    contextMatches &&
+    executable === "uv" &&
+    args[0] === "run" &&
+    basename(args[1] ?? "") === "pyright" &&
+    args.some((argument) => argument === "--threads" || argument.startsWith("--threads="))
+  )
+}
+
+export function isBlockedDocumentExtractorTypecheck(command: string, cwd: string = "", depth = 0): boolean {
+  const contextMatches =
+    cwd.includes("/src/document_extractor") ||
+    command.includes("src/document_extractor") ||
+    command.includes("document_extractor/typeCheck.sh")
+  return shellSegments(command).some((segment) =>
+    segmentRunsDocumentExtractorTypecheck(segment, contextMatches, depth),
+  )
+}
+
 async function inspectProcesses(): Promise<ProcessRecord[]> {
   const { stdout } = await execFileAsync("/bin/ps", ["-axo", "pid=,ppid=,command="], {
     maxBuffer: 10 * 1024 * 1024,
@@ -278,8 +318,14 @@ export default function registerProcessBudgetGuard(
   })
 
   pi.on("tool_call", async (event, ctx) => {
-    if (event.toolName === "bash" && isRawPiDelegation(event.input.command as string)) {
-      return { block: true, reason: RAW_PI_REASON, terminate: true }
+    if (event.toolName === "bash") {
+      const command = event.input.command as string
+      if (isBlockedDocumentExtractorTypecheck(command, ctx.cwd)) {
+        return { block: true, reason: DOCUMENT_EXTRACTOR_TYPECHECK_REASON, terminate: true }
+      }
+      if (isRawPiDelegation(command)) {
+        return { block: true, reason: RAW_PI_REASON, terminate: true }
+      }
     }
 
     const violation = await enforceBudget(ctx)
@@ -305,6 +351,9 @@ export default function registerProcessBudgetGuard(
   })
 
   pi.on("user_bash", async (event) => {
+    if (isBlockedDocumentExtractorTypecheck(event.command, event.cwd)) {
+      return blockedUserBashResult(DOCUMENT_EXTRACTOR_TYPECHECK_REASON)
+    }
     if (isRawPiDelegation(event.command)) return blockedUserBashResult(RAW_PI_REASON)
   })
 }
