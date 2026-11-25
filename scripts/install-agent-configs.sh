@@ -39,6 +39,26 @@ link_one() {
   link_target "$(resolve_source_path "$source_path")" "$HOME/$relative_path"
 }
 
+copy_target() {
+  source_path=$1
+  target_path=$2
+  relative_path=${target_path#"$HOME"/}
+
+  mkdir -p -- "$(dirname -- "$target_path")"
+
+  if [ -f "$target_path" ] && ! [ -L "$target_path" ] && cmp -s "$source_path" "$target_path"; then
+    return
+  fi
+
+  if [ -e "$target_path" ] || [ -L "$target_path" ]; then
+    backup_path=$backup_root/$relative_path
+    mkdir -p -- "$(dirname -- "$backup_path")"
+    mv -- "$target_path" "$backup_path"
+  fi
+
+  cp -- "$source_path" "$target_path"
+}
+
 resolve_source_path() {
   source_path=$1
   original_source_path=$source_path
@@ -121,7 +141,7 @@ for pocket_profile in .pi-pocket-work .pi-pocket-personal; do
     document-extractor-typecheck-guard.ts \
     jev-auto.ts
   do
-    link_target \
+    copy_target \
       "$repo_dir/pi-durable/extensions/$extension_file" \
       "$HOME/$pocket_profile/extensions/$extension_file"
   done
