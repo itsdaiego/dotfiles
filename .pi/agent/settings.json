@@ -1,6 +1,6 @@
 {
-  "lastChangelogVersion": "1.4.0",
-  "theme": "macmarchy-system",
+  "lastChangelogVersion": "1.5.2",
+  "theme": "dark",
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.6-sol",
   "hideThinkingBlock": true,
@@ -16,5 +16,8 @@
     "npm:pi-vim",
     "npm:pi-remote-control@1.0.9",
     "git:github.com/dmmulroy/pi-claude-cli"
-  ]
+  ],
+  "extensionChangelogVersions": {
+    "{\"source\":\"npm:pi-mcp-adapter\",\"scope\":\"user\"}": "3.3.0"
+  }
 }
