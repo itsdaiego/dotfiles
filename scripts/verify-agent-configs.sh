@@ -23,6 +23,8 @@ sh -n .codex/herdr-agent-state.sh
 jq empty .claude/settings.json .codex/hooks.json .codex-personal/hooks.json .pi/settings.json \
   .pi/agent/keybindings.json .pi/agent/mcp-adapter.json .pi/agent/settings.json \
   .pi/pi-personal/settings.json
+jq -e '.packages | index("git:github.com/dmmulroy/pi-claude-cli") != null' \
+  .pi/pi-personal/settings.json >/dev/null
 
 codex_check_dir=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-codex-check.XXXXXX")
 trap 'rm -rf "$codex_check_dir"' EXIT HUP INT TERM
@@ -52,6 +54,8 @@ ln -s /opt/homebrew/lib/node_modules/pi-pocket/node_modules "$pocket_extension_c
 node --experimental-strip-types -e \
   'import(process.argv[1]).then(async (module) => { const extension = module.default({ cwdOf: () => "/tmp/work/src/document_extractor" }); const beforeTool = extension.hooks?.[0]?.handlers?.beforeTool; const blocked = await beforeTool?.({ name: "bash", arguments: { command: "./typeCheck.sh" } }, { conversationId: 1 }); if (!blocked?.block) process.exit(1) })' \
   "$pocket_extension_check/document-extractor-typecheck-guard.ts"
+node --experimental-strip-types --test "$pocket_extension_check/jev-auto.test.ts"
+node --experimental-strip-types --test .pi/agent/extensions/tests/jev-auto.test.ts
 node --experimental-strip-types --test scripts/tests/pi-aws-command-guard.test.ts
 node --experimental-strip-types --test scripts/tests/pi-process-budget-guard.test.ts
 node --experimental-strip-types --test scripts/tests/pi-pocket-typecheck-guard.test.ts

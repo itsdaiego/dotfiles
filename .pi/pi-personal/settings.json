@@ -4,7 +4,8 @@
   "defaultModel": "gpt-6-luna",
   "packages": [
     "npm:pi-mcp-adapter",
-    "npm:pi-vim"
+    "npm:pi-vim",
+    "git:github.com/dmmulroy/pi-claude-cli"
   ],
   "extensions": [
     "/Users/daiego/.pi/agent/extensions/vim-jj.ts"

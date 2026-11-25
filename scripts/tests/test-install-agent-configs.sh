@@ -53,6 +53,10 @@ for pocket_profile in .pi-pocket-work .pi-pocket-personal; do
     "$stable_repo_dir/pi-durable/extensions/document-extractor-typecheck-guard.ts"
   test "$(readlink "$test_home/$pocket_profile/extensions/_document-extractor-typecheck-guard.ts")" = \
     "$stable_repo_dir/pi-durable/extensions/_document-extractor-typecheck-guard.ts"
+  test "$(readlink "$test_home/$pocket_profile/extensions/jev-auto.ts")" = \
+    "$stable_repo_dir/pi-durable/extensions/jev-auto.ts"
+  test "$(readlink "$test_home/$pocket_profile/extensions/_jev-auto-policy.ts")" = \
+    "$stable_repo_dir/pi-durable/extensions/_jev-auto-policy.ts"
 done
 test "$(readlink "$test_home/.codex-personal/AGENTS.md")" = "$test_home/.pi/pi-personal/AGENTS.md"
 test "$(readlink "$test_home/.codex-personal/skills")" = "$test_home/.codex/skills"
@@ -65,6 +69,8 @@ test "$(readlink "$test_home/.codex/skills/review-risk")" = \
   "$stable_repo_dir/.pi/agent/skills/review-risk"
 test "$(readlink "$test_home/.pi/pi-personal/skills/review-risk")" = \
   "$stable_repo_dir/.pi/agent/skills/review-risk"
+test "$(readlink "$repo_dir/.pi/pi-personal/extensions/jev-auto.ts")" = \
+  "../../agent/extensions/jev-auto.ts"
 test "$(readlink "$test_home/.claude/skills/adversarial-review-stop")" = \
   "$stable_repo_dir/.pi/agent/skills/adversarial-review-stop"
 test "$(readlink "$test_home/.claude/skills/brain")" = "$stable_repo_dir/.pi/agent/skills/brain"

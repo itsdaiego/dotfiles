@@ -117,7 +117,9 @@ done
 for pocket_profile in .pi-pocket-work .pi-pocket-personal; do
   for extension_file in \
     _document-extractor-typecheck-guard.ts \
-    document-extractor-typecheck-guard.ts
+    _jev-auto-policy.ts \
+    document-extractor-typecheck-guard.ts \
+    jev-auto.ts
   do
     link_target \
       "$repo_dir/pi-durable/extensions/$extension_file" \
