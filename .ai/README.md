@@ -17,6 +17,7 @@ This folder is the shared memory for every agent harness on this Mac: Claude Cod
 | `eve/weekly/YYYY-Www.md` | The plan for one week, such as `eve/weekly/2026-W47.md`. |
 | `eve/log.md` | A short dated log of what was done and what was closed. |
 | `eve/oncall-intake-brain.md` | File-based, bounded-window tracker for oncall-intake items (see the `brain-oncall` skill). Separate from the `oncall-intake` dashboard's `~/ai/eve/oncall-intake/pings.json`. |
+| `eve/pinned-session-findings.md` | Durable findings, decisions, progress, and next steps recovered from pinned agent sessions. Live tasks still belong in `eve/brain.md`. |
 
 Add a new top-level folder for a new area of life or work, such as `personal/`. Do not mix Eve work into it.
 
