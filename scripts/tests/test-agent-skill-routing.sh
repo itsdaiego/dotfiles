@@ -69,6 +69,18 @@ test -f .codex/skills/walle-chat/SKILL.md
 test -f .pi/agent/skills/walle-chat/SKILL.md
 test -f .pi/pi-personal/skills/walle-chat/SKILL.md
 
+test -f .pi/agent/prompts/try-harder.md
+test -L .pi/pi-personal/prompts/try-harder.md
+test "$(readlink .pi/pi-personal/prompts/try-harder.md)" = '../../agent/prompts/try-harder.md'
+test -f .pi/agent/skills/try-harder/SKILL.md
+test -L .pi/pi-personal/skills/try-harder
+test "$(readlink .pi/pi-personal/skills/try-harder)" = '../../agent/skills/try-harder'
+grep -F 'Load and follow the `try-harder` skill' .pi/agent/prompts/try-harder.md >/dev/null
+grep -F 'Treat routine blockers as work to do, not reasons to stop.' .pi/agent/skills/try-harder/SKILL.md >/dev/null
+grep -F 'MR or PR conflicts' .pi/agent/skills/try-harder/SKILL.md >/dev/null
+grep -F 'local service or dependency is missing' .pi/agent/skills/try-harder/SKILL.md >/dev/null
+grep -F 'worktree cleanup' .pi/agent/skills/try-harder/SKILL.md >/dev/null
+
 risk_skill=.pi/agent/skills/review-risk/SKILL.md
 grep -F 'complete current open-MR pool with pagination' "$risk_skill" >/dev/null
 grep -F 'It never fills a result slot by itself.' "$risk_skill" >/dev/null
