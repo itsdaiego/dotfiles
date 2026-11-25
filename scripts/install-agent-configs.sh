@@ -114,6 +114,17 @@ for config_root in .ai .config/herdr/scripts .agent-customizations .codex .codex
   done
 done
 
+for pocket_profile in .pi-pocket-work .pi-pocket-personal; do
+  for extension_file in \
+    _document-extractor-typecheck-guard.ts \
+    document-extractor-typecheck-guard.ts
+  do
+    link_target \
+      "$repo_dir/pi-durable/extensions/$extension_file" \
+      "$HOME/$pocket_profile/extensions/$extension_file"
+  done
+done
+
 link_target "$HOME/.pi/agent" "$HOME/.pi/pi-work"
 link_target "$HOME/.pi/pi-personal/AGENTS.md" "$HOME/.codex-personal/AGENTS.md"
 link_target "$HOME/.codex/skills" "$HOME/.codex-personal/skills"

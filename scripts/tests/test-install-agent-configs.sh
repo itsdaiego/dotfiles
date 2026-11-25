@@ -48,6 +48,12 @@ test "$(readlink "$test_home/.codex-personal/config.toml")" = "$stable_repo_dir/
 test "$(readlink "$test_home/.ai/README.md")" = "$stable_repo_dir/.ai/README.md"
 test "$(readlink "$test_home/.local/bin/codex-personal")" = "$stable_repo_dir/.local/bin/codex-personal"
 test "$(readlink "$test_home/.local/bin/codex-company")" = "$stable_repo_dir/.local/bin/codex-company"
+for pocket_profile in .pi-pocket-work .pi-pocket-personal; do
+  test "$(readlink "$test_home/$pocket_profile/extensions/document-extractor-typecheck-guard.ts")" = \
+    "$stable_repo_dir/pi-durable/extensions/document-extractor-typecheck-guard.ts"
+  test "$(readlink "$test_home/$pocket_profile/extensions/_document-extractor-typecheck-guard.ts")" = \
+    "$stable_repo_dir/pi-durable/extensions/_document-extractor-typecheck-guard.ts"
+done
 test "$(readlink "$test_home/.codex-personal/AGENTS.md")" = "$test_home/.pi/pi-personal/AGENTS.md"
 test "$(readlink "$test_home/.codex-personal/skills")" = "$test_home/.codex/skills"
 test "$(readlink "$test_home/.codex/rules/default.rules")" = "$stable_repo_dir/.codex/rules/default.rules"

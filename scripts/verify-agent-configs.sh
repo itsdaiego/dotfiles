@@ -45,8 +45,16 @@ sh scripts/tests/test-pi-cli-guard.sh
 sh scripts/tests/test-agent-skill-routing.sh
 sh scripts/tests/test-herdr-agent-picker.sh
 sh scripts/tests/test-herdr-agent-picker-session-name.sh
+pocket_extension_check=$codex_check_dir/pi-pocket-extension
+mkdir -p "$pocket_extension_check"
+cp pi-durable/extensions/*.ts "$pocket_extension_check/"
+ln -s /opt/homebrew/lib/node_modules/pi-pocket/node_modules "$pocket_extension_check/node_modules"
+node --experimental-strip-types -e \
+  'import(process.argv[1]).then(async (module) => { const extension = module.default({ cwdOf: () => "/tmp/work/src/document_extractor" }); const beforeTool = extension.hooks?.[0]?.handlers?.beforeTool; const blocked = await beforeTool?.({ name: "bash", arguments: { command: "./typeCheck.sh" } }, { conversationId: 1 }); if (!blocked?.block) process.exit(1) })' \
+  "$pocket_extension_check/document-extractor-typecheck-guard.ts"
 node --experimental-strip-types --test scripts/tests/pi-aws-command-guard.test.ts
 node --experimental-strip-types --test scripts/tests/pi-process-budget-guard.test.ts
+node --experimental-strip-types --test scripts/tests/pi-pocket-typecheck-guard.test.ts
 
 find .config/herdr/scripts .agent-customizations .codex .codex-personal .claude .pi .local/bin -type l -print | while IFS= read -r link; do
   case "$link" in
