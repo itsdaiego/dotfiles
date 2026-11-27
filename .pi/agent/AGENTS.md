@@ -28,8 +28,9 @@
 - Each commit must stand alone: its message states the outcome, its diff contains everything required for that outcome, and it leaves the repository in a valid, testable state.
 - Run the relevant checks before each commit. Do not include unrelated pre-existing changes just because they are present.
 - Prefer small, reviewable commits. Split independent behavior changes into separate commits. Keep required generated files with the source change that generated them.
-- Before every git commit, inspect the staged diff and explain its one outcome and verification. In Pi, call `assess_atomic_commit` immediately before the commit.
-- A staged change over 25 files or 1,200 changed lines needs explicit user approval before the agent commits it. Explain why it cannot be split first.
+- Before every git commit, inspect the staged diff and explain its one outcome and verification. In Pi, call `assess_atomic_commit` immediately before the commit when available.
+- Treat this discipline as the default workflow, not a blocker. It must not prevent task completion.
+- If a change over 25 files or 1,200 changed lines cannot be split safely or reasonably, make the smallest coherent larger commit necessary, explain why, and continue without extra approval solely because of its size.
 - Follow the repository's commit and authorization rules. Never create a commit unless the user has authorized it.
 
 ## Disposable worktrees

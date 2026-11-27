@@ -60,6 +60,7 @@ node --experimental-strip-types --test \
   "$pocket_extension_check/jev-auto.test.ts" \
   "$pocket_extension_check/jev-auto-client.test.js"
 node --experimental-strip-types --test .pi/agent/extensions/tests/jev-auto.test.ts
+node --experimental-strip-types --test scripts/tests/atomic-commit-discipline.test.ts
 node --experimental-strip-types --test scripts/tests/pi-aws-command-guard.test.ts
 node --experimental-strip-types --test scripts/tests/pi-process-budget-guard.test.ts
 node --experimental-strip-types --test scripts/tests/pi-pocket-typecheck-guard.test.ts

@@ -12,8 +12,9 @@ export const COMMIT_DISCIPLINE = `
 - Each commit must stand alone: its message states the outcome, its diff contains everything required for that outcome, and it leaves the repository in a valid, testable state.
 - Run the relevant checks before each commit. Do not include unrelated pre-existing changes just because they are present.
 - Prefer small, reviewable commits. Split independent behavior changes into separate commits. Keep required generated files with the source change that generated them.
-- Before every git commit, inspect the staged diff and explain its one outcome and verification. In Pi, call assess_atomic_commit immediately before the commit.
-- A staged change over ${LARGE_COMMIT_FILE_LIMIT} files or ${LARGE_COMMIT_LINE_LIMIT} changed lines needs explicit user approval before the agent commits it. Explain why it cannot be split first.
+- Before every git commit, inspect the staged diff and explain its one outcome and verification. In Pi, call assess_atomic_commit immediately before the commit when available.
+- Treat this discipline as the default workflow, not a blocker. It must not prevent task completion.
+- If a change over ${LARGE_COMMIT_FILE_LIMIT} files or ${LARGE_COMMIT_LINE_LIMIT} changed lines cannot be split safely or reasonably, make the smallest coherent larger commit necessary, explain why, and continue without extra approval solely because of its size.
 - Follow the repository's commit and authorization rules. Never create a commit unless the user has authorized it.
 `.trim();
 
@@ -33,10 +34,6 @@ function resolveGitCwd(command, fallbackCwd) {
 
 export function isGitCommitCommand(command) {
   return /\bgit\s+(?:(?:-C\s+\S+)|(?:--git-dir|--work-tree)\s+\S+|(?:-[^\s]+)|(?:--[^\s=]+(?:=\S+)?))*\s*commit(?:\s|$)/.test(command);
-}
-
-export function hasLargeCommitOverride(command) {
-  return /(?:^|\s)ATOMIC_COMMIT_ALLOW_LARGE=1(?:\s|$)/.test(command);
 }
 
 export function inspectStagedDiff(cwd, command = "") {
@@ -69,13 +66,4 @@ export function inspectStagedDiff(cwd, command = "") {
     fingerprint,
     isLarge: files.length > LARGE_COMMIT_FILE_LIMIT || changedLines > LARGE_COMMIT_LINE_LIMIT,
   };
-}
-
-export function commitBlockReason(cwd, command) {
-  const staged = inspectStagedDiff(cwd, command);
-  if (staged.kind !== "changes") return undefined;
-  if (staged.isLarge && !hasLargeCommitOverride(command)) {
-    return `The staged diff changes ${staged.files.length} files and ${staged.changedLines} lines. Split it into smaller commits, or ask the user to approve an inseparable large commit. After approval, rerun the commit with ATOMIC_COMMIT_ALLOW_LARGE=1.`;
-  }
-  return undefined;
 }

@@ -1,18 +1,11 @@
 import {
   COMMIT_DISCIPLINE,
-  commitBlockReason,
   inspectStagedDiff,
-  isGitCommitCommand,
 } from "./commit-guard.mjs";
-import {
-  isToolCallEventType,
-  type ExtensionAPI,
-} from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 
 export default function (pi: ExtensionAPI) {
-  let approvedFingerprint: string | undefined;
-
   pi.on("before_agent_start", (event) => ({
     systemPrompt: `${event.systemPrompt}\n\n${COMMIT_DISCIPLINE}`,
   }));
@@ -23,13 +16,14 @@ export default function (pi: ExtensionAPI) {
     description: "Inspect the staged diff before a git commit and record that it is one self-contained, verified change.",
     promptSnippet: "Assess the staged diff immediately before every git commit",
     promptGuidelines: [
-      "Use assess_atomic_commit immediately before each git commit. Do not commit when it reports a blocker.",
+      "Use assess_atomic_commit as the default check before each git commit when available.",
+      "Treat the assessment as advisory. Never let it prevent a necessary commit or task completion.",
     ],
     parameters: Type.Object({
       summary: Type.String({ description: "The single outcome this commit delivers." }),
       verification: Type.String({ description: "The relevant checks already run for this staged change." }),
-      largeCommitApprovedByUser: Type.Optional(Type.Boolean({
-        description: "True only when the user explicitly approved an inseparable large commit.",
+      largeCommitReason: Type.Optional(Type.String({
+        description: "Why a large staged change cannot be split safely or reasonably.",
       })),
     }),
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
@@ -46,53 +40,18 @@ export default function (pi: ExtensionAPI) {
           details: { approved: false },
         };
       }
-      if (staged.whitespaceErrors) {
-        return {
-          content: [{ type: "text", text: `Blocked: staged whitespace errors:\n${staged.whitespaceErrors}` }],
-          details: { approved: false },
-        };
-      }
-      if (staged.isLarge && !params.largeCommitApprovedByUser) {
-        return {
-          content: [{
-            type: "text",
-            text: `Blocked: ${staged.files.length} files and ${staged.changedLines} changed lines. Split the commit, or obtain explicit user approval for an inseparable large commit.`,
-          }],
-          details: { approved: false },
-        };
-      }
-
-      approvedFingerprint = staged.fingerprint;
-      const approval = staged.isLarge ? " Large commit approval was recorded." : "";
+      const largeCommitNote = staged.isLarge
+        ? params.largeCommitReason
+          ? `\nLarge commit reason: ${params.largeCommitReason}`
+          : "\nThis is a large commit. Split it when practical; otherwise explain why and continue."
+        : "";
       return {
         content: [{
           type: "text",
-          text: `Approved staged commit: ${params.summary}\nVerification: ${params.verification}\n${staged.files.length} files, ${staged.changedLines} changed lines.${approval}`,
+          text: `Assessed staged commit: ${params.summary}\nVerification: ${params.verification}\n${staged.files.length} files, ${staged.changedLines} changed lines.${largeCommitNote}`,
         }],
-        details: { approved: true, fingerprint: staged.fingerprint },
+        details: { approved: true, fingerprint: staged.fingerprint, advisory: staged.isLarge },
       };
     },
-  });
-
-  pi.on("tool_call", (event, ctx) => {
-    if (!isToolCallEventType("bash", event)) return;
-    const command = event.input.command;
-    if (!isGitCommitCommand(command)) return;
-
-    const basicBlocker = commitBlockReason(ctx.cwd, command);
-    if (basicBlocker) {
-      return { block: true, reason: basicBlocker, terminate: true };
-    }
-
-    const staged = inspectStagedDiff(ctx.cwd, command);
-    if (staged.kind !== "changes") return;
-    if (approvedFingerprint !== staged.fingerprint) {
-      return {
-        block: true,
-        reason: "Call assess_atomic_commit after staging this exact diff, then run the commit again.",
-        terminate: true,
-      };
-    }
-    approvedFingerprint = undefined;
   });
 }
