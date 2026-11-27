@@ -58,10 +58,11 @@
 - `pi-personal` uses its own `~/.pi/pi-personal` root. Add shared Pi customizations under `.pi/agent/`, then link them from `pi-personal` when it needs them.
 - Keep `pi-personal` settings separate only when the difference is intentional.
 
-## Herdr session names
+## Pi session names
 
-- In a Herdr-managed root session, the shared auto-name integration labels the current tab `pi`, `claude`, or `codex`. Herdr combines that with the workspace/project name on the bold top line, such as `chessan · pi`.
-- On the first user prompt, infer a short task description and convert it to a lowercase kebab-case slug with at most 32 characters. Run the exact `herdr agent rename` command that the shared auto-name integration supplies before substantive work. That inferred task name belongs on the lower description line. Preserve an existing task name and never rename a subagent.
+- Every interactive Pi session gets a meaningful task name. On the first user prompt, infer a lowercase kebab-case slug with two to five useful words and at most 32 characters, then call the `set_agent_session_name` tool before substantive work. Preserve an existing meaningful name and never name a subagent.
+- The tool persists the name in Pi so it appears in `/resume`, Pi Pocket, and other session listings. When Pi runs inside Herdr or Rex, it mirrors the same name to the current agent entry without renaming the containing workspace.
+- In a Herdr-managed root session, the integration also labels the current tab `pi`, `claude`, or `codex`. Herdr combines that with the workspace/project name on the bold top line, such as `chessan · pi`.
 
 ## MR review attention
 

@@ -1,6 +1,6 @@
 ---
 name: rename-session
-description: Rename the current Claude Code session to reflect what it is actually about, not the literal text of the first message. Use when the user asks to rename, relabel, or retitle this session or chat, says the session name is wrong, stale, or just echoes the first prompt, or runs /rename-session. Works whether the session is a local Herdr-managed pane, a Claude Code Remote (cloud/mobile) session, or both at once, and updates every naming surface that applies.
+description: Rename the current agent session to reflect what it is actually about, not the literal text of the first message. Use when the user asks to rename, relabel, or retitle this session or chat, says the session name is wrong, stale, or just echoes the first prompt, or runs /rename-session. Works with Pi sessions, local Herdr panes, Rex agent entries, Claude Code Remote sessions, or any combination of them, and updates every naming surface that applies.
 ---
 
 # Rename session
@@ -24,11 +24,28 @@ every naming surface this session actually has, instead of guessing which one ap
    session can have more than one (e.g. a Herdr-wrapped bridge session is also a Claude Code Remote
    session):
 
+   - **Pi session**: true when the `set_agent_session_name` tool is available. Call that tool with a
+     lowercase ASCII kebab-case task slug. It persists the name through `pi.setSessionName()` so the
+     name appears in `/resume`, Pi Pocket, and other Pi session listings. It also mirrors the same
+     name to Herdr or Rex when the current Pi process runs inside one of those harnesses. Prefer this
+     tool over changing a terminal title or editing a session JSONL file directly.
    - **Herdr-managed pane (local)**: true when `$HERDR_PANE_ID` is set and the `herdr` binary is on
      `PATH`. Herdr names a terminal pane, so the name must always be a lowercase ASCII kebab-case
      slug — dashes only, no spaces, no punctuation, no freeform text — 2–5 words, at most 32
      characters. Run `herdr agent rename "$HERDR_PANE_ID" "<slug>"`. Never rename a subagent's pane
      — only the root agent for the current pane.
+   - **Rex agent session (local)**: true when `$REX_SESSION` and `$REX_BLOCK` are set and either
+     `rex` is on `PATH` or `$REX_BIN_DIR/rex` is executable. Rex represents the current agent in
+     the sidebar with its terminal block, so rename that block rather than the containing Rex
+     workspace. Use the same lowercase ASCII kebab-case convention as Herdr: dashes only, no spaces
+     or punctuation, 2–5 words, and at most 32 characters. Run
+     `rex block rename -s "$REX_SESSION" "$REX_BLOCK" "<slug>"`; when `rex` is not on `PATH`, run
+     `"$REX_BIN_DIR/rex" block rename -s "$REX_SESSION" "$REX_BLOCK" "<slug>"`. After a successful
+     explicit rename, pin the label so automatic naming does not overwrite it:
+     `state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/rex/block-name-locks"; mkdir -p "$state_dir";
+     printf '%s\n' "<slug>" > "$state_dir/${REX_BLOCK#block:}"`. Rename only the current block unless
+     the user explicitly identifies another one. Remove the pin only when the user asks to resume
+     automatic topic naming.
    - **Claude Code Remote session (cloud/mobile, "CCR")**: true when the
      `claude-code-remote` MCP tools are available in this session. Call `get_session` with no
      `session_id` to resolve this session's own ID, then call `set_session_title` with that ID.
@@ -38,9 +55,10 @@ every naming surface this session actually has, instead of guessing which one ap
 
    If neither surface is detected, say so and stop — there is nothing to rename.
 
-3. **Apply the same inferred intent to both surfaces when both apply**, formatted for each
-   surface's own convention — a lowercase-with-dashes slug for Herdr's terminal pane, freestyle
-   readable text for CCR. Do not silently skip one because the other succeeded.
+3. **Apply the same inferred intent to every detected surface**, formatted for each surface's
+   convention: a lowercase-with-dashes slug for Pi, Herdr, and Rex, and a freestyle readable title for
+   CCR. Do not silently skip one because another succeeded. When the user explicitly supplies a
+   label, use it exactly when the target accepts it, even when it is a single word such as `eve`.
 
 4. **Report back** which surface(s) were renamed and to what, or why a surface was skipped (not
    detected, command failed, etc.). Do not report success for a surface that was not actually

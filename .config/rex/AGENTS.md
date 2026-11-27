@@ -51,4 +51,4 @@ A Rex update can overwrite this patch and reset the sidebar to its default size 
 
 ## Session naming and notifications
 
-New Pi sessions automatically rename their Rex session by topic, and the `rename-session` skill supports Herdr, Rex, and Claude Code Remote as naming targets — see `.agent-customizations/rename-session/SKILL.md`. Rex also shows a macOS notification when an agent finishes while Rex is in the background (no sound or Dock badge, matching the Herdr setup), configured in the same preferences file as the sidebar patch.
+New interactive Pi sessions receive a semantic Pi session name on their first prompt. That persisted Pi name appears in `/resume` and Pi Pocket, and the integration mirrors it to the Rex sidebar entry for the agent's terminal block. The containing Rex session remains the workspace. The `rename-session` skill supports Pi, Herdr, Rex, and Claude Code Remote as naming targets; see `.agent-customizations/rename-session/SKILL.md`. Rex also shows a macOS notification when an agent finishes while Rex is in the background (no sound or Dock badge, matching the Herdr setup), configured in the same preferences file as the sidebar patch.
