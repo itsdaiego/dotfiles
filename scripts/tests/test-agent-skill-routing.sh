@@ -68,6 +68,15 @@ test -f .claude/skills/walle-chat/SKILL.md
 test -f .codex/skills/walle-chat/SKILL.md
 test -f .pi/agent/skills/walle-chat/SKILL.md
 test -f .pi/pi-personal/skills/walle-chat/SKILL.md
+test -f .claude/skills/ask-away/SKILL.md
+test -f .codex/skills/ask-away/SKILL.md
+test -f .pi/agent/skills/ask-away/SKILL.md
+test -f .pi/pi-personal/skills/ask-away/SKILL.md
+test -f .pi/agent/prompts/ask-away.md
+test -L .pi/pi-personal/prompts/ask-away.md
+grep -F 'Load and follow the `ask-away` skill' .pi/agent/prompts/ask-away.md >/dev/null
+grep -F 'Ask exactly one question per message.' .agent-customizations/ask-away/SKILL.md >/dev/null
+grep -F 'Every question quotes the code it is about.' .agent-customizations/ask-away/SKILL.md >/dev/null
 
 test -f .pi/agent/prompts/try-harder.md
 test -L .pi/pi-personal/prompts/try-harder.md
