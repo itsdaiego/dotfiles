@@ -1,4 +1,4 @@
-/** Adds an Auto (Jev) model that selects a physical model for each new task and reports the choice. */
+/** Adds the Claude CLI models and an Auto (Jev) model that selects a model for each new task. */
 import { access } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,6 +9,7 @@ import {
     type AssistantMessage,
     type AssistantMessageEventStream,
     type Model,
+    type Provider,
     type SimpleStreamOptions,
     type TranscriptContext,
 } from "@earendil-works/pi-ai";
@@ -45,9 +46,17 @@ type RouterRuntime = Pick<
     "getAvailable" | "getAvailableOfType" | "classify" | "streamSimple"
 >;
 
+type ClaudeCliRegistration = {
+    provider?: Provider;
+    cleanup?: () => Promise<void>;
+};
+
 type PocketDependencies = {
     createRuntime(): Promise<RouterRuntime>;
-    registerClaudeCliProvider(runtime: ModelRuntime, agentDir: string): Promise<(() => Promise<void>) | undefined>;
+    registerClaudeCliProvider(
+        runtime: ModelRuntime,
+        agentDir: string,
+    ): Promise<ClaudeCliRegistration | undefined>;
 };
 
 type SessionRoute = {
@@ -126,10 +135,47 @@ function pipePhysicalStream(
     return out;
 }
 
+export function resolvePiAiEntryForJiti(
+    resolveModule: (specifier: string) => string = import.meta.resolve,
+): string {
+    return fileURLToPath(
+        new URL("./index.js", resolveModule("@earendil-works/pi-ai/models")),
+    );
+}
+
+function pocketProviderConfig(provider: Provider): Record<string, unknown> {
+    const models = () => provider.getModels().map((model) => {
+        const { provider: _provider, baseUrl: _baseUrl, ...config } = model;
+
+        return config;
+    });
+    const config: Record<string, unknown> = {
+        name: provider.name,
+        baseUrl: "http://pi-claude-cli.local",
+        apiKey: "unused",
+        api: provider.id,
+        authHeader: false,
+        streamSimple: provider.streamSimple.bind(provider),
+        models: models(),
+    };
+
+    if (provider.refreshModels) {
+        config.refreshModels = async (
+            context: Parameters<NonNullable<Provider["refreshModels"]>>[0],
+        ) => {
+            await provider.refreshModels?.(context);
+
+            return models();
+        };
+    }
+
+    return config;
+}
+
 async function loadClaudeCliProvider(
     runtime: ModelRuntime,
     agentDir: string,
-): Promise<(() => Promise<void>) | undefined> {
+): Promise<ClaudeCliRegistration | undefined> {
     const entries = [
         resolve(agentDir, "git/github.com/dmmulroy/pi-claude-cli/index.ts"),
         resolve(agentDir, "../agent/git/github.com/dmmulroy/pi-claude-cli/index.ts"),
@@ -151,7 +197,7 @@ async function loadClaudeCliProvider(
     const handlers = new Map<string, Array<(...args: any[]) => unknown>>();
     const jiti = createJiti(import.meta.url, {
         alias: {
-            "@earendil-works/pi-ai": fileURLToPath(import.meta.resolve("@earendil-works/pi-ai")),
+            "@earendil-works/pi-ai": resolvePiAiEntryForJiti(),
             "@earendil-works/pi-ai/compat": fileURLToPath(
                 import.meta.resolve("@earendil-works/pi-ai/compat"),
             ),
@@ -163,13 +209,15 @@ async function loadClaudeCliProvider(
     const module = await jiti.import(entry) as {
         default(pi: Record<string, unknown>): void | Promise<void>;
     };
+    let provider: Provider | undefined;
     const pi = {
         on(event: string, handler: (...args: any[]) => unknown) {
             handlers.set(event, [...(handlers.get(event) ?? []), handler]);
             return () => {};
         },
-        registerProvider(provider: unknown) {
-            if (typeof provider === "object" && provider !== null) {
+        registerProvider(candidate: unknown) {
+            if (typeof candidate === "object" && candidate !== null) {
+                provider = candidate as Provider;
                 runtime.registerNativeProvider(provider as never);
             }
         },
@@ -178,10 +226,13 @@ async function loadClaudeCliProvider(
 
     await module.default(pi);
 
-    return async () => {
-        for (const handler of handlers.get("session_shutdown") ?? []) {
-            await handler({ reason: "quit" }, {});
-        }
+    return {
+        provider,
+        cleanup: async () => {
+            for (const handler of handlers.get("session_shutdown") ?? []) {
+                await handler({ reason: "quit" }, {});
+            }
+        },
     };
 }
 
@@ -215,10 +266,16 @@ export async function createPocketJevAuto(
             pendingRuns.splice(index, 1);
         }
     });
-    const claudeCleanup = await dependencies.registerClaudeCliProvider(
+    const claude = await dependencies.registerClaudeCliProvider(
         runtime as ModelRuntime,
         host.agentDir,
     );
+    const removeClaudeProvider = claude?.provider
+        ? host.registerModelProvider(
+            claude.provider.id,
+            pocketProviderConfig(claude.provider),
+        )
+        : undefined;
 
     const conversationFor = (sessionId: string | undefined): number | undefined => {
         if (!sessionId) {
@@ -326,8 +383,11 @@ export async function createPocketJevAuto(
     web.onDispose(started);
     web.onDispose(ended);
     web.onDispose(removeProvider);
+    if (removeClaudeProvider) {
+        web.onDispose(removeClaudeProvider);
+    }
     web.onDispose(() => {
-        void claudeCleanup?.();
+        void claude?.cleanup?.();
     });
 
     return defineExtension({ name: EXTENSION_NAME });

@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { createAssistantMessageEventStream } from "@earendil-works/pi-ai";
 
-import { createPocketJevAuto } from "./jev-auto.ts";
+import { createPocketJevAuto, resolvePiAiEntryForJiti } from "./jev-auto.ts";
 
 function model(provider: string, id: string) {
   return {
@@ -18,6 +18,23 @@ function model(provider: string, id: string) {
     maxTokens: 128_000,
   };
 }
+
+test("resolves the real pi-ai entry when Pocket redirects the bare package", () => {
+  const resolved: string[] = [];
+  const entry = resolvePiAiEntryForJiti((specifier) => {
+    resolved.push(specifier);
+    if (specifier === "@earendil-works/pi-ai/models") {
+      return "file:///opt/pi-ai/dist/models.js";
+    }
+    if (specifier === "@earendil-works/pi-ai") {
+      return "file:///opt/pi-pocket/extension-pi-ai-compat.ts";
+    }
+    throw new Error(`Unexpected specifier: ${specifier}`);
+  });
+
+  assert.equal(entry, "/opt/pi-ai/dist/index.js");
+  assert.deepEqual(resolved, ["@earendil-works/pi-ai/models"]);
+});
 
 function completedStream(chosen: ReturnType<typeof model>) {
   const stream = createAssistantMessageEventStream();
@@ -44,7 +61,7 @@ function completedStream(chosen: ReturnType<typeof model>) {
 }
 
 test("registers Auto (Jev), routes a task, and tells the matching Pocket session", async () => {
-  let providerConfig: any;
+  const providerConfigs = new Map<string, any>();
   let messageSent: ((event: any) => void) | undefined;
   let runStarted: ((event: any) => void) | undefined;
   let classifyCalls = 0;
@@ -76,9 +93,9 @@ test("registers Auto (Jev), routes a task, and tells the matching Pocket session
   };
   const host = {
     agentDir: "/tmp/pi-agent",
-    registerModelProvider(_provider: string, config: unknown) {
-      providerConfig = config;
-      return () => {};
+    registerModelProvider(provider: string, config: unknown) {
+      providerConfigs.set(provider, config);
+      return () => providerConfigs.delete(provider);
     },
     on(event: string, listener: (value: unknown) => void) {
       if (event === "message.sent") messageSent = listener;
@@ -97,12 +114,28 @@ test("registers Auto (Jev), routes a task, and tells the matching Pocket session
 
   const extension = await createPocketJevAuto(host as never, web as never, {
     createRuntime: async () => runtime as never,
-    registerClaudeCliProvider: async () => undefined,
+    registerClaudeCliProvider: async () => ({
+      provider: {
+        id: "pi-claude-cli",
+        name: "pi-claude-cli",
+        baseUrl: "pi-claude-cli",
+        getModels: () => [chosen],
+        streamSimple: runtime.streamSimple,
+      },
+    }),
   });
+
+  const providerConfig = providerConfigs.get("jev");
+  const claudeConfig = providerConfigs.get("pi-claude-cli");
 
   assert.equal(extension.name, "daiego-jev-auto");
   assert.equal(providerConfig.name, "Jev");
   assert.equal(providerConfig.models[0].id, "auto");
+  assert.equal(claudeConfig.name, "pi-claude-cli");
+  assert.equal(claudeConfig.apiKey, "unused");
+  assert.equal(claudeConfig.authHeader, false);
+  assert.equal(claudeConfig.models[0].id, "claude-sonnet-5-5");
+  assert.equal(claudeConfig.models[0].provider, undefined);
 
   runStarted?.({ conversationId: 42, session: 42 });
   const stream = providerConfig.streamSimple(
