@@ -51,11 +51,14 @@ sh scripts/tests/test-herdr-agent-picker-session-name.sh
 pocket_extension_check=$codex_check_dir/pi-pocket-extension
 mkdir -p "$pocket_extension_check"
 cp pi-durable/extensions/*.ts "$pocket_extension_check/"
+cp pi-durable/extensions/jev-auto-client*.js "$pocket_extension_check/"
 ln -s /opt/homebrew/lib/node_modules/pi-pocket/node_modules "$pocket_extension_check/node_modules"
 node --experimental-strip-types -e \
   'import(process.argv[1]).then(async (module) => { const extension = module.default({ cwdOf: () => "/tmp/work/src/document_extractor" }); const beforeTool = extension.hooks?.[0]?.handlers?.beforeTool; const blocked = await beforeTool?.({ name: "bash", arguments: { command: "./typeCheck.sh" } }, { conversationId: 1 }); if (!blocked?.block) process.exit(1) })' \
   "$pocket_extension_check/document-extractor-typecheck-guard.ts"
-node --experimental-strip-types --test "$pocket_extension_check/jev-auto.test.ts"
+node --experimental-strip-types --test \
+  "$pocket_extension_check/jev-auto.test.ts" \
+  "$pocket_extension_check/jev-auto-client.test.js"
 node --experimental-strip-types --test .pi/agent/extensions/tests/jev-auto.test.ts
 node --experimental-strip-types --test scripts/tests/pi-aws-command-guard.test.ts
 node --experimental-strip-types --test scripts/tests/pi-process-budget-guard.test.ts

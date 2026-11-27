@@ -37,7 +37,20 @@ type PocketHost = {
     notice(level: "info" | "warning" | "error", message: string, conversationId?: number): void;
 };
 
+type PocketRouteRequest = {
+    params: Record<string, string>;
+    sessions(): Array<{ id: number }>;
+};
+
 type PocketWeb = {
+    client(entry: string, options: { access: "view" }): void;
+    route(
+        method: "GET",
+        path: string,
+        handler: (request: PocketRouteRequest) => unknown,
+        options: { access: "view" },
+    ): void;
+    send(event: string, data: unknown): void;
     onDispose(dispose: () => void): void;
 };
 
@@ -249,8 +262,26 @@ export async function createPocketJevAuto(
     const runtime = await dependencies.createRuntime();
     const routes = new Map<string, SessionRoute>();
     const sessionConversations = new Map<string, number>();
+    const conversationRoutes = new Map<number, ModelCandidate>();
     const conversationVersions = new Map<number, number>();
     const pendingRuns: number[] = [];
+
+    web.client("jev-auto-client.js", { access: "view" });
+    web.route(
+        "GET",
+        "route/:conversation",
+        (request) => {
+            const conversationId = Number(request.params.conversation);
+            const visible = request.sessions().some((session) => session.id === conversationId);
+
+            if (!Number.isSafeInteger(conversationId) || conversationId <= 0 || !visible) {
+                return { label: null };
+            }
+
+            return { label: conversationRoutes.get(conversationId)?.label ?? null };
+        },
+        { access: "view" },
+    );
     const messages = host.on("message.sent", ({ conversationId }) => {
         conversationVersions.set(
             conversationId,
@@ -326,6 +357,13 @@ export async function createPocketJevAuto(
                         `Jev chose ${route.candidate.label}.`,
                         conversationId,
                     );
+                    if (conversationId !== undefined) {
+                        conversationRoutes.set(conversationId, route.candidate);
+                        web.send("route", {
+                            conversationId,
+                            label: route.candidate.label,
+                        });
+                    }
                 }
 
                 const stream = pipePhysicalStream(

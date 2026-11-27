@@ -67,6 +67,9 @@ test("registers Auto (Jev), routes a task, and tells the matching Pocket session
   let classifyCalls = 0;
   const notices: Array<{ message: string; conversationId?: number }> = [];
   const disposers: Array<() => void> = [];
+  const clients: Array<{ entry: string; access?: string }> = [];
+  const events: Array<{ event: string; data: unknown }> = [];
+  let routeHandler: ((request: any) => unknown) | undefined;
   const chosen = model("pi-claude-cli", "claude-sonnet-5-5");
   const runtime = {
     getAvailable: async () => [
@@ -107,6 +110,16 @@ test("registers Auto (Jev), routes a task, and tells the matching Pocket session
     },
   };
   const web = {
+    client(entry: string, options: { access?: string }) {
+      clients.push({ entry, ...options });
+    },
+    route(_method: string, path: string, handler: (request: any) => unknown) {
+      assert.equal(path, "route/:conversation");
+      routeHandler = handler;
+    },
+    send(event: string, data: unknown) {
+      events.push({ event, data });
+    },
     onDispose(dispose: () => void) {
       disposers.push(dispose);
     },
@@ -136,6 +149,8 @@ test("registers Auto (Jev), routes a task, and tells the matching Pocket session
   assert.equal(claudeConfig.authHeader, false);
   assert.equal(claudeConfig.models[0].id, "claude-sonnet-5-5");
   assert.equal(claudeConfig.models[0].provider, undefined);
+  assert.deepEqual(clients, [{ entry: "jev-auto-client.js", access: "view" }]);
+  assert.ok(routeHandler);
 
   runStarted?.({ conversationId: 42, session: 42 });
   const stream = providerConfig.streamSimple(
@@ -150,6 +165,26 @@ test("registers Auto (Jev), routes a task, and tells the matching Pocket session
   assert.deepEqual(notices, [
     { message: "Jev chose Claude Sonnet 5.5.", conversationId: 42 },
   ]);
+  assert.deepEqual(events, [
+    {
+      event: "route",
+      data: { conversationId: 42, label: "Claude Sonnet 5.5" },
+    },
+  ]);
+  assert.deepEqual(
+    routeHandler?.({
+      params: { conversation: "42" },
+      sessions: () => [{ id: 42 }],
+    }),
+    { label: "Claude Sonnet 5.5" },
+  );
+  assert.deepEqual(
+    routeHandler?.({
+      params: { conversation: "42" },
+      sessions: () => [{ id: 7 }],
+    }),
+    { label: null },
+  );
 
   const continuation = providerConfig.streamSimple(
     model("jev", "auto"),
@@ -177,6 +212,10 @@ test("registers Auto (Jev), routes a task, and tells the matching Pocket session
   assert.deepEqual(notices.at(-1), {
     message: "Jev chose GPT-6 Sol.",
     conversationId: 42,
+  });
+  assert.deepEqual(events.at(-1), {
+    event: "route",
+    data: { conversationId: 42, label: "GPT-6 Sol" },
   });
   assert.ok(disposers.length >= 3);
 });

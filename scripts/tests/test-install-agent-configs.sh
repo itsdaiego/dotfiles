@@ -53,11 +53,12 @@ for pocket_profile in .pi-pocket-work .pi-pocket-personal; do
     _document-extractor-typecheck-guard.ts \
     _jev-auto-policy.ts \
     document-extractor-typecheck-guard.ts \
+    jev-auto-client.js \
     jev-auto.ts
   do
     test ! -L "$test_home/$pocket_profile/extensions/$extension_file"
     cmp \
-      "$stable_repo_dir/pi-durable/extensions/$extension_file" \
+      "$repo_dir/pi-durable/extensions/$extension_file" \
       "$test_home/$pocket_profile/extensions/$extension_file"
   done
 done

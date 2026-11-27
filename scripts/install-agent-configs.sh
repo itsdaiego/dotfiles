@@ -139,10 +139,11 @@ for pocket_profile in .pi-pocket-work .pi-pocket-personal; do
     _document-extractor-typecheck-guard.ts \
     _jev-auto-policy.ts \
     document-extractor-typecheck-guard.ts \
+    jev-auto-client.js \
     jev-auto.ts
   do
     copy_target \
-      "$repo_dir/pi-durable/extensions/$extension_file" \
+      "$script_repo_dir/pi-durable/extensions/$extension_file" \
       "$HOME/$pocket_profile/extensions/$extension_file"
   done
 done
