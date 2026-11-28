@@ -93,6 +93,9 @@
 
 ## Shared agent brain
 - `~/.ai` is the shared memory for Claude Code, Codex, and Pi. Read `~/.ai/README.md` for its rules.
+
+# Communication safeguards
+- Do not ask people for feedback, review, or re-review when we already asked and they have not replied, unless Toddynho explicitly asks. Before posting to GitLab or another channel, check the relevant session and communication history for prior unanswered requests.
 - Eve work state lives in `~/.ai/eve/`. `brain.md` holds open promises, requests, and MR reviews. `weekly/YYYY-Www.md` holds the week plan. `log.md` holds closed items.
 - Before you plan Eve work, answer "what should I do", or run any `brain` skill, read `~/.ai/eve/brain.md`.
 - When Daiego makes a promise or receives a request in a session, add it to `~/.ai/eve/brain.md` with the `brain-update` rules. When an item is done, move it to `~/.ai/eve/log.md` with the date and evidence.
