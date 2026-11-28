@@ -15,7 +15,8 @@
     "npm:@narumitw/pi-goal",
     "npm:pi-vim",
     "npm:pi-remote-control@1.0.9",
-    "git:github.com/dmmulroy/pi-claude-cli"
+    "git:github.com/dmmulroy/pi-claude-cli",
+    "npm:@injaneity/pi-computer-use"
   ],
   "extensionChangelogVersions": {
     "{\"source\":\"npm:pi-mcp-adapter\",\"scope\":\"user\"}": "3.3.0"

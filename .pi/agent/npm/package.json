@@ -5,6 +5,7 @@
     "@agnishc/edb-diff-files": "^0.21.1",
     "@earendil-works/pi-coding-agent": "0.87.1",
     "@earendil-works/pi-tui": "0.87.1",
+    "@injaneity/pi-computer-use": "^0.5.1",
     "@narumitw/pi-btw": "0.61.1",
     "@narumitw/pi-goal": "^0.54.2",
     "@tmustier/pi-usage-extension": "^0.9.4",
@@ -15,5 +16,8 @@
   },
   "scripts": {
     "postinstall": "node ./patch-pi-ui.mjs"
+  },
+  "allowScripts": {
+    "@injaneity/pi-computer-use@0.5.1": true
   }
 }
